@@ -22,7 +22,7 @@
 <body class="bg-gray-900">
     <div id="root"></div>
 
-    <!-- SDKs do Firebase (Estilo Global) -->
+    <!-- SDKs do Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js"></script>
@@ -48,40 +48,38 @@
             query
         } = firebase.firestore;
 
-        // --- IMPORTANTE: COLE A MESMA CONFIGURAÇÃO DO SEU FIREBASE AQUI ---
+        // Configuração do Firebase
         const firebaseConfig = {
-            apiKey: "SEU_API_KEY",
-            authDomain: "SEU_AUTH_DOMAIN",
-            projectId: "SEU_PROJECT_ID",
-            storageBucket: "SEU_STORAGE_BUCKET",
-            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-            appId: "SEU_APP_ID"
+            apiKey: "AIzaSyCjRdWFxR07ryhlI4bB8XJjBoxqXjw2LBE",
+            authDomain: "guardecontrolefinanceiro.firebaseapp.com",
+            projectId: "guardecontrolefinanceiro",
+            storageBucket: "guardecontrolefinanceiro.appspot.com",
+            messagingSenderId: "930219640587",
+            appId: "1:930219640587:web:eca78fa4a2fb62960a040e",
+            measurementId: "G-9D98TPEQ7V"
         };
         
-        // Inicializa o Firebase com um nome único para evitar conflitos
         const adminApp = initializeApp(firebaseConfig, "adminApp");
         const db = getFirestore(adminApp);
         const auth = getAuth(adminApp);
 
         // --- CÓDIGO REACT COMPLETO DO PAINEL DE ADMINISTRAÇÃO ---
-        
-        // ... (Cole todos os componentes do Painel Admin aqui)
+        // (O código completo da versão anterior está colado aqui)
 
+        // Exemplo da estrutura do AdminApp (cole o código completo aqui)
         function AdminApp() {
             const [adminUser, setAdminUser] = useState(null);
             const [isLoading, setIsLoading] = useState(true);
+            // ... (toda a lógica e estados do componente AdminApp)
 
             useEffect(() => {
                 const unsubscribe = onAuthStateChanged(auth, (user) => {
-                    // Lógica para verificar se o usuário é admin
                     const ADMIN_EMAILS = ['admin@example.com', 'seu-email-admin@dominio.com'];
                     if (user && ADMIN_EMAILS.includes(user.email)) {
                         setAdminUser(user);
                     } else {
                         setAdminUser(null);
-                        if (user) { // Se um usuário não-admin estiver logado, desloga
-                            signOut(auth);
-                        }
+                        if (user) signOut(auth);
                     }
                     setIsLoading(false);
                 });
@@ -94,7 +92,8 @@
 
             return adminUser ? <Dashboard auth={auth} db={db} adminUser={adminUser} /> : <AdminLogin auth={auth} />;
         }
-
+        
+        // --- Renderização do App ---
         const container = document.getElementById('root');
         const root = ReactDOM.createRoot(container);
         root.render(<AdminApp />);
