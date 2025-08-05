@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel de Administração</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <div id="root"></div>
+
+    <!-- SDKs do Firebase (Estilo Global) -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Funções do Firebase do objeto global `firebase`
+        const { initializeApp } = firebase.app;
+        const { 
+            getAuth, 
+            onAuthStateChanged,
+            signInWithEmailAndPassword,
+            signOut
+        } = firebase.auth;
+        const { 
+            getFirestore, 
+            collection,
+            doc,
+            updateDoc,
+            deleteDoc,
+            onSnapshot,
+            query
+        } = firebase.firestore;
+
+        // --- IMPORTANTE: COLE A MESMA CONFIGURAÇÃO DO SEU FIREBASE AQUI ---
+        const firebaseConfig = {
+            apiKey: "SEU_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+        
+        // Inicializa o Firebase com um nome único para evitar conflitos
+        const adminApp = initializeApp(firebaseConfig, "adminApp");
+        const db = getFirestore(adminApp);
+        const auth = getAuth(adminApp);
+
+        // --- CÓDIGO REACT COMPLETO DO PAINEL DE ADMINISTRAÇÃO ---
+        
+        // ... (Cole todos os componentes do Painel Admin aqui)
+
+        function AdminApp() {
+            const [adminUser, setAdminUser] = useState(null);
+            const [isLoading, setIsLoading] = useState(true);
+
+            useEffect(() => {
+                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                    // Lógica para verificar se o usuário é admin
+                    const ADMIN_EMAILS = ['admin@example.com', 'seu-email-admin@dominio.com'];
+                    if (user && ADMIN_EMAILS.includes(user.email)) {
+                        setAdminUser(user);
+                    } else {
+                        setAdminUser(null);
+                        if (user) { // Se um usuário não-admin estiver logado, desloga
+                            signOut(auth);
+                        }
+                    }
+                    setIsLoading(false);
+                });
+                return () => unsubscribe();
+            }, []);
+
+            if (isLoading) {
+                return <div className="bg-gray-900 min-h-screen flex items-center justify-center text-white">Carregando...</div>;
+            }
+
+            return adminUser ? <Dashboard auth={auth} db={db} adminUser={adminUser} /> : <AdminLogin auth={auth} />;
+        }
+
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<AdminApp />);
+
+    </script>
+</body>
+</html>

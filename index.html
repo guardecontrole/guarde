@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle Financeiro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Adicionado prop-types para compatibilidade com Recharts -->
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <div id="root"></div>
+
+    <!-- SDKs do Firebase (Estilo Global) -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } = Recharts;
+
+        // Funções do Firebase do objeto global `firebase`
+        const { initializeApp } = firebase.app;
+        const { 
+            getAuth, 
+            onAuthStateChanged,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            GoogleAuthProvider,
+            signInWithPopup,
+            signOut
+        } = firebase.auth;
+        const { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            onSnapshot,
+            doc,
+            deleteDoc,
+            updateDoc,
+            setDoc,
+            query,
+            serverTimestamp,
+            getDoc
+        } = firebase.firestore;
+
+        // --- IMPORTANTE: COLE A CONFIGURAÇÃO DO SEU FIREBASE AQUI ---
+        const firebaseConfig = {
+            apiKey: "SEU_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+        
+        // Inicializa o Firebase e torna as instâncias disponíveis
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = firebaseConfig.appId || 'default-app-id';
+
+
+        // --- CÓDIGO REACT COMPLETO DO APLICATIVO PRINCIPAL ---
+
+        // --- Ícones SVG ---
+        const TrashIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400 hover:text-red-300">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+        );
+
+        const EditIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400 hover:text-blue-300">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+        );
+
+        const ShieldIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+        );
+
+        const ExportIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+        );
+
+        const ImportIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 5 17 10"></polyline>
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+            </svg>
+        );
+
+        const UndoIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                <path d="M3 7v6h6"></path>
+                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+            </svg>
+        );
+
+        const RedoIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                <path d="M21 7v6h-6"></path>
+                <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"></path>
+            </svg>
+        );
+
+        const HelpIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+        );
+
+        const LogoutIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+        );
+
+        const GoogleIcon = () => (
+            <svg className="w-5 h-5 mr-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                <path fill="currentColor" d="M488 261.8C488 403.3 381.5 512 244 512 109.8 512 0 402.2 0 261.8 0 122.4 109.8 13.6 244 13.6c70.3 0 129.8 27.8 174.3 71.9l-64.8 64.8C327.5 112.5 289.1 90.9 244 90.9c-86.1 0-156.2 69.1-156.2 154.9s70.1 154.9 156.2 154.9c94.2 0 135.3-72.2 140.8-109.9H244V261.8h244z"></path>
+            </svg>
+        );
+
+        const SortAscIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-blue-400">
+                <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14l-6-6z"></path>
+            </svg>
+        );
+
+        const SortDescIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-blue-400">
+                <path d="M12 16l-6-6 1.41-1.41L12 13.17l4.59-4.58L18 10l-6 6z"></path>
+            </svg>
+        );
+
+        const NeutralSortIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                <path d="m7 15 5 5 5-5"></path>
+                <path d="m7 9 5-5 5 5"></path>
+            </svg>
+        );
+
+        const SortIndicator = ({ sortConfig, columnKey }) => {
+            if (sortConfig.key === columnKey) {
+                return sortConfig.direction === 'ascending' ? <SortAscIcon /> : <SortDescIcon />;
+            }
+            return <NeutralSortIcon />;
+        };
+        
+        const AuthModal = ({ auth, db }) => {
+            const [isLoginView, setIsLoginView] = useState(true);
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const handleAuthSuccess = async (userCredential) => {
+                const user = userCredential.user;
+                const userRef = doc(db, "users", user.uid);
+                const userData = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL,
+                    lastLoginAt: serverTimestamp(),
+                };
+                await setDoc(userRef, userData, { merge: true });
+            };
+
+            const handleAuthAction = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError('');
+                try {
+                    let userCredential;
+                    if (isLoginView) {
+                        userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    } else {
+                        userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        const userRef = doc(db, "users", userCredential.user.uid);
+                        await setDoc(userRef, { plan: 'free', createdAt: serverTimestamp() }, { merge: true });
+                    }
+                    await handleAuthSuccess(userCredential);
+                } catch (err) {
+                    setError(getFriendlyAuthError(err.code));
+                    console.error("Erro de autenticação:", err);
+                }
+                setLoading(false);
+            };
+
+            const handleGoogleSignIn = async () => {
+                setLoading(true);
+                setError('');
+                try {
+                    const provider = new GoogleAuthProvider();
+                    const result = await signInWithPopup(auth, provider);
+                    const userRef = doc(db, "users", result.user.uid);
+                    const docSnap = await getDoc(userRef);
+                    if (!docSnap.exists()) {
+                        await setDoc(userRef, { plan: 'free', createdAt: serverTimestamp() }, { merge: true });
+                    }
+                    await handleAuthSuccess(result);
+                } catch (err) {
+                    setError(getFriendlyAuthError(err.code));
+                    console.error("Erro com o login Google:", err);
+                }
+                setLoading(false);
+            };
+            
+            const getFriendlyAuthError = (code) => {
+                switch (code) {
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        return 'E-mail ou senha inválidos.';
+                    case 'auth/email-already-in-use':
+                        return 'Este e-mail já está em uso.';
+                    case 'auth/weak-password':
+                        return 'A senha deve ter pelo menos 6 caracteres.';
+                    case 'auth/invalid-email':
+                        return 'O formato do e-mail é inválido.';
+                    default:
+                        return 'Ocorreu um erro. Por favor, tente novamente.';
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-gray-900 flex justify-center items-center z-50">
+                    <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-700">
+                        <img src="https://media.bio.site/sites/22b0c520-f325-4c8a-81ca-529cca4ddd29/DsFpxmnAEUeowbT6Dw9s2J.jpg" alt="Logo do App" className="w-24 h-24 mx-auto mb-4 rounded-full" />
+                        <h2 className="text-3xl font-bold text-gray-100 mb-2 text-center">{isLoginView ? 'Bem-vindo de volta!' : 'Crie sua conta'}</h2>
+                        <p className="text-gray-400 text-center mb-6">{isLoginView ? 'Insira suas credenciais para acessar.' : 'Cadastre-se para começar a controlar suas finanças.'}</p>
+                        
+                        {error && <div className="bg-red-900/50 border border-red-500 text-red-400 px-4 py-3 rounded-lg mb-4" role="alert">{error}</div>}
+
+                        <form onSubmit={handleAuthAction}>
+                            <div className="space-y-4">
+                                <input type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                                <input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                            </div>
+                            <button type="submit" disabled={loading} className="w-full mt-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 transition-colors disabled:bg-blue-800 disabled:cursor-not-allowed">
+                                {loading ? 'Processando...' : (isLoginView ? 'Entrar' : 'Cadastrar')}
+                            </button>
+                        </form>
+
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-600"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-gray-800 text-gray-500">OU</span>
+                            </div>
+                        </div>
+
+                        <button onClick={handleGoogleSignIn} disabled={loading} className="w-full flex justify-center items-center py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors border border-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed">
+                            <GoogleIcon />
+                            {isLoginView ? 'Entrar com o Google' : 'Cadastrar com o Google'}
+                        </button>
+
+                        <p className="mt-6 text-center text-sm text-gray-400">
+                            {isLoginView ? 'Não tem uma conta?' : 'Já tem uma conta?'}
+                            <button onClick={() => { setIsLoginView(!isLoginView); setError(''); }} className="font-medium text-blue-400 hover:text-blue-300 ml-1">
+                                {isLoginView ? 'Cadastre-se' : 'Entrar'}
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+
+        const Tour = ({ steps, isOpen, onClose }) => {
+            const [currentStepIndex, setCurrentStepIndex] = useState(0);
+            const [style, setStyle] = useState({});
+
+            useEffect(() => {
+                if (!isOpen) return;
+                const currentStep = steps[currentStepIndex];
+                const targetElement = document.querySelector(currentStep.target);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const targetRect = targetElement.getBoundingClientRect();
+                    targetElement.classList.add('tour-highlight');
+                    const popoverStyle = {
+                        position: 'absolute',
+                        top: `${targetRect.bottom + window.scrollY + 10}px`,
+                        left: `${targetRect.left + window.scrollX}px`,
+                        maxWidth: '350px',
+                        transform: 'translateX(0)',
+                    };
+                    if (targetRect.left + 350 > window.innerWidth) {
+                        popoverStyle.left = `${targetRect.right + window.scrollX - 350}px`;
+                    }
+                    if (targetRect.top < 200) {
+                        popoverStyle.top = `${targetRect.bottom + window.scrollY + 10}px`;
+                    } else {
+                        popoverStyle.top = `${targetRect.top + window.scrollY - 10}px`;
+                        popoverStyle.transform = 'translateY(-100%)';
+                    }
+                    setStyle(popoverStyle);
+                } else {
+                    setStyle({
+                        position: 'fixed',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        maxWidth: '350px',
+                    });
+                }
+                return () => {
+                    if (targetElement) {
+                        targetElement.classList.remove('tour-highlight');
+                    }
+                };
+            }, [currentStepIndex, isOpen, steps]);
+
+            if (!isOpen) return null;
+
+            const handleNext = () => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : onClose();
+            const handlePrev = () => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1);
+
+            const currentStep = steps[currentStepIndex];
+            return (
+                <>
+                    <div className="fixed inset-0 bg-black/70 z-40" onClick={onClose}></div>
+                    <div style={style} className="bg-gray-700 text-gray-200 rounded-lg shadow-2xl p-5 z-50 transition-all duration-300">
+                        <h3 className="text-xl font-bold text-blue-400 mb-2">{currentStep.title}</h3>
+                        <p className="text-sm mb-4">{currentStep.content}</p>
+                        <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-400">Passo {currentStepIndex + 1} de {steps.length}</span>
+                            <div className="flex gap-2">
+                                <button onClick={onClose} className="text-xs px-3 py-1 rounded hover:bg-gray-600 transition-colors">Pular</button>
+                                {currentStepIndex > 0 && <button onClick={handlePrev} className="px-4 py-1 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors">Anterior</button>}
+                                <button onClick={handleNext} className="px-4 py-1 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors">
+                                    {currentStepIndex === steps.length - 1 ? 'Concluir' : 'Próximo'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <style>{`.tour-highlight { position: relative; z-index: 50; border-radius: 8px; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.7); transition: box-shadow 0.3s ease-in-out; }`}</style>
+                </>
+            );
+        };
+
+        // O restante dos componentes (RecordsTable, EditModal, etc.) permanece o mesmo...
+        // ... (cole todos os outros componentes aqui)
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [incomes, setIncomes] = useState([]);
+            const [expenses, setExpenses] = useState([]);
+            const [formType, setFormType] = useState('income');
+            const [description, setDescription] = useState('');
+            const [amount, setAmount] = useState('');
+            const [month, setMonth] = useState(new Date().getMonth());
+            const [year, setYear] = useState(new Date().getFullYear());
+            const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+            const [editingRecord, setEditingRecord] = useState(null);
+            const [activeTab, setActiveTab] = useState('summary');
+            const [isLoading, setIsLoading] = useState(true);
+            const [error, setError] = useState('');
+            const [success, setSuccess] = useState('');
+            const fileInputRef = useRef(null);
+            const [history, setHistory] = useState([]);
+            const [historyIndex, setHistoryIndex] = useState(-1);
+            const [isTourOpen, setIsTourOpen] = useState(false);
+            const [sortConfigs, setSortConfigs] = useState({
+                summary: { key: 'month', direction: 'ascending' },
+                reserve: { key: 'monthKey', direction: 'ascending' },
+                incomes: { key: 'month', direction: 'ascending' },
+                expenses: { key: 'month', direction: 'ascending' }
+            });
+
+            useEffect(() => {
+                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                    setUser(user);
+                    setIsLoading(false);
+                });
+                return () => unsubscribe();
+            }, []);
+
+            // ... (cole o resto da lógica da função App aqui, sem as inicializações do Firebase)
+            
+            if (isLoading) {
+                return <div className="bg-gray-900 text-gray-300 min-h-screen flex justify-center items-center"><p>Carregando...</p></div>;
+            }
+            
+            if (!user) {
+                return <AuthModal auth={auth} db={db} />;
+            }
+
+            return (
+                <div className="bg-gray-900 text-gray-300 min-h-screen font-sans p-4 sm:p-6 lg:p-8">
+                    {/* O JSX completo do App vai aqui */}
+                    <h1 className="text-white">App Carregado - Cole o JSX completo aqui</h1>
+                </div>
+            );
+        }
+
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
