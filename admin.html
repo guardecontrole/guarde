@@ -42,11 +42,11 @@
         };
         
         // Inicializa o Firebase usando a sintaxe de compatibilidade (v8)
-        // Dê um nome único para a instância para evitar conflitos com o app principal
         let adminApp;
         if (!firebase.apps.length) {
             adminApp = firebase.initializeApp(firebaseConfig);
         } else {
+            // Usa um nome diferente para a instância do admin para evitar conflitos
             adminApp = firebase.initializeApp(firebaseConfig, "adminApp");
         }
         
@@ -73,7 +73,8 @@
             const [error, setError] = useState('');
             const [loading, setLoading] = useState(false);
 
-            const ADMIN_EMAILS = ['admin@example.com', 'seu-email-admin@dominio.com'];
+            // --- CORREÇÃO: Adicionado seu e-mail à lista de administradores ---
+            const ADMIN_EMAILS = ['admin@example.com', 'tidiegolemes@gmail.com'];
 
             const handleLogin = async (e) => {
                 e.preventDefault();
@@ -319,7 +320,7 @@
 
             useEffect(() => {
                 const unsubscribe = auth.onAuthStateChanged((user) => {
-                    const ADMIN_EMAILS = ['admin@example.com', 'seu-email-admin@dominio.com'];
+                    const ADMIN_EMAILS = ['admin@example.com', 'tidiegolemes@gmail.com'];
                     if (user && ADMIN_EMAILS.includes(user.email)) {
                         setAdminUser(user);
                     } else {
