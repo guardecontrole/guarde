@@ -41,12 +41,10 @@
             measurementId: "G-9D98TPEQ7V"
         };
         
-        // Inicializa o Firebase usando a sintaxe de compatibilidade (v8)
         let adminApp;
         if (!firebase.apps.length) {
             adminApp = firebase.initializeApp(firebaseConfig);
         } else {
-            // Usa um nome diferente para a instância do admin para evitar conflitos
             adminApp = firebase.initializeApp(firebaseConfig, "adminApp");
         }
         
@@ -54,17 +52,10 @@
         const auth = adminApp.auth();
 
         // --- Ícones SVG ---
-        const UsersIcon = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-        );
-
-        const LogoutIcon = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-        );
-
-        const TrashIcon = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-red-500"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-        );
+        const UsersIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> );
+        const LogoutIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> );
+        const TrashIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-red-500"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> );
+        const AddUserIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line></svg> );
 
         // --- Componente de Login do Admin ---
         const AdminLogin = ({ auth }) => {
@@ -73,7 +64,6 @@
             const [error, setError] = useState('');
             const [loading, setLoading] = useState(false);
 
-            // --- CORREÇÃO: Adicionado seu e-mail à lista de administradores ---
             const ADMIN_EMAILS = ['admin@example.com', 'tidiegolemes@gmail.com'];
 
             const handleLogin = async (e) => {
@@ -108,40 +98,62 @@
                         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
                             <div className="rounded-md shadow-sm -space-y-px">
                                 <div>
-                                    <input
-                                        id="email-address"
-                                        name="email"
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                        placeholder="Endereço de e-mail"
-                                    />
+                                    <input id="email-address" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Endereço de e-mail" />
                                 </div>
                                 <div>
-                                    <input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                        placeholder="Senha"
-                                    />
+                                    <input id="password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Senha" />
                                 </div>
                             </div>
-
                             {error && <p className="mt-2 text-center text-sm text-red-400">{error}</p>}
-
                             <div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-800"
-                                >
+                                <button type="submit" disabled={loading} className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-800">
                                     {loading ? 'Entrando...' : 'Entrar'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Componente Modal para Adicionar Usuário ---
+        const AddUserModal = ({ onClose, onCreateUser }) => {
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const handleCreate = async (e) => {
+                e.preventDefault();
+                if (password.length < 6) {
+                    setError("A senha deve ter pelo menos 6 caracteres.");
+                    return;
+                }
+                setLoading(true);
+                setError('');
+                const success = await onCreateUser(email, password);
+                if (success) {
+                    onClose();
+                } else {
+                    setError("Não foi possível criar o usuário. O e-mail pode já estar em uso.");
+                }
+                setLoading(false);
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-md border border-gray-700">
+                        <h2 className="text-2xl font-bold text-gray-100 mb-6">Criar Novo Usuário</h2>
+                        {error && <p className="mb-4 text-center text-sm text-red-400">{error}</p>}
+                        <form onSubmit={handleCreate}>
+                            <div className="space-y-4">
+                                <input type="email" placeholder="E-mail do novo usuário" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                                <input type="password" placeholder="Senha (mínimo 6 caracteres)" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                            </div>
+                            <div className="mt-8 flex justify-end gap-4">
+                                <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors">Cancelar</button>
+                                <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors disabled:bg-blue-800">
+                                    {loading ? 'Criando...' : 'Criar Usuário'}
                                 </button>
                             </div>
                         </form>
@@ -155,10 +167,10 @@
             const [users, setUsers] = useState([]);
             const [searchTerm, setSearchTerm] = useState('');
             const [loading, setLoading] = useState(true);
+            const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
 
             useEffect(() => {
                 const usersCollection = db.collection("users");
-                
                 const unsubscribe = usersCollection.onSnapshot((snapshot) => {
                     const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     setUsers(usersData);
@@ -167,15 +179,43 @@
                     console.error("Erro ao buscar usuários: ", error);
                     setLoading(false);
                 });
-
                 return () => unsubscribe();
             }, [db]);
+
+            const handleCreateUser = async (email, password) => {
+                // NOTA: Esta abordagem client-side tem uma limitação: ela irá logar o novo usuário
+                // temporariamente e depois deslogá-lo para manter o admin logado.
+                // A abordagem ideal para produção seria usar Firebase Cloud Functions.
+                try {
+                    const tempAuthApp = firebase.initializeApp(firebaseConfig, "temp-user-creation");
+                    const tempAuth = tempAuthApp.auth();
+                    const userCredential = await tempAuth.createUserWithEmailAndPassword(email, password);
+                    
+                    const userRef = db.collection("users").doc(userCredential.user.uid);
+                    await userRef.set({
+                        uid: userCredential.user.uid,
+                        email: userCredential.user.email,
+                        plan: 'free',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    await tempAuth.signOut();
+                    await tempAuthApp.delete(); // Limpa a instância temporária
+                    
+                    alert(`Usuário ${email} criado com sucesso!`);
+                    return true;
+                } catch (error) {
+                    console.error("Erro ao criar usuário:", error);
+                    return false;
+                }
+            };
 
             const handlePlanChange = async (userId, newPlan) => {
                 const userDocRef = db.collection("users").doc(userId);
                 try {
                     await userDocRef.update({ plan: newPlan });
-                    alert(`Plano do usuário ${userId} atualizado para ${newPlan}.`);
+                    alert(`Plano do usuário atualizado para ${newPlan}.`);
                 } catch (error) {
                     console.error("Erro ao atualizar plano: ", error);
                     alert("Falha ao atualizar o plano.");
@@ -183,7 +223,7 @@
             };
 
             const handleDeleteUser = async (userId) => {
-                if (window.confirm(`Tem certeza que deseja apagar os dados do usuário ${userId} do Firestore? Esta ação não pode ser desfeita.`)) {
+                if (window.confirm(`Tem certeza que deseja apagar os dados do usuário do Firestore? Esta ação não pode ser desfeita e não apaga o usuário da Autenticação.`)) {
                     try {
                         await db.collection("users").doc(userId).delete();
                         alert("Dados do usuário apagados do Firestore com sucesso.");
@@ -210,6 +250,7 @@
 
             return (
                 <div className="bg-gray-900 min-h-screen text-gray-300">
+                    {isAddUserModalOpen && <AddUserModal onClose={() => setAddUserModalOpen(false)} onCreateUser={handleCreateUser} />}
                     <header className="bg-gray-800 shadow-md">
                         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
                             <div className="flex items-center gap-3">
@@ -231,19 +272,8 @@
                                 <div className="bg-gray-800 overflow-hidden shadow rounded-lg">
                                     <div className="p-5">
                                         <div className="flex items-center">
-                                            <div className="flex-shrink-0">
-                                                <UsersIcon />
-                                            </div>
-                                            <div className="ml-5 w-0 flex-1">
-                                                <dl>
-                                                    <dt className="text-sm font-medium text-gray-400 truncate">
-                                                        Total de Usuários
-                                                    </dt>
-                                                    <dd className="text-3xl font-bold text-white">
-                                                        {users.length}
-                                                    </dd>
-                                                </dl>
-                                            </div>
+                                            <div className="flex-shrink-0"><UsersIcon /></div>
+                                            <div className="ml-5 w-0 flex-1"><dl><dt className="text-sm font-medium text-gray-400 truncate">Total de Usuários</dt><dd className="text-3xl font-bold text-white">{users.length}</dd></dl></div>
                                         </div>
                                     </div>
                                 </div>
@@ -253,13 +283,13 @@
                         <div className="mt-8 bg-gray-800 shadow rounded-lg p-6">
                             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                                 <h2 className="text-xl font-bold text-white">Gerenciamento de Usuários</h2>
-                                <input 
-                                    type="text"
-                                    placeholder="Buscar por e-mail ou nome..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="px-4 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-                                />
+                                <div className="flex items-center gap-4">
+                                    <input type="text" placeholder="Buscar por e-mail ou nome..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="px-4 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"/>
+                                    <button onClick={() => setAddUserModalOpen(true)} className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors text-sm">
+                                        <AddUserIcon />
+                                        Novo Usuário
+                                    </button>
+                                </div>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-700">
@@ -278,30 +308,19 @@
                                             <tr key={user.id} className="hover:bg-gray-700/50">
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center">
-                                                        <div className="flex-shrink-0 h-10 w-10">
-                                                            <img className="h-10 w-10 rounded-full" src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=random`} alt="" />
-                                                        </div>
-                                                        <div className="ml-4">
-                                                            <div className="text-sm font-medium text-white">{user.displayName || 'Sem nome'}</div>
-                                                            <div className="text-sm text-gray-400">{user.email}</div>
-                                                        </div>
+                                                        <div className="flex-shrink-0 h-10 w-10"><img className="h-10 w-10 rounded-full" src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=random`} alt="" /></div>
+                                                        <div className="ml-4"><div className="text-sm font-medium text-white">{user.displayName || 'Sem nome'}</div><div className="text-sm text-gray-400">{user.email}</div></div>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{formatDate(user.lastLoginAt)}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <select 
-                                                        value={user.plan || 'free'} 
-                                                        onChange={(e) => handlePlanChange(user.id, e.target.value)}
-                                                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 ${user.plan === 'premium' ? 'bg-green-800 text-green-300' : 'bg-gray-700 text-gray-300'}`}
-                                                    >
+                                                    <select value={user.plan || 'free'} onChange={(e) => handlePlanChange(user.id, e.target.value)} className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 ${user.plan === 'premium' ? 'bg-green-800 text-green-300' : 'bg-gray-700 text-gray-300'}`}>
                                                         <option value="free">Free</option>
                                                         <option value="premium">Premium</option>
                                                     </select>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                                    <button onClick={() => handleDeleteUser(user.id)} className="p-1">
-                                                        <TrashIcon />
-                                                    </button>
+                                                    <button onClick={() => handleDeleteUser(user.id)} className="p-1"><TrashIcon /></button>
                                                 </td>
                                             </tr>
                                         ))}
