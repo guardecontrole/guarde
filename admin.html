@@ -22,31 +22,13 @@
 <body class="bg-gray-900">
     <div id="root"></div>
 
-    <!-- SDKs do Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js"></script>
+    <!-- SDKs do Firebase (Versão de Compatibilidade v8) -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
 
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
-
-        // Funções do Firebase do objeto global `firebase`
-        const { initializeApp } = firebase.app;
-        const { 
-            getAuth, 
-            onAuthStateChanged,
-            signInWithEmailAndPassword,
-            signOut
-        } = firebase.auth;
-        const { 
-            getFirestore, 
-            collection,
-            doc,
-            updateDoc,
-            deleteDoc,
-            onSnapshot,
-            query
-        } = firebase.firestore;
 
         // Configuração do Firebase
         const firebaseConfig = {
@@ -59,27 +41,292 @@
             measurementId: "G-9D98TPEQ7V"
         };
         
-        const adminApp = initializeApp(firebaseConfig, "adminApp");
-        const db = getFirestore(adminApp);
-        const auth = getAuth(adminApp);
+        // Inicializa o Firebase usando a sintaxe de compatibilidade (v8)
+        // Dê um nome único para a instância para evitar conflitos com o app principal
+        let adminApp;
+        if (!firebase.apps.length) {
+            adminApp = firebase.initializeApp(firebaseConfig);
+        } else {
+            adminApp = firebase.initializeApp(firebaseConfig, "adminApp");
+        }
+        
+        const db = adminApp.firestore();
+        const auth = adminApp.auth();
 
-        // --- CÓDIGO REACT COMPLETO DO PAINEL DE ADMINISTRAÇÃO ---
-        // (O código completo da versão anterior está colado aqui)
+        // --- Ícones SVG ---
+        const UsersIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        );
 
-        // Exemplo da estrutura do AdminApp (cole o código completo aqui)
+        const LogoutIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        );
+
+        const TrashIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-red-500"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        );
+
+        // --- Componente de Login do Admin ---
+        const AdminLogin = ({ auth }) => {
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const ADMIN_EMAILS = ['admin@example.com', 'seu-email-admin@dominio.com'];
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError('');
+
+                if (!ADMIN_EMAILS.includes(email)) {
+                    setError("Acesso negado. Esta conta não tem permissão de administrador.");
+                    setLoading(false);
+                    return;
+                }
+
+                try {
+                    await auth.signInWithEmailAndPassword(email, password);
+                } catch (err) {
+                    setError("E-mail ou senha inválidos.");
+                    console.error("Erro de login do admin:", err);
+                }
+                setLoading(false);
+            };
+
+            return (
+                <div className="bg-gray-900 min-h-screen flex items-center justify-center">
+                    <div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
+                        <div>
+                            <img src="https://media.bio.site/sites/22b0c520-f325-4c8a-81ca-529cca4ddd29/DsFpxmnAEUeowbT6Dw9s2J.jpg" alt="Logo" className="w-20 h-20 mx-auto rounded-full" />
+                            <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+                                Painel de Administração
+                            </h2>
+                        </div>
+                        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+                            <div className="rounded-md shadow-sm -space-y-px">
+                                <div>
+                                    <input
+                                        id="email-address"
+                                        name="email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                                        placeholder="Endereço de e-mail"
+                                    />
+                                </div>
+                                <div>
+                                    <input
+                                        id="password"
+                                        name="password"
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                                        placeholder="Senha"
+                                    />
+                                </div>
+                            </div>
+
+                            {error && <p className="mt-2 text-center text-sm text-red-400">{error}</p>}
+
+                            <div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-800"
+                                >
+                                    {loading ? 'Entrando...' : 'Entrar'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Componente do Painel Principal ---
+        const Dashboard = ({ auth, db, adminUser }) => {
+            const [users, setUsers] = useState([]);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                const usersCollection = db.collection("users");
+                
+                const unsubscribe = usersCollection.onSnapshot((snapshot) => {
+                    const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setUsers(usersData);
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Erro ao buscar usuários: ", error);
+                    setLoading(false);
+                });
+
+                return () => unsubscribe();
+            }, [db]);
+
+            const handlePlanChange = async (userId, newPlan) => {
+                const userDocRef = db.collection("users").doc(userId);
+                try {
+                    await userDocRef.update({ plan: newPlan });
+                    alert(`Plano do usuário ${userId} atualizado para ${newPlan}.`);
+                } catch (error) {
+                    console.error("Erro ao atualizar plano: ", error);
+                    alert("Falha ao atualizar o plano.");
+                }
+            };
+
+            const handleDeleteUser = async (userId) => {
+                if (window.confirm(`Tem certeza que deseja apagar os dados do usuário ${userId} do Firestore? Esta ação não pode ser desfeita.`)) {
+                    try {
+                        await db.collection("users").doc(userId).delete();
+                        alert("Dados do usuário apagados do Firestore com sucesso.");
+                    } catch (error) {
+                        console.error("Erro ao apagar dados do usuário: ", error);
+                        alert("Falha ao apagar dados do usuário.");
+                    }
+                }
+            };
+
+            const filteredUsers = useMemo(() => 
+                users.filter(user => 
+                    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
+                ), 
+            [users, searchTerm]);
+
+            const formatDate = (timestamp) => {
+                if (timestamp && timestamp.toDate) {
+                    return timestamp.toDate().toLocaleString('pt-BR');
+                }
+                return 'N/A';
+            };
+
+            return (
+                <div className="bg-gray-900 min-h-screen text-gray-300">
+                    <header className="bg-gray-800 shadow-md">
+                        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <img src="https://media.bio.site/sites/22b0c520-f325-4c8a-81ca-529cca4ddd29/DsFpxmnAEUeowbT6Dw9s2J.jpg" alt="Logo" className="w-10 h-10 rounded-full" />
+                                <h1 className="text-2xl font-bold text-white">Painel de Administração</h1>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm text-gray-400 hidden sm:block">{adminUser.email}</span>
+                                <button onClick={() => auth.signOut()} className="flex items-center justify-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-500 transition-colors text-sm">
+                                    <LogoutIcon />
+                                    Sair
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+                    <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                        <div className="px-4 py-6 sm:px-0">
+                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                <div className="bg-gray-800 overflow-hidden shadow rounded-lg">
+                                    <div className="p-5">
+                                        <div className="flex items-center">
+                                            <div className="flex-shrink-0">
+                                                <UsersIcon />
+                                            </div>
+                                            <div className="ml-5 w-0 flex-1">
+                                                <dl>
+                                                    <dt className="text-sm font-medium text-gray-400 truncate">
+                                                        Total de Usuários
+                                                    </dt>
+                                                    <dd className="text-3xl font-bold text-white">
+                                                        {users.length}
+                                                    </dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 bg-gray-800 shadow rounded-lg p-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                                <h2 className="text-xl font-bold text-white">Gerenciamento de Usuários</h2>
+                                <input 
+                                    type="text"
+                                    placeholder="Buscar por e-mail ou nome..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="px-4 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+                                />
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-700">
+                                    <thead className="bg-gray-700/50">
+                                        <tr>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Usuário</th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Último Login</th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Plano</th>
+                                            <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-gray-800 divide-y divide-gray-700">
+                                        {loading ? (
+                                            <tr><td colSpan="4" className="text-center py-4">Carregando usuários...</td></tr>
+                                        ) : filteredUsers.map((user) => (
+                                            <tr key={user.id} className="hover:bg-gray-700/50">
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center">
+                                                        <div className="flex-shrink-0 h-10 w-10">
+                                                            <img className="h-10 w-10 rounded-full" src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=random`} alt="" />
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            <div className="text-sm font-medium text-white">{user.displayName || 'Sem nome'}</div>
+                                                            <div className="text-sm text-gray-400">{user.email}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{formatDate(user.lastLoginAt)}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <select 
+                                                        value={user.plan || 'free'} 
+                                                        onChange={(e) => handlePlanChange(user.id, e.target.value)}
+                                                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 ${user.plan === 'premium' ? 'bg-green-800 text-green-300' : 'bg-gray-700 text-gray-300'}`}
+                                                    >
+                                                        <option value="free">Free</option>
+                                                        <option value="premium">Premium</option>
+                                                    </select>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                    <button onClick={() => handleDeleteUser(user.id)} className="p-1">
+                                                        <TrashIcon />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
         function AdminApp() {
             const [adminUser, setAdminUser] = useState(null);
             const [isLoading, setIsLoading] = useState(true);
-            // ... (toda a lógica e estados do componente AdminApp)
 
             useEffect(() => {
-                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                const unsubscribe = auth.onAuthStateChanged((user) => {
                     const ADMIN_EMAILS = ['admin@example.com', 'seu-email-admin@dominio.com'];
                     if (user && ADMIN_EMAILS.includes(user.email)) {
                         setAdminUser(user);
                     } else {
                         setAdminUser(null);
-                        if (user) signOut(auth);
+                        if (user) {
+                            auth.signOut();
+                        }
                     }
                     setIsLoading(false);
                 });
@@ -93,7 +340,6 @@
             return adminUser ? <Dashboard auth={auth} db={db} adminUser={adminUser} /> : <AdminLogin auth={auth} />;
         }
         
-        // --- Renderização do App ---
         const container = document.getElementById('root');
         const root = ReactDOM.createRoot(container);
         root.render(<AdminApp />);
