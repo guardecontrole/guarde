@@ -181,7 +181,6 @@
             return (
                 <div className="fixed inset-0 bg-gray-900 flex justify-center items-center z-50">
                     <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-700">
-                        <img src="https://media.bio.site/sites/22b0c520-f325-4c8a-81ca-529cca4ddd29/DsFpxmnAEUeowbT6Dw9s2J.jpg" alt="Logo do App" className="w-24 h-24 mx-auto mb-4 rounded-full" />
                         <h2 className="text-3xl font-bold text-gray-100 mb-2 text-center">{isLoginView ? 'Bem-vindo de volta!' : 'Crie sua conta'}</h2>
                         <p className="text-gray-400 text-center mb-6">{isLoginView ? 'Insira suas credenciais para acessar.' : 'Cadastre-se para começar a controlar suas finanças.'}</p>
                         {error && <div className="bg-red-900/50 border border-red-500 text-red-400 px-4 py-3 rounded-lg mb-4" role="alert">{error}</div>}
@@ -329,7 +328,7 @@
                     {editingRecord && ( <EditModal record={editingRecord} onSave={handleUpdateRecord} onCancel={() => { setEditingRecord(null); setError(''); }} onError={setError} /> )}
                     <div className="max-w-7xl mx-auto">
                         <header className="mb-8 text-center">
-                            <h1 className="text-4xl font-bold text-gray-100 flex items-center justify-center gap-4"> <img src="https://media.bio.site/sites/22b0c520-f325-4c8a-81ca-529cca4ddd29/DsFpxmnAEUeowbT6Dw9s2J.jpg" alt="Logo do App" className="w-14 h-14 rounded-full" /> Controle Financeiro </h1>
+                            <h1 className="text-4xl font-bold text-gray-100">Controle Financeiro</h1>
                             <p className="text-gray-400 mt-2">Adicione suas entradas e saídas para acompanhar seu saldo.</p>
                             <div id="action-buttons" className="flex justify-center flex-wrap gap-4 mt-4"> <button onClick={handleUndo} disabled={!canUndo} className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <UndoIcon /> Desfazer </button> <button onClick={handleRedo} disabled={!canRedo} className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <RedoIcon /> Refazer </button> <button onClick={handleImportClick} className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors"> <ImportIcon /> Importar </button> <button onClick={handleExportData} className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors"> <ExportIcon /> Exportar </button> <button onClick={() => setIsTourOpen(true)} className="flex items-center justify-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500 transition-colors"> <HelpIcon /> Ajuda </button> <button onClick={() => signOut(auth)} className="flex items-center justify-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-500 transition-colors"> <LogoutIcon /> Sair </button> <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json" /> </div>
                         </header>
@@ -356,7 +355,13 @@
                             <div className="border-b border-gray-700 flex"> <TabButton tabName="summary" label="Resumo Mensal" /> <TabButton tabName="reserve" label="Reserva de Estabilidade" /> <TabButton tabName="incomes" label="Entradas" /> <TabButton tabName="expenses" label="Saídas" /> </div>
                             <div className="mt-4"> {(isLoading && !user) ? (<p className="text-gray-500 text-center py-4">Carregando dados...</p>) : ( <> {activeTab === 'summary' && <MonthlyBalanceHistoryTable data={sortedMonthlyBalanceHistory} isLoading={isLoading} sortConfig={sortConfigs.summary} requestSort={(key) => handleRequestSort('summary', key)} />} {activeTab === 'reserve' && <StabilityReserveHistoryTable data={sortedStabilityReserveHistory} sortConfig={sortConfigs.reserve} requestSort={(key) => handleRequestSort('reserve', key)} />} {activeTab === 'incomes' && <RecordsTable title={`Detalhes de Entradas (${filterYear})`} records={sortedFilteredIncomes} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="income" sortConfig={sortConfigs.incomes} requestSort={(key) => handleRequestSort('incomes', key)} />} {activeTab === 'expenses' && <RecordsTable title={`Detalhes de Saídas (${filterYear})`} records={sortedFilteredExpenses} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="expense" sortConfig={sortConfigs.expenses} requestSort={(key) => handleRequestSort('expenses', key)} />} </> )} </div>
                         </div>
-                        <footer className="text-center mt-8 text-sm text-gray-500"> <p>Conectado como: <span className="font-mono bg-gray-700 text-gray-400 px-1 rounded">{user.email || user.displayName || 'Usuário Anônimo'}</span></p> </footer>
+                        <footer className="text-center mt-8 text-sm text-gray-500">
+                            <p className="mb-4">Conectado como: <span className="font-mono bg-gray-700 text-gray-400 px-1 rounded">{user.email || user.displayName || 'Usuário Anônimo'}</span></p>
+                            <div className="flex flex-col items-center justify-center mt-4">
+                                <p className="mb-2">Desenvolvido por:</p>
+                                <img src="https://i.postimg.cc/dVgn73g8/Monocromatica-Horizontal.png" alt="Logo do Desenvolvedor" className="h-8 opacity-50" />
+                            </div>
+                        </footer>
                     </div>
                 </div>
             );
