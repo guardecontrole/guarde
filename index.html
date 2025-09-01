@@ -317,7 +317,7 @@
             const tourSteps = [
                 { target: '#add-record-form', title: 'Bem-vindo(a)!', content: 'Comece por aqui! Use este formulário para adicionar suas entradas e saídas. Ele estará sempre visível para acesso rápido.' },
                 { target: '#summary-cards', title: 'Seu Painel Principal', content: 'Aqui você vê o mais importante: sua Reserva de Estabilidade e o Salário sugerido para o mês.' },
-                { target: '#summary-toggle', title: 'Ver Detalhes do Ano', content: 'Quer ver o total de entradas, saídas e o saldo do ano? Clique aqui para expandir e ver o resumo completo.'},
+                { target: '#summary-toggle', title: 'Ver Detalhes do Ano', content: 'Quer ver o total de entradas, saídas, médias mensais e o saldo do ano? Clique aqui para expandir e ver o resumo completo.'},
                 { target: '#financial-chart', title: 'Evolução Financeira', content: 'Este gráfico mostra o seu progresso mês a mês. Clique nas legendas para focar no que é mais importante.' },
                 { target: '#action-buttons', title: 'Ferramentas', content: 'Precisa importar ou exportar dados? Cometeu um erro e quer desfazer? Use as ferramentas neste painel.' }
             ];
@@ -380,6 +380,16 @@
                                             <>
                                                 <div className="bg-green-900/50 p-4 rounded-lg border border-green-700"> <h3 className="text-lg font-semibold text-green-300">Total de Entradas</h3> <p className="text-3xl font-bold text-green-400 mt-2">{totalIncomes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
                                                 <div className="bg-red-900/50 p-4 rounded-lg border border-red-700"> <h3 className="text-lg font-semibold text-red-300">Total de Saídas</h3> <p className="text-3xl font-bold text-red-400 mt-2">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
+                                                
+                                                <div className="bg-green-900/50 p-4 rounded-lg border border-green-700/50">
+                                                    <h3 className="text-base font-semibold text-green-300/80">Média de Entradas (12m)</h3>
+                                                    <p className="text-2xl font-bold text-green-400/90 mt-2">{twelveMonthAverages.avgIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                                </div>
+                                                <div className="bg-red-900/50 p-4 rounded-lg border border-red-700/50">
+                                                    <h3 className="text-base font-semibold text-red-300/80">Média de Saídas (12m)</h3>
+                                                    <p className="text-2xl font-bold text-red-400/90 mt-2">{twelveMonthAverages.avgExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                                </div>
+
                                                 <div className={`md:col-span-2 p-4 rounded-lg border ${balance >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}> <h3 className={`text-lg font-semibold ${balance >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>Saldo Final do Ano</h3> <p className={`text-3xl font-bold mt-2 ${balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}>{balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
                                             </>
                                         )}
