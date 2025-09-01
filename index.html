@@ -237,6 +237,7 @@
             const [historyIndex, setHistoryIndex] = useState(-1);
             const [isTourOpen, setIsTourOpen] = useState(false);
             const [sortConfigs, setSortConfigs] = useState({ summary: { key: 'month', direction: 'ascending' }, reserve: { key: 'monthKey', direction: 'ascending' }, incomes: { key: 'month', direction: 'ascending' }, expenses: { key: 'month', direction: 'ascending' } });
+            const [showAverages, setShowAverages] = useState(false);
 
             useEffect(() => {
                 const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -313,7 +314,13 @@
 
             const canUndo = historyIndex >= 0;
             const canRedo = historyIndex < history.length - 1;
-            const tourSteps = [ { target: '#add-record-form', title: 'Bem-vindo(a)!', content: 'Comece por aqui! Use este formulário para adicionar suas entradas e saídas. Ele estará sempre visível para acesso rápido.', }, { target: '#summary-cards', title: 'Resumo Anual', content: 'Aqui você terá uma visão geral do ano, com o total de entradas, saídas, seu saldo e a Reserva de Estabilidade.', }, { target: '#financial-chart', title: 'Evolução Financeira', content: 'Este gráfico mostra o seu progresso mês a mês. Clique nas legendas para focar no que é mais importante.', }, { target: '#action-buttons', title: 'Ferramentas', content: 'Precisa importar ou exportar dados? Cometeu um erro e quer desfazer? Use as ferramentas neste painel.', } ];
+            const tourSteps = [
+                { target: '#add-record-form', title: 'Bem-vindo(a)!', content: 'Comece por aqui! Use este formulário para adicionar suas entradas e saídas. Ele estará sempre visível para acesso rápido.' },
+                { target: '#summary-cards', title: 'Resumo Anual', content: 'Aqui você terá uma visão geral do ano, com o total de entradas, saídas, seu saldo e a Reserva de Estabilidade.' },
+                { target: '#averages-toggle', title: 'Ver Médias Mensais', content: 'Clique aqui para expandir e ver as médias dos seus últimos 12 meses, uma ótima forma de entender suas tendências financeiras.'},
+                { target: '#financial-chart', title: 'Evolução Financeira', content: 'Este gráfico mostra o seu progresso mês a mês. Clique nas legendas para focar no que é mais importante.' },
+                { target: '#action-buttons', title: 'Ferramentas', content: 'Precisa importar ou exportar dados? Cometeu um erro e quer desfazer? Use as ferramentas neste painel.' }
+            ];
 
             if (isLoading) { return <div className="bg-gray-900 text-gray-300 min-h-screen flex justify-center items-center"><p>Carregando...</p></div>; }
             if (!user) { return <AuthModal auth={auth} db={db} />; }
@@ -348,6 +355,20 @@
                                 <div id="summary-cards" className="bg-gray-800 p-6 rounded-xl shadow-md">
                                     <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"> <h2 className="text-2xl font-semibold text-gray-200">Resumo de {filterYear}</h2> <div className="flex items-center gap-2"> <label htmlFor="filterYear" className="text-sm font-medium text-gray-400">Filtrar por Ano:</label> <input id="filterYear" type="number" value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="w-32 px-3 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div> </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> <div className="bg-green-900/50 p-4 rounded-lg border border-green-700"> <h3 className="text-lg font-semibold text-green-300">Total de Entradas</h3> <p className="text-3xl font-bold text-green-400 mt-2">{totalIncomes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div> <div className="bg-red-900/50 p-4 rounded-lg border border-red-700"> <h3 className="text-lg font-semibold text-red-300">Total de Saídas</h3> <p className="text-3xl font-bold text-red-400 mt-2">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div> <div className={`p-4 rounded-lg border ${balance >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}> <h3 className={`text-lg font-semibold ${balance >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>Saldo Final</h3> <p className={`text-3xl font-bold mt-2 ${balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}>{balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div> <div className="bg-purple-900/50 p-4 rounded-lg border border-purple-700"> <h3 className="text-lg font-semibold text-purple-300 flex items-center gap-2 relative group"> <ShieldIcon /> Reserva de Estabilidade <span className="absolute -top-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-600 text-white text-xs rounded py-1 px-2 w-72"> Calculada mês a mês: Saldo Anterior + (Saldo do Mês - Média de Saldo dos 12 meses anteriores). A reserva é zerada se ficar negativa. </span> </h3> <p className="text-3xl font-bold text-purple-400 mt-2">{finalStabilityReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div> </div>
+                                    
+                                    <div id="averages-toggle" className="text-center mt-6 border-t border-gray-700 pt-4">
+                                        <button onClick={() => setShowAverages(!showAverages)} className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-3 py-1">
+                                            {showAverages ? 'Ocultar Médias Mensais' : 'Mostrar Médias Mensais (12m)'}
+                                        </button>
+                                    </div>
+
+                                    {showAverages && (
+                                        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="bg-green-900/50 p-4 rounded-lg border border-green-700/50"> <h3 className="text-base font-semibold text-green-300/80">Média de Entradas (12m)</h3> <p className="text-2xl font-bold text-green-400/90 mt-2">{twelveMonthAverages.avgIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
+                                            <div className="bg-red-900/50 p-4 rounded-lg border border-red-700/50"> <h3 className="text-base font-semibold text-red-300/80">Média de Saídas (12m)</h3> <p className="text-2xl font-bold text-red-400/90 mt-2">{twelveMonthAverages.avgExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
+                                            <div className={`p-4 rounded-lg border ${twelveMonthAverages.avgBalance >= 0 ? 'bg-blue-900/50 border-blue-700/50' : 'bg-yellow-900/50 border-yellow-700/50'}`}> <h3 className={`text-base font-semibold ${twelveMonthAverages.avgBalance >= 0 ? 'text-blue-300/80' : 'text-yellow-300/80'}`}>Média de Saldo (12m)</h3> <p className={`text-2xl font-bold mt-2 ${twelveMonthAverages.avgBalance >= 0 ? 'text-blue-400/90' : 'text-yellow-400/90'}`}>{twelveMonthAverages.avgBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
+                                        </div>
+                                    )}
                                 </div>
                                 
                                 <FinancialEvolutionChart data={chartData} />
