@@ -215,6 +215,7 @@
                 income: true,
                 avgIncome: true,
                 accumulatedReserve: true,
+                suggestedBalance: true,
             });
 
             const handleLegendClick = (e) => {
@@ -239,6 +240,7 @@
                                 <Line type="monotone" dataKey="income" name="Recebido (R$)" stroke="#3182CE" strokeWidth={2} hide={!visibility.income} />
                                 <Line type="monotone" dataKey="avgIncome" name="Média móvel 12 meses (R$)" stroke="#DD6B20" strokeWidth={2} hide={!visibility.avgIncome} />
                                 <Line type="monotone" dataKey="accumulatedReserve" name="Reserva acumulada (R$)" stroke="#38A169" strokeWidth={2} hide={!visibility.accumulatedReserve} />
+                                <Line type="monotone" dataKey="suggestedBalance" name="Saldo Sugerido (R$)" stroke="#A0AEC0" strokeDasharray="5 5" strokeWidth={2} hide={!visibility.suggestedBalance} />
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>
@@ -341,9 +343,61 @@
             
             const monthlySummary = useMemo(() => { const summary = Array.from({ length: 12 }, (_, i) => ({ month: i, monthName: new Date(filterYear, i).toLocaleString('pt-BR', { month: 'short' }).replace(/\.$/, ''), income: 0, expense: 0, balance: 0, })); filteredIncomes.forEach(income => { summary[income.month].income += income.amount; }); filteredExpenses.forEach(expense => { summary[expense.month].expense += expense.amount; }); summary.forEach(monthData => { monthData.balance = monthData.income - monthData.expense; }); return summary; }, [filteredIncomes, filteredExpenses, filterYear]);
 
-            const movingAveragesData = useMemo(() => {
-                const averages = [];
+            const chartData = useMemo(() => {
+                const allMonthlyIncomes = {};
+                incomes.forEach(record => {
+                    const key = `${record.year}-${String(record.month).padStart(2, '0')}`;
+                    if (!allMonthlyIncomes[key]) allMonthlyIncomes[key] = 0;
+                    allMonthlyIncomes[key] += record.amount;
+                });
+                
+                const sortedMonthKeys = Object.keys(allMonthlyIncomes).sort();
+                const reserveHistoryMap = new Map();
+                let runningReserve = 0;
+
+                if (sortedMonthKeys.length > 0) {
+                    for (const monthKey of sortedMonthKeys) {
+                        const [currentYear, currentMonthIndex] = monthKey.split('-').map(Number);
+                        const currentDate = new Date(currentYear, currentMonthIndex + 1, 0);
+                        const twelveMonthsAgo = new Date(currentDate);
+                        twelveMonthsAgo.setMonth(currentDate.getMonth() - 11);
+                        twelveMonthsAgo.setDate(1);
+
+                        const relevantIncomes = incomes.filter(i => {
+                            const d = new Date(i.year, i.month, 1);
+                            return d >= twelveMonthsAgo && d <= currentDate;
+                        });
+
+                        const activeMonths = new Set(relevantIncomes.map(i => `${i.year}-${i.month}`));
+                        const divisor = activeMonths.size > 0 ? activeMonths.size : 1;
+                        const totalIncomeWindow = relevantIncomes.reduce((sum, i) => sum + i.amount, 0);
+                        const avgIncomeForThisMonth = totalIncomeWindow / divisor;
+                        
+                        const currentMonthIncome = allMonthlyIncomes[monthKey] || 0;
+                        const difference = currentMonthIncome - avgIncomeForThisMonth;
+                        runningReserve += difference;
+                        if (runningReserve < 0) runningReserve = 0;
+                        
+                        reserveHistoryMap.set(monthKey, runningReserve);
+                    }
+                }
+
+                const finalChartData = [];
+                let lastKnownReserve = 0;
                 for (let i = 0; i < 12; i++) {
+                    const monthKey = `${filterYear}-${String(i).padStart(2, '0')}`;
+                    
+                    if (reserveHistoryMap.has(monthKey)) {
+                        lastKnownReserve = reserveHistoryMap.get(monthKey);
+                    } else {
+                        const previousKeys = Array.from(reserveHistoryMap.keys()).filter(k => k < monthKey).sort();
+                        if (previousKeys.length > 0) {
+                            lastKnownReserve = reserveHistoryMap.get(previousKeys[previousKeys.length - 1]);
+                        }
+                    }
+
+                    const monthSummaryData = monthlySummary.find(m => m.month === i);
+                    
                     const currentDate = new Date(filterYear, i + 1, 0);
                     const twelveMonthsAgo = new Date(currentDate);
                     twelveMonthsAgo.setMonth(currentDate.getMonth() - 11);
@@ -353,85 +407,22 @@
                         const d = new Date(inc.year, inc.month, 1);
                         return d >= twelveMonthsAgo && d <= currentDate;
                     });
-
                     const activeMonths = new Set(relevantIncomes.map(inc => `${inc.year}-${inc.month}`));
                     const divisor = activeMonths.size > 0 ? activeMonths.size : 1;
                     const totalIncomeWindow = relevantIncomes.reduce((sum, inc) => sum + inc.amount, 0);
                     const avgIncome = totalIncomeWindow / divisor;
-                    
-                    averages.push({ month: i, avgIncome: avgIncome });
-                }
-                return averages;
-            }, [incomes, filterYear]);
 
-            const incomeReserveHistory = useMemo(() => {
-                const monthlyIncomes = {};
-                incomes.forEach(record => {
-                    const key = `${record.year}-${String(record.month).padStart(2, '0')}`;
-                    if (!monthlyIncomes[key]) monthlyIncomes[key] = 0;
-                    monthlyIncomes[key] += record.amount;
-                });
-                
-                const sortedMonthKeys = Object.keys(monthlyIncomes).sort();
-                if (sortedMonthKeys.length === 0) return [];
-
-                const history = [];
-                let runningReserve = 0;
-
-                for (const monthKey of sortedMonthKeys) {
-                    const [currentYear, currentMonthIndex] = monthKey.split('-').map(Number);
-                    const currentDate = new Date(currentYear, currentMonthIndex + 1, 0);
-                    const twelveMonthsAgo = new Date(currentDate);
-                    twelveMonthsAgo.setMonth(currentDate.getMonth() - 11);
-                    twelveMonthsAgo.setDate(1);
-
-                    const relevantIncomes = incomes.filter(i => {
-                        const d = new Date(i.year, i.month, 1);
-                        return d >= twelveMonthsAgo && d <= currentDate;
-                    });
-
-                    const activeMonths = new Set(relevantIncomes.map(i => `${i.year}-${i.month}`));
-                    const divisor = activeMonths.size > 0 ? activeMonths.size : 1;
-                    const totalIncomeWindow = relevantIncomes.reduce((sum, i) => sum + i.amount, 0);
-                    const avgIncomeForThisMonth = totalIncomeWindow / divisor;
-                    
-                    const currentMonthIncome = monthlyIncomes[monthKey] || 0;
-                    const difference = currentMonthIncome - avgIncomeForThisMonth;
-                    runningReserve += difference;
-                    if (runningReserve < 0) runningReserve = 0;
-
-                    history.push({ 
-                        monthKey: monthKey, 
-                        totalReserve: runningReserve 
-                    });
-                }
-                return history;
-            }, [incomes]);
-
-            const chartData = useMemo(() => {
-                const reserveMap = new Map(incomeReserveHistory.map(entry => [entry.monthKey, entry.totalReserve]));
-                const avgIncomeMap = new Map(movingAveragesData.map(entry => [entry.month, entry.avgIncome]));
-                let lastKnownReserve = 0;
-
-                return monthlySummary.map(summaryMonth => {
-                    const monthKey = `${filterYear}-${String(summaryMonth.month).padStart(2, '0')}`;
-                    
-                    if (reserveMap.has(monthKey)) {
-                        lastKnownReserve = reserveMap.get(monthKey);
-                    } else {
-                        const previousKeys = Array.from(reserveMap.keys()).filter(k => k < monthKey).sort();
-                        if (previousKeys.length > 0) {
-                            lastKnownReserve = reserveMap.get(previousKeys[previousKeys.length - 1]);
-                        }
-                    }
-
-                    return {
-                        ...summaryMonth,
-                        avgIncome: avgIncomeMap.get(summaryMonth.month) || 0,
+                    finalChartData.push({
+                        monthName: monthSummaryData ? monthSummaryData.monthName : new Date(filterYear, i).toLocaleString('pt-BR', { month: 'short' }).replace(/\.$/, ''),
+                        income: monthSummaryData ? monthSummaryData.income : 0,
+                        avgIncome: avgIncome,
                         accumulatedReserve: lastKnownReserve,
-                    };
-                });
-            }, [monthlySummary, incomeReserveHistory, movingAveragesData, filterYear]);
+                        suggestedBalance: twelveMonthAverages.avgBalance,
+                    });
+                }
+
+                return finalChartData;
+            }, [incomes, filterYear, monthlySummary, twelveMonthAverages.avgBalance]);
 
             const monthlyBalanceHistory = useMemo(() => monthlySummary.filter(m => m.income > 0 || m.expense > 0), [monthlySummary]);
             
