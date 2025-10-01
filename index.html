@@ -137,7 +137,6 @@
                     await handleAuthSuccess(userCredential);
                 } catch (err) {
                     setError(getFriendlyAuthError(err.code));
-                    console.error("Erro de autenticação:", err);
                 }
                 setLoading(false);
             };
@@ -156,7 +155,6 @@
                     await handleAuthSuccess(result);
                 } catch (err) {
                     setError(getFriendlyAuthError(err.code));
-                    console.error("Erro com o login Google:", err);
                 }
                 setLoading(false);
             };
@@ -340,7 +338,6 @@
                     profileData = docSnap.exists() ? docSnap.data() : { tourCompleted: false };
                     setUserProfile(profileData);
 
-                    // Move a lógica de tour/onboarding para depois que os dados são carregados
                     if (dataLoaded) {
                         const isNewUser = !profileData.tourCompleted;
                          if (isNewUser) {
@@ -371,8 +368,8 @@
                 if (user && userProfile && !userProfile.tourCompleted) {
                     const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
                     await setDoc(profileRef, { tourCompleted: true }, { merge: true });
-                    // Agora que o tour fechou, se for um novo usuário sem dados, mostre o onboarding
-                    if (incomes.length === 0 && expenses.length === 0) {
+                    
+                    if (incomes.length === 0 && expenses.length === 0 && !userProfile.initialDataSeeded) {
                         setShowOnboarding(true);
                     }
                 }
@@ -389,37 +386,45 @@
                 setHistoryIndex(newHistory.length - 1);
             }, [history, historyIndex, isSimulation]);
 
-            const handleAddRecord = async (e) => { e.preventDefault(); if (!description.trim() || !amount || isNaN(parseFloat(amount))) { setError("Por favor, preencha a descrição e um valor válido."); return; } setError(''); const newRecord = { description, amount: parseFloat(amount), month: parseInt(month), year: parseInt(year), createdAt: new Date() }; if(isSimulation){ const simId = `sim-${Date.now()}`; const recordWithSimFlag = {...newRecord, id: simId, isSimulated: true}; if (formType === 'income') setSimIncomes(prev => [...prev, recordWithSimFlag]); else setSimExpenses(prev => [...prev, recordWithSimFlag]); setSuccess("Transação simulada adicionada."); } else { if (!db || !user) { setError("A conexão com o banco de dados não está pronta."); return; } const collectionName = formType === 'income' ? 'incomes' : 'expenses'; try { const colRef = collection(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`); const docRef = await addDoc(colRef, newRecord); addActionToHistory({ type: 'ADD', collection: collectionName, docId: docRef.id, data: newRecord }); setSuccess(`Registro de ${formType === 'income' ? 'entrada' : 'saída'} adicionado com sucesso!`); } catch (err) { console.error(`Erro ao adicionar ${formType}:`, err); setError("Ocorreu um erro ao salvar o registro."); } } setDescription(''); setAmount(''); };
-            const handleDeleteRecord = async (id, type) => { if(isSimulation){ if(type === 'income') setSimIncomes(prev => prev.filter(r => r.id !== id)); else setSimExpenses(prev => prev.filter(r => r.id !== id)); return; } if (!db || !user) return; const collectionName = type === 'income' ? 'incomes' : 'expenses'; const recordToDelete = (type === 'income' ? incomes : expenses).find(r => r.id === id); if (!recordToDelete) { setError("Registro não encontrado para apagar."); return; } try { const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, id); await deleteDoc(docRef); addActionToHistory({ type: 'DELETE', collection: collectionName, docId: id, data: recordToDelete }); setSuccess("Registro apagado com sucesso."); } catch (err) { console.error(`Erro ao deletar ${type}:`, err); setError("Ocorreu um erro ao apagar o registro."); } };
-            const handleUpdateRecord = async (id, type, updatedData) => { if(isSimulation){ const updateSim = (prev) => prev.map(r => r.id === id ? updatedData : r); if(type === 'income') setSimIncomes(updateSim); else setSimExpenses(updateSim); setEditingRecord(null); return; } if (!db || !user) return; const collectionName = type === 'income' ? 'incomes' : 'expenses'; const originalRecord = (type === 'income' ? incomes : expenses).find(r => r.id === id); if (!originalRecord) { setError("Registro não encontrado para atualizar."); return; } try { const {isSimulated, id: recordId, ...dataToSave} = updatedData; const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, id); await updateDoc(docRef, dataToSave); addActionToHistory({ type: 'UPDATE', collection: collectionName, docId: id, oldData: { description: originalRecord.description, amount: originalRecord.amount }, newData: dataToSave }); setEditingRecord(null); setSuccess("Registro atualizado com sucesso."); } catch (err) { console.error("Erro ao atualizar registro:", err); setError("Ocorreu um erro ao atualizar o registro."); } };
-            const handleUndo = async () => { if (historyIndex < 0 || isSimulation) return; const actionToUndo = history[historyIndex]; const { type, collection: collectionName, docId, data, oldData } = actionToUndo; try { const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, docId); if (type === 'ADD') { await deleteDoc(docRef); } else if (type === 'DELETE') { const { id, ...dataToRestore } = data; await setDoc(docRef, dataToRestore); } else if (type === 'UPDATE') { await updateDoc(docRef, oldData); } setHistoryIndex(prev => prev - 1); setSuccess("Ação desfeita com sucesso."); } catch (err) { console.error("Erro ao desfazer:", err); setError("Falha ao desfazer a ação."); } };
-            const handleRedo = async () => { if (historyIndex >= history.length - 1 || isSimulation) return; const newIndex = historyIndex + 1; const actionToRedo = history[newIndex]; const { type, collection: collectionName, docId, data, newData } = actionToRedo; try { const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, docId); if (type === 'ADD') { await setDoc(docRef, data); } else if (type === 'DELETE') { await deleteDoc(docRef); } else if (type === 'UPDATE') { await updateDoc(docRef, newData); } setHistoryIndex(newIndex); setSuccess("Ação refeita com sucesso."); } catch (err) { console.error("Erro ao refazer:", err); setError("Falha ao refazer a ação."); } };
+            const handleAddRecord = async (e) => { e.preventDefault(); if (!description.trim() || !amount || isNaN(parseFloat(amount))) { setError("Por favor, preencha a descrição e um valor válido."); return; } setError(''); const newRecord = { description, amount: parseFloat(amount), month: parseInt(month), year: parseInt(year), createdAt: new Date() }; if(isSimulation){ const simId = `sim-${Date.now()}`; const recordWithSimFlag = {...newRecord, id: simId, isSimulated: true}; if (formType === 'income') setSimIncomes(prev => [...prev, recordWithSimFlag]); else setSimExpenses(prev => [...prev, recordWithSimFlag]); setSuccess("Transação simulada adicionada."); } else { if (!db || !user) { setError("A conexão com o banco de dados não está pronta."); return; } const collectionName = formType === 'income' ? 'incomes' : 'expenses'; try { const colRef = collection(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`); const docRef = await addDoc(colRef, newRecord); addActionToHistory({ type: 'ADD', collection: collectionName, docId: docRef.id, data: newRecord }); setSuccess(`Registro de ${formType === 'income' ? 'entrada' : 'saída'} adicionado com sucesso!`); } catch (err) { setError("Ocorreu um erro ao salvar o registro."); } } setDescription(''); setAmount(''); };
+            const handleDeleteRecord = async (id, type) => { if(isSimulation){ if(type === 'income') setSimIncomes(prev => prev.filter(r => r.id !== id)); else setSimExpenses(prev => prev.filter(r => r.id !== id)); return; } if (!db || !user) return; const collectionName = type === 'income' ? 'incomes' : 'expenses'; const recordToDelete = (type === 'income' ? incomes : expenses).find(r => r.id === id); if (!recordToDelete) { setError("Registro não encontrado para apagar."); return; } try { const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, id); await deleteDoc(docRef); addActionToHistory({ type: 'DELETE', collection: collectionName, docId: id, data: recordToDelete }); setSuccess("Registro apagado com sucesso."); } catch (err) { setError("Ocorreu um erro ao apagar o registro."); } };
+            const handleUpdateRecord = async (id, type, updatedData) => { if(isSimulation){ const updateSim = (prev) => prev.map(r => r.id === id ? updatedData : r); if(type === 'income') setSimIncomes(updateSim); else setSimExpenses(updateSim); setEditingRecord(null); return; } if (!db || !user) return; const collectionName = type === 'income' ? 'incomes' : 'expenses'; const originalRecord = (type === 'income' ? incomes : expenses).find(r => r.id === id); if (!originalRecord) { setError("Registro não encontrado para atualizar."); return; } try { const {isSimulated, id: recordId, ...dataToSave} = updatedData; const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, id); await updateDoc(docRef, dataToSave); addActionToHistory({ type: 'UPDATE', collection: collectionName, docId: id, oldData: { description: originalRecord.description, amount: originalRecord.amount }, newData: dataToSave }); setEditingRecord(null); setSuccess("Registro atualizado com sucesso."); } catch (err) { setError("Ocorreu um erro ao atualizar o registro."); } };
+            const handleUndo = async () => { if (historyIndex < 0 || isSimulation) return; const actionToUndo = history[historyIndex]; const { type, collection: collectionName, docId, data, oldData } = actionToUndo; try { const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, docId); if (type === 'ADD') { await deleteDoc(docRef); } else if (type === 'DELETE') { const { id, ...dataToRestore } = data; await setDoc(docRef, dataToRestore); } else if (type === 'UPDATE') { await updateDoc(docRef, oldData); } setHistoryIndex(prev => prev - 1); setSuccess("Ação desfeita com sucesso."); } catch (err) { setError("Falha ao desfazer a ação."); } };
+            const handleRedo = async () => { if (historyIndex >= history.length - 1 || isSimulation) return; const newIndex = historyIndex + 1; const actionToRedo = history[newIndex]; const { type, collection: collectionName, docId, data, newData } = actionToRedo; try { const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, docId); if (type === 'ADD') { await setDoc(docRef, data); } else if (type === 'DELETE') { await deleteDoc(docRef); } else if (type === 'UPDATE') { await updateDoc(docRef, newData); } setHistoryIndex(newIndex); setSuccess("Ação refeita com sucesso."); } catch (err) { setError("Falha ao refazer a ação."); } };
             const handleExportData = () => { if (incomes.length === 0 && expenses.length === 0) { setError("Não há dados para exportar."); return; } const convertTimestamp = (data) => data.map(doc => { const { id, ...rest } = doc; if (rest.createdAt && typeof rest.createdAt.toDate === 'function') { rest.createdAt = rest.createdAt.toDate().toISOString(); } return rest; }); const dataToExport = { incomes: convertTimestamp(incomes), expenses: convertTimestamp(expenses), }; const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(dataToExport, null, 2))}`; const link = document.createElement("a"); link.href = jsonString; link.download = `dados_financeiros_${new Date().toISOString().slice(0, 10)}.json`; link.click(); setSuccess('Dados exportados com sucesso!'); };
             const handleImportClick = () => { fileInputRef.current.click(); };
-            const handleFileChange = async (event) => { const file = event.target.files[0]; if (!file) return; if (file.type !== "application/json") { setError("Por favor, selecione um arquivo .json válido."); return; } const reader = new FileReader(); reader.onload = async (e) => { try { const data = JSON.parse(e.target.result); if (!data.incomes || !data.expenses || !Array.isArray(data.incomes) || !Array.isArray(data.expenses)) { throw new Error("Formato de arquivo inválido."); } setIsLoading(true); const createRecordIdentifier = (rec) => { const date = rec.createdAt?.toDate ? rec.createdAt.toDate() : new Date(rec.createdAt); return `${rec.description?.trim()}|${rec.amount}|${date.toISOString()}`; }; const existingIncomes = new Set(incomes.map(createRecordIdentifier)); const existingExpenses = new Set(expenses.map(createRecordIdentifier)); let importedCount = 0; let skippedCount = 0; const incomeCollectionRef = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`); for (const record of data.incomes) { const newRecord = { ...record, createdAt: record.createdAt ? new Date(record.createdAt) : new Date() }; const identifier = createRecordIdentifier(newRecord); if (!existingIncomes.has(identifier)) { await addDoc(incomeCollectionRef, newRecord); importedCount++; } else { skippedCount++; } } const expenseCollectionRef = collection(db, `/artifacts/${appId}/users/${user.uid}/expenses`); for (const record of data.expenses) { const newRecord = { ...record, createdAt: record.createdAt ? new Date(record.createdAt) : new Date() }; const identifier = createRecordIdentifier(newRecord); if (!existingExpenses.has(identifier)) { await addDoc(expenseCollectionRef, newRecord); importedCount++; } else { skippedCount++; } } setSuccess(`Importação concluída! ${importedCount} registros adicionados, ${skippedCount} duplicados ignorados.`); setHistory([]); setHistoryIndex(-1); } catch (err) { console.error("Erro ao importar dados:", err); setError(`Erro ao importar dados: ${err.message}`); } finally { if(fileInputRef.current) { fileInputRef.current.value = ""; } setIsLoading(false); } }; reader.readAsText(file); };
+            const handleFileChange = async (event) => { const file = event.target.files[0]; if (!file) return; if (file.type !== "application/json") { setError("Por favor, selecione um arquivo .json válido."); return; } const reader = new FileReader(); reader.onload = async (e) => { try { const data = JSON.parse(e.target.result); if (!data.incomes || !data.expenses || !Array.isArray(data.incomes) || !Array.isArray(data.expenses)) { throw new Error("Formato de arquivo inválido."); } setIsLoading(true); const createRecordIdentifier = (rec) => { const date = rec.createdAt?.toDate ? rec.createdAt.toDate() : new Date(rec.createdAt); return `${rec.description?.trim()}|${rec.amount}|${date.toISOString()}`; }; const existingIncomes = new Set(incomes.map(createRecordIdentifier)); const existingExpenses = new Set(expenses.map(createRecordIdentifier)); let importedCount = 0; let skippedCount = 0; const incomeCollectionRef = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`); for (const record of data.incomes) { const newRecord = { ...record, createdAt: record.createdAt ? new Date(record.createdAt) : new Date() }; const identifier = createRecordIdentifier(newRecord); if (!existingIncomes.has(identifier)) { await addDoc(incomeCollectionRef, newRecord); importedCount++; } else { skippedCount++; } } const expenseCollectionRef = collection(db, `/artifacts/${appId}/users/${user.uid}/expenses`); for (const record of data.expenses) { const newRecord = { ...record, createdAt: record.createdAt ? new Date(record.createdAt) : new Date() }; const identifier = createRecordIdentifier(newRecord); if (!existingExpenses.has(identifier)) { await addDoc(expenseCollectionRef, newRecord); importedCount++; } else { skippedCount++; } } setSuccess(`Importação concluída! ${importedCount} registros adicionados, ${skippedCount} duplicados ignorados.`); setHistory([]); setHistoryIndex(-1); } catch (err) { setError(`Erro ao importar dados: ${err.message}`); } finally { if(fileInputRef.current) { fileInputRef.current.value = ""; } setIsLoading(false); } }; reader.readAsText(file); };
             const handleRequestSort = (tab, key) => { setSortConfigs(prevConfigs => { const currentConfig = prevConfigs[tab]; let direction = 'ascending'; if (currentConfig.key === key && currentConfig.direction === 'ascending') { direction = 'descending'; } return { ...prevConfigs, [tab]: { key, direction } }; }); };
             
             const handleSaveInitialAverage = async (avg, months) => {
-                if(user) {
-                    const totalAmount = avg * months;
-                    const date = new Date();
-                    date.setMonth(date.getMonth() - months);
-                    
-                    const seedRecord = {
-                        description: `Saldo inicial baseado em média de ${months} meses`,
-                        amount: totalAmount,
-                        month: date.getMonth(),
-                        year: date.getFullYear(),
-                        createdAt: new Date()
-                    };
-
+                 if (user) {
                     const incomesColRef = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`);
-                    await addDoc(incomesColRef, seedRecord);
+                    const promises = [];
+                    const currentDate = new Date();
 
-                    const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
-                    await setDoc(profileRef, { initialDataSeeded: true, tourCompleted: true }, { merge: true });
-                    
-                    setShowOnboarding(false);
+                    for (let i = 0; i < months; i++) {
+                        const pastDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - (i + 1), 1);
+                        
+                        const seedRecord = {
+                            description: `Média inicial (Mês ${i + 1}/${months})`,
+                            amount: avg,
+                            month: pastDate.getMonth(),
+                            year: pastDate.getFullYear(),
+                            createdAt: new Date()
+                        };
+                        promises.push(addDoc(incomesColRef, seedRecord));
+                    }
+
+                    try {
+                        await Promise.all(promises);
+
+                        const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
+                        await setDoc(profileRef, { initialDataSeeded: true, tourCompleted: true }, { merge: true });
+
+                        setShowOnboarding(false);
+                    } catch (err) {
+                        setError("Não foi possível salvar os dados iniciais. Tente novamente.");
+                    }
                 }
             };
             
