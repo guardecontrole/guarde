@@ -408,10 +408,6 @@
                 const unsubIncomes = onSnapshot(incomesCol, (snapshot) => {
                     const incomeData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                     setIncomes(incomeData);
-                    if (dataLoaded && profileData) {
-                         const hasOnlySeedData = incomeData.length > 0 && incomeData.every(inc => inc.description.startsWith('Média inicial')) && expenses.length === 0;
-                         setShowRedoButton(profileData.initialDataSeeded && hasOnlySeedData);
-                    }
                     if (!dataLoaded) setDataLoaded(true);
                 });
 
@@ -419,10 +415,6 @@
                 const unsubExpenses = onSnapshot(expensesCol, (snapshot) => {
                     const expenseData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                     setExpenses(expenseData);
-                    if (dataLoaded && profileData) {
-                        const hasOnlySeedData = incomes.length > 0 && incomes.every(inc => inc.description.startsWith('Média inicial')) && expenseData.length === 0;
-                        setShowRedoButton(profileData.initialDataSeeded && hasOnlySeedData);
-                    }
                     if (!dataLoaded) setDataLoaded(true);
                 });
                 
@@ -440,6 +432,16 @@
                     }
                 }
             };
+            
+            useEffect(() => {
+                if (userProfile && dataLoaded) {
+                    const hasOnlySeedData = userProfile.initialDataSeeded && incomes.length > 0 && incomes.every(inc => inc.description.startsWith('Média inicial')) && expenses.length === 0;
+                    const hasNoData = userProfile.initialDataSeeded && incomes.length === 0 && expenses.length === 0;
+                    setShowRedoButton(hasOnlySeedData || hasNoData);
+                } else {
+                    setShowRedoButton(false);
+                }
+            }, [incomes, expenses, userProfile, dataLoaded]);
 
             useEffect(() => { if (error) { const timer = setTimeout(() => setError(''), 5000); return () => clearTimeout(timer); } }, [error]);
             useEffect(() => { if (success) { const timer = setTimeout(() => setSuccess(''), 5000); return () => clearTimeout(timer); } }, [success]);
@@ -819,4 +821,5 @@
     </script>
 </body>
 </html>
+" selected.
 
