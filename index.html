@@ -97,6 +97,7 @@
         const SortDescIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-blue-400"><path d="M12 16l-6-6 1.41-1.41L12 13.17l4.59-4.58L18 10l-6 6z"></path></svg> );
         const NeutralSortIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity"><path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path></svg> );
         const AlertTriangleIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-400"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>);
+        const ResetIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg> );
         const SortIndicator = ({ sortConfig, columnKey }) => { if (sortConfig.key === columnKey) { return sortConfig.direction === 'ascending' ? <SortAscIcon /> : <SortDescIcon />; } return <NeutralSortIcon />; };
         
         // --- COMPONENTES ---
@@ -363,6 +364,7 @@
             const [dataLoaded, setDataLoaded] = useState(false);
             const [showDepletionModal, setShowDepletionModal] = useState(false);
             const [depletionModalShownThisSession, setDepletionModalShownThisSession] = useState(false);
+            const [showRedoButton, setShowRedoButton] = useState(false);
 
             const isSimulation = view === 'simulation';
 
@@ -404,13 +406,23 @@
 
                 const incomesCol = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`);
                 const unsubIncomes = onSnapshot(incomesCol, (snapshot) => {
-                    setIncomes(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                    const incomeData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    setIncomes(incomeData);
+                    if (dataLoaded && profileData) {
+                         const hasOnlySeedData = incomeData.length > 0 && incomeData.every(inc => inc.description.startsWith('Média inicial')) && expenses.length === 0;
+                         setShowRedoButton(profileData.initialDataSeeded && hasOnlySeedData);
+                    }
                     if (!dataLoaded) setDataLoaded(true);
                 });
 
                 const expensesCol = collection(db, `/artifacts/${appId}/users/${user.uid}/expenses`);
                 const unsubExpenses = onSnapshot(expensesCol, (snapshot) => {
-                    setExpenses(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                    const expenseData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    setExpenses(expenseData);
+                    if (dataLoaded && profileData) {
+                        const hasOnlySeedData = incomes.length > 0 && incomes.every(inc => inc.description.startsWith('Média inicial')) && expenseData.length === 0;
+                        setShowRedoButton(profileData.initialDataSeeded && hasOnlySeedData);
+                    }
                     if (!dataLoaded) setDataLoaded(true);
                 });
                 
@@ -488,6 +500,30 @@
                     await setDoc(profileRef, { initialDataSeeded: true, tourCompleted: true }, { merge: true });
                     setShowOnboarding(false);
                  }
+            };
+
+            const handleRedoInitialAverage = async () => {
+                if (!user) return;
+
+                try {
+                    setIsLoading(true);
+                    const seedRecords = incomes.filter(inc => inc.description.startsWith('Média inicial'));
+                    
+                    const deletePromises = seedRecords.map(record => {
+                        const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/incomes`, record.id);
+                        return deleteDoc(docRef);
+                    });
+
+                    await Promise.all(deletePromises);
+
+                    const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
+                    await setDoc(profileRef, { initialDataSeeded: false }, { merge: true });
+                    
+                } catch (err) {
+                    setError("Ocorreu um erro ao reiniciar a configuração.");
+                } finally {
+                    setIsLoading(false);
+                }
             };
             
             // --- Hooks de Cálculo (Memoização) ---
@@ -747,6 +783,14 @@
                                 <div id="action-buttons" className="bg-gray-800 p-6 rounded-xl shadow-md">
                                     <h3 className="text-xl font-semibold text-gray-200 mb-4">Ferramentas</h3>
                                     <div className="grid grid-cols-2 gap-4">
+                                        {showRedoButton && (
+                                            <button 
+                                                onClick={handleRedoInitialAverage}
+                                                className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-500 transition-colors">
+                                                <ResetIcon />
+                                                Refazer Média Inicial
+                                            </button>
+                                        )}
                                         <button onClick={handleImportClick} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <ImportIcon /> Importar </button>
                                         <button onClick={handleExportData} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <ExportIcon /> Exportar </button>
                                         <button onClick={handleUndo} disabled={!canUndo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <UndoIcon /> Desfazer </button>
