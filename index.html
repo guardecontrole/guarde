@@ -210,22 +210,23 @@
 
         const OnboardingModal = ({ onSave, onCancel }) => {
             const [initialAverage, setInitialAverage] = useState('');
+            const [months, setMonths] = useState('');
 
             const handleSave = () => {
                 const avg = parseFloat(initialAverage);
-                if (!isNaN(avg) && avg > 0) {
-                    onSave(avg);
-                } else {
-                    // Tratar erro caso o usuário insira um valor inválido
-                    alert("Por favor, insira um valor numérico válido.");
+                const numMonths = parseInt(months, 10);
+                if (isNaN(avg) || avg <= 0 || isNaN(numMonths) || numMonths <= 0 || numMonths > 120) {
+                     alert("Por favor, insira valores válidos (Média > 0, Meses entre 1 e 120).");
+                    return;
                 }
+                onSave(avg, numMonths);
             };
             
             return (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
                     <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-lg text-center">
-                        <h2 className="text-2xl font-bold text-gray-100 mb-4">Bem-vindo(a)!</h2>
-                        <p className="text-gray-400 mb-6">Para que o "Saldo Sugerido" funcione corretamente, precisamos de uma base. Como você prefere começar?</p>
+                        <h2 className="text-2xl font-bold text-gray-100 mb-4">Configuração Inicial</h2>
+                        <p className="text-gray-400 mb-6">Para que o "Saldo Sugerido" funcione bem, precisamos de uma base. Como você prefere começar?</p>
                         <div className="space-y-4">
                             <button onClick={onCancel} className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 transition-colors">
                                 Começar do Zero
@@ -234,21 +235,37 @@
                                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-600"></div></div>
                                 <div className="relative flex justify-center text-sm"><span className="px-2 bg-gray-800 text-gray-500">OU</span></div>
                             </div>
-                            <div className="bg-gray-700/50 p-4 rounded-lg">
-                                <p className="text-gray-300 mb-2">Já tem uma média de saldo dos últimos meses?</p>
-                                <div className="flex items-center gap-4">
-                                    <input 
-                                        type="number" 
-                                        step="0.01" 
-                                        value={initialAverage}
-                                        onChange={(e) => setInitialAverage(e.target.value)}
-                                        placeholder="Ex: 4500.50" 
-                                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    />
-                                    <button onClick={handleSave} className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-500 transition-colors">
-                                        Salvar Média
-                                    </button>
+                            <div className="bg-gray-700/50 p-4 rounded-lg text-left">
+                                <p className="text-gray-300 mb-2 font-semibold">Já tem um controle financeiro?</p>
+                                <p className="text-sm text-gray-400 mb-4">Informe sua média de saldo mensal e por quantos meses você a calculou.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                    <div className="md:col-span-2">
+                                        <label htmlFor="avg-input" className="block text-sm font-medium text-gray-400 mb-1">Sua Média de Saldo (R$)</label>
+                                        <input 
+                                            id="avg-input"
+                                            type="number" 
+                                            step="0.01" 
+                                            value={initialAverage}
+                                            onChange={(e) => setInitialAverage(e.target.value)}
+                                            placeholder="Ex: 4500.50" 
+                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        />
+                                    </div>
+                                    <div>
+                                         <label htmlFor="months-input" className="block text-sm font-medium text-gray-400 mb-1">Nº de Meses</label>
+                                        <input 
+                                            id="months-input"
+                                            type="number"
+                                            value={months}
+                                            onChange={(e) => setMonths(e.target.value)}
+                                            placeholder="Ex: 6" 
+                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        />
+                                    </div>
                                 </div>
+                                <button onClick={handleSave} className="mt-4 w-full px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-500 transition-colors">
+                                    Salvar Média Inicial
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -293,6 +310,7 @@
             const [sortConfigs, setSortConfigs] = useState({ summary: { key: 'month', direction: 'descending' }, reserve: { key: 'monthKey', direction: 'descending' }, incomes: { key: 'month', direction: 'descending' }, expenses: { key: 'month', direction: 'descending' } });
             const [showFullSummary, setShowFullSummary] = useState(false);
             const [showOnboarding, setShowOnboarding] = useState(false);
+            const [dataLoaded, setDataLoaded] = useState(false);
 
             const isSimulation = view === 'simulation';
 
@@ -301,46 +319,65 @@
                     setUser(user);
                     if (!user) {
                         setIsLoading(false);
+                        setDataLoaded(false);
                     }
                 });
                 return () => unsubscribe();
             }, []);
 
             useEffect(() => {
-                if (!user) { 
-                    setIncomes([]); 
-                    setExpenses([]); 
+                if (!user) {
+                    setIncomes([]);
+                    setExpenses([]);
                     setUserProfile(null);
-                    return; 
+                    setDataLoaded(false);
+                    return;
                 }
 
+                let profileData = null;
                 const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
                 const unsubProfile = onSnapshot(profileRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        setUserProfile(docSnap.data());
-                    } else {
-                        setUserProfile({}); // Perfil existe mas pode não ter a média ainda
+                    profileData = docSnap.exists() ? docSnap.data() : { tourCompleted: false };
+                    setUserProfile(profileData);
+
+                    // Move a lógica de tour/onboarding para depois que os dados são carregados
+                    if (dataLoaded) {
+                        const isNewUser = !profileData.tourCompleted;
+                         if (isNewUser) {
+                            setIsTourOpen(true);
+                        } else if (!profileData.initialDataSeeded && incomes.length === 0 && expenses.length === 0) {
+                            setShowOnboarding(true);
+                        }
                     }
                 });
 
                 const incomesCol = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`);
-                const unsubIncomes = onSnapshot(incomesCol, (snapshot) => { 
-                    const incomeData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
-                    setIncomes(incomeData); 
-                    
-                    if(userProfile !== null && !userProfile.initialAverage && incomeData.length === 0 && expenses.length === 0){
-                        setShowOnboarding(true);
-                    }
-                    setIsLoading(false);
-                });
-                
-                const unsubExpenses = onSnapshot(collection(db, `/artifacts/${appId}/users/${user.uid}/expenses`), (snapshot) => { 
-                    setExpenses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                const unsubIncomes = onSnapshot(incomesCol, (snapshot) => {
+                    setIncomes(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                    if (!dataLoaded) setDataLoaded(true);
                 });
 
+                const expensesCol = collection(db, `/artifacts/${appId}/users/${user.uid}/expenses`);
+                const unsubExpenses = onSnapshot(expensesCol, (snapshot) => {
+                    setExpenses(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                    if (!dataLoaded) setDataLoaded(true);
+                });
+                
                 return () => { unsubProfile(); unsubIncomes(); unsubExpenses(); };
-            }, [user, userProfile, expenses.length]);
+            }, [user, dataLoaded]); 
             
+             const handleTourClose = async () => {
+                setIsTourOpen(false);
+                if (user && userProfile && !userProfile.tourCompleted) {
+                    const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
+                    await setDoc(profileRef, { tourCompleted: true }, { merge: true });
+                    // Agora que o tour fechou, se for um novo usuário sem dados, mostre o onboarding
+                    if (incomes.length === 0 && expenses.length === 0) {
+                        setShowOnboarding(true);
+                    }
+                }
+            };
+
             useEffect(() => { if (error) { const timer = setTimeout(() => setError(''), 5000); return () => clearTimeout(timer); } }, [error]);
             useEffect(() => { if (success) { const timer = setTimeout(() => setSuccess(''), 5000); return () => clearTimeout(timer); } }, [success]);
             
@@ -362,12 +399,36 @@
             const handleFileChange = async (event) => { const file = event.target.files[0]; if (!file) return; if (file.type !== "application/json") { setError("Por favor, selecione um arquivo .json válido."); return; } const reader = new FileReader(); reader.onload = async (e) => { try { const data = JSON.parse(e.target.result); if (!data.incomes || !data.expenses || !Array.isArray(data.incomes) || !Array.isArray(data.expenses)) { throw new Error("Formato de arquivo inválido."); } setIsLoading(true); const createRecordIdentifier = (rec) => { const date = rec.createdAt?.toDate ? rec.createdAt.toDate() : new Date(rec.createdAt); return `${rec.description?.trim()}|${rec.amount}|${date.toISOString()}`; }; const existingIncomes = new Set(incomes.map(createRecordIdentifier)); const existingExpenses = new Set(expenses.map(createRecordIdentifier)); let importedCount = 0; let skippedCount = 0; const incomeCollectionRef = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`); for (const record of data.incomes) { const newRecord = { ...record, createdAt: record.createdAt ? new Date(record.createdAt) : new Date() }; const identifier = createRecordIdentifier(newRecord); if (!existingIncomes.has(identifier)) { await addDoc(incomeCollectionRef, newRecord); importedCount++; } else { skippedCount++; } } const expenseCollectionRef = collection(db, `/artifacts/${appId}/users/${user.uid}/expenses`); for (const record of data.expenses) { const newRecord = { ...record, createdAt: record.createdAt ? new Date(record.createdAt) : new Date() }; const identifier = createRecordIdentifier(newRecord); if (!existingExpenses.has(identifier)) { await addDoc(expenseCollectionRef, newRecord); importedCount++; } else { skippedCount++; } } setSuccess(`Importação concluída! ${importedCount} registros adicionados, ${skippedCount} duplicados ignorados.`); setHistory([]); setHistoryIndex(-1); } catch (err) { console.error("Erro ao importar dados:", err); setError(`Erro ao importar dados: ${err.message}`); } finally { if(fileInputRef.current) { fileInputRef.current.value = ""; } setIsLoading(false); } }; reader.readAsText(file); };
             const handleRequestSort = (tab, key) => { setSortConfigs(prevConfigs => { const currentConfig = prevConfigs[tab]; let direction = 'ascending'; if (currentConfig.key === key && currentConfig.direction === 'ascending') { direction = 'descending'; } return { ...prevConfigs, [tab]: { key, direction } }; }); };
             
-            const handleSaveInitialAverage = async (avg) => {
+            const handleSaveInitialAverage = async (avg, months) => {
                 if(user) {
+                    const totalAmount = avg * months;
+                    const date = new Date();
+                    date.setMonth(date.getMonth() - months);
+                    
+                    const seedRecord = {
+                        description: `Saldo inicial baseado em média de ${months} meses`,
+                        amount: totalAmount,
+                        month: date.getMonth(),
+                        year: date.getFullYear(),
+                        createdAt: new Date()
+                    };
+
+                    const incomesColRef = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`);
+                    await addDoc(incomesColRef, seedRecord);
+
                     const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
-                    await setDoc(profileRef, { initialAverage: avg }, { merge: true });
+                    await setDoc(profileRef, { initialDataSeeded: true, tourCompleted: true }, { merge: true });
+                    
                     setShowOnboarding(false);
                 }
+            };
+            
+            const handleStartFromZero = async () => {
+                 if(user) {
+                    const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
+                    await setDoc(profileRef, { initialDataSeeded: true, tourCompleted: true }, { merge: true });
+                    setShowOnboarding(false);
+                 }
             };
             
             // --- Hooks de Cálculo (Memoização) ---
@@ -389,10 +450,6 @@
                 const activeMonths = new Set([...relevantIncomes, ...relevantExpenses].map(t => `${t.year}-${t.month}`));
                 const numMonthsWithData = activeMonths.size;
 
-                if (numMonthsWithData < 3 && userProfile?.initialAverage) {
-                    return { avgIncome: 0, avgExpense: 0, avgBalance: userProfile.initialAverage };
-                }
-
                 const totalIncome = relevantIncomes.reduce((sum, i) => sum + i.amount, 0);
                 const totalExpense = relevantExpenses.reduce((sum, e) => sum + e.amount, 0);
                 const divisor = numMonthsWithData > 0 ? numMonthsWithData : 1;
@@ -402,30 +459,34 @@
                     avgExpense: totalExpense / divisor,
                     avgBalance: (totalIncome - totalExpense) / divisor
                 };
-            }, [combinedIncomes, combinedExpenses, userProfile]);
+            }, [combinedIncomes, combinedExpenses]);
             
-            const stabilityReserveHistory = useMemo(() => { const monthlyNetIncomes = {}; combinedIncomes.forEach(record => { const key = `${record.year}-${String(record.month).padStart(2, '0')}`; if (!monthlyNetIncomes[key]) monthlyNetIncomes[key] = 0; monthlyNetIncomes[key] += record.amount; }); combinedExpenses.forEach(record => { const key = `${record.year}-${String(record.month).padStart(2, '0')}`; if (!monthlyNetIncomes[key]) monthlyNetIncomes[key] = 0; monthlyNetIncomes[key] -= record.amount; }); const sortedMonthKeys = Object.keys(monthlyNetIncomes).sort(); if (sortedMonthKeys.length === 0) { return []; } const firstMonthAvg = userProfile?.initialAverage || 0; const history = []; let runningReserve = 0; for (const monthKey of sortedMonthKeys) { const [currentYear, currentMonthIndex] = monthKey.split('-').map(Number); const currentDate = new Date(currentYear, currentMonthIndex + 1, 0); const twelveMonthsAgo = new Date(currentDate); twelveMonthsAgo.setMonth(currentDate.getMonth() - 11); twelveMonthsAgo.setDate(1); const relevantIncomes = combinedIncomes.filter(i => { const d = new Date(i.year, i.month, 1); return d >= twelveMonthsAgo && d <= currentDate; }); const relevantExpenses = combinedExpenses.filter(e => { const d = new Date(e.year, e.month, 1); return d >= twelveMonthsAgo && d <= currentDate; }); const activeMonths = new Set(); relevantIncomes.forEach(i => activeMonths.add(`${i.year}-${i.month}`)); relevantExpenses.forEach(e => activeMonths.add(`${e.year}-${e.month}`)); const divisor = activeMonths.size > 0 ? activeMonths.size : 1; const totalIncomeWindow = relevantIncomes.reduce((sum, i) => sum + i.amount, 0); const totalExpenseWindow = relevantExpenses.reduce((sum, e) => sum + e.amount, 0); const avgBalanceForThisMonth = activeMonths.size < 3 && firstMonthAvg ? firstMonthAvg : (totalIncomeWindow - totalExpenseWindow) / divisor; const previousReserve = runningReserve; const currentMonthBalance = monthlyNetIncomes[monthKey] || 0; const difference = currentMonthBalance - avgBalanceForThisMonth; runningReserve += difference; if (runningReserve < 0) { runningReserve = 0; } const amountAdded = runningReserve - previousReserve;
-            const monthName = new Date(currentYear, currentMonthIndex).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }); history.push({ monthKey: monthKey, monthName: monthName, amountAdded: amountAdded, totalReserve: runningReserve }); } return history; }, [combinedIncomes, combinedExpenses, userProfile]);
+            const stabilityReserveHistory = useMemo(() => { const monthlyNetIncomes = {}; combinedIncomes.forEach(record => { const key = `${record.year}-${String(record.month).padStart(2, '0')}`; if (!monthlyNetIncomes[key]) monthlyNetIncomes[key] = 0; monthlyNetIncomes[key] += record.amount; }); combinedExpenses.forEach(record => { const key = `${record.year}-${String(record.month).padStart(2, '0')}`; if (!monthlyNetIncomes[key]) monthlyNetIncomes[key] = 0; monthlyNetIncomes[key] -= record.amount; }); const sortedMonthKeys = Object.keys(monthlyNetIncomes).sort(); if (sortedMonthKeys.length === 0) { return []; } const history = []; let runningReserve = 0; for (const monthKey of sortedMonthKeys) { const [currentYear, currentMonthIndex] = monthKey.split('-').map(Number); const currentDate = new Date(currentYear, currentMonthIndex + 1, 0); const twelveMonthsAgo = new Date(currentDate); twelveMonthsAgo.setMonth(currentDate.getMonth() - 11); twelveMonthsAgo.setDate(1); const relevantIncomes = combinedIncomes.filter(i => { const d = new Date(i.year, i.month, 1); return d >= twelveMonthsAgo && d <= currentDate; }); const relevantExpenses = combinedExpenses.filter(e => { const d = new Date(e.year, e.month, 1); return d >= twelveMonthsAgo && d <= currentDate; }); const activeMonths = new Set(); relevantIncomes.forEach(i => activeMonths.add(`${i.year}-${i.month}`)); relevantExpenses.forEach(e => activeMonths.add(`${e.year}-${e.month}`)); const divisor = activeMonths.size > 0 ? activeMonths.size : 1; const totalIncomeWindow = relevantIncomes.reduce((sum, i) => sum + i.amount, 0); const totalExpenseWindow = relevantExpenses.reduce((sum, e) => sum + e.amount, 0); const avgBalanceForThisMonth = (totalIncomeWindow - totalExpenseWindow) / divisor; const previousReserve = runningReserve; const currentMonthBalance = monthlyNetIncomes[monthKey] || 0; const difference = currentMonthBalance - avgBalanceForThisMonth; runningReserve += difference; if (runningReserve < 0) { runningReserve = 0; } const amountAdded = runningReserve - previousReserve;
+            const monthName = new Date(currentYear, currentMonthIndex).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }); history.push({ monthKey: monthKey, monthName: monthName, amountAdded: amountAdded, totalReserve: runningReserve }); } return history; }, [combinedIncomes, combinedExpenses]);
             
             const finalStabilityReserve = useMemo(() => { return stabilityReserveHistory.length > 0 ? stabilityReserveHistory[stabilityReserveHistory.length - 1].totalReserve : 0; }, [stabilityReserveHistory]);
             
             const monthlySummary = useMemo(() => { const summary = Array.from({ length: 12 }, (_, i) => ({ month: i, monthName: new Date(filterYear, i).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }), income: 0, expense: 0, balance: 0, })); filteredIncomes.forEach(income => { summary[income.month].income += income.amount; }); filteredExpenses.forEach(expense => { summary[expense.month].expense += expense.amount; }); summary.forEach(monthData => { monthData.balance = monthData.income - monthData.expense; }); return summary; }, [filteredIncomes, filteredExpenses, filterYear]);
             
             const deficitAlertData = useMemo(() => {
-                if (stabilityReserveHistory.length === 0) return { show: false };
-                const lastMonthHistory = stabilityReserveHistory[stabilityReserveHistory.length - 1];
-                const lastMonthKey = lastMonthHistory.monthKey;
-                const netIncomeLastMonth = (monthlySummary.find(m => `${filterYear}-${String(m.month).padStart(2,'0')}` === lastMonthKey)?.balance) || 0;
+                const now = new Date();
+                const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
                 
+                const lastMonthHistory = stabilityReserveHistory.find(h => h.monthKey === currentMonthKey);
+                if (!lastMonthHistory) return { show: false };
+
+                const netIncomeCurrentMonth = monthlySummary.find(m => m.month === now.getMonth())?.balance || 0;
                 const suggestedBalance = twelveMonthAverages.avgBalance;
                 
-                if (netIncomeLastMonth < suggestedBalance) {
-                    const deficit = suggestedBalance - netIncomeLastMonth;
-                    if (lastMonthHistory.totalReserve < deficit) {
+                if (netIncomeCurrentMonth < suggestedBalance) {
+                    const deficit = suggestedBalance - netIncomeCurrentMonth;
+                    const reserve = lastMonthHistory.totalReserve - lastMonthHistory.amountAdded; // Reserva no início do mês
+                    if (reserve < deficit) {
+                        const actualAvailableBalance = netIncomeCurrentMonth + reserve;
                         return {
                             show: true,
-                            missingAmount: deficit - lastMonthHistory.totalReserve,
-                            actualBalance: netIncomeLastMonth + lastMonthHistory.totalReserve
+                            missingAmount: suggestedBalance - actualAvailableBalance,
+                            actualBalance: actualAvailableBalance,
                         };
                     }
                 }
@@ -451,13 +512,13 @@
                 { target: '#action-buttons', title: 'Ferramentas', content: 'Precisa importar ou exportar dados? Cometeu um erro e quer desfazer? Use as ferramentas neste painel.' }
             ];
 
-            if (isLoading) { return <div className="bg-gray-900 text-gray-300 min-h-screen flex justify-center items-center"><p>Carregando...</p></div>; }
+            if (isLoading && !dataLoaded) { return <div className="bg-gray-900 text-gray-300 min-h-screen flex justify-center items-center"><p>Carregando...</p></div>; }
             if (!user) { return <AuthModal auth={auth} db={db} />; }
 
             return (
                 <div className="bg-gray-900 text-gray-300 min-h-screen font-sans">
-                    {showOnboarding && <OnboardingModal onSave={handleSaveInitialAverage} onCancel={() => handleSaveInitialAverage(0)} />}
-                    <Tour steps={tourSteps} isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
+                    {showOnboarding && <OnboardingModal onSave={handleSaveInitialAverage} onCancel={handleStartFromZero} />}
+                    <Tour steps={tourSteps} isOpen={isTourOpen} onClose={handleTourClose} />
                     {editingRecord && ( <EditModal record={editingRecord} onSave={handleUpdateRecord} onCancel={() => { setEditingRecord(null); setError(''); }} onError={setError} /> )}
                     
                     <header className="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-20">
@@ -496,8 +557,8 @@
                                 <AlertTriangleIcon />
                                 <div>
                                     <p className="font-bold">Atenção: Reserva de Estabilidade Insuficiente!</p>
-                                    <p className="text-sm">Faltam <span className="font-bold">{deficitAlertData.missingAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span> para atingir seu Saldo Sugerido.</p>
-                                    <p className="text-sm">Seu saldo real disponível para o mês foi de <span className="font-bold">{deficitAlertData.actualBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>.</p>
+                                    <p className="text-sm">Seu saldo disponível (<span className="font-bold">{deficitAlertData.actualBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>) não atingiu o Saldo Sugerido.</p>
+                                    <p className="text-sm">Faltaram <span className="font-bold">{deficitAlertData.missingAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span> para completar o valor.</p>
                                 </div>
                             </div>
                         )}
