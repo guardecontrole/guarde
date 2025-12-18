@@ -276,12 +276,18 @@
             );
         };
         
-        const AdjustReserveModal = ({ isOpen, onClose, currentCalculatedReserve, onConfirm }) => {
+        const AdjustReserveModal = ({ isOpen, onClose, currentCalculatedReserve, onConfirm, currentMonthBalance, suggestedBalance }) => {
             const [realReserve, setRealReserve] = useState('');
+            const [deficit, setDeficit] = useState(0);
 
             useEffect(() => {
-                if (isOpen) setRealReserve('');
-            }, [isOpen]);
+                if (isOpen) {
+                    setRealReserve('');
+                    // Calculate deficit if current balance is below suggested
+                    const gap = suggestedBalance - currentMonthBalance;
+                    setDeficit(gap > 0 ? gap : 0);
+                }
+            }, [isOpen, currentMonthBalance, suggestedBalance]);
 
             const handleConfirm = () => {
                 const value = parseFloat(realReserve);
@@ -289,8 +295,8 @@
                     alert("Por favor, insira um valor válido.");
                     return;
                 }
-                const diff = value - currentCalculatedReserve;
-                onConfirm(diff);
+                // We pass the raw user value to parent to handle the complex logic (Transfer + Adjustment)
+                onConfirm(value);
             };
 
             if (!isOpen) return null;
@@ -304,6 +310,19 @@
                                 <p className="text-sm text-gray-400 mb-1">Valor Calculado pelo App:</p>
                                 <p className="text-xl font-bold text-gray-300">{currentCalculatedReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                             </div>
+                            
+                            {deficit > 0 && (
+                                <div className="bg-yellow-900/40 border border-yellow-600/50 p-3 rounded-lg text-sm">
+                                    <p className="font-bold text-yellow-400 mb-1">Atenção!</p>
+                                    <p className="text-gray-300 mb-2">
+                                        Seu saldo atual está abaixo do sugerido. Faltam <span className="font-bold">{deficit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>.
+                                    </p>
+                                    <p className="text-gray-400 text-xs">
+                                        Ao confirmar, esse valor será automaticamente <strong>retirado da reserva</strong> que você informar abaixo e <strong>adicionado ao seu saldo</strong> para cobrir a meta.
+                                    </p>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-sm font-medium text-purple-300 mb-1">Qual o valor REAL da reserva hoje?</label>
                                 <input 
@@ -315,9 +334,18 @@
                                     placeholder="Ex: 5000.00"
                                 />
                             </div>
-                            <p className="text-xs text-gray-500">Isso criará um ajuste oculto para corrigir o saldo sem alterar seus relatórios de renda.</p>
-                            <button onClick={handleConfirm} className="w-full py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-500 transition-colors">
-                                Confirmar Ajuste
+                            
+                            {deficit > 0 && realReserve && (
+                                <div className="text-xs text-gray-500 mt-1 border-t border-gray-700 pt-2">
+                                    <p>Cálculo Final:</p>
+                                    <p>Reserva Informada: {parseFloat(realReserve).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                    <p className="text-red-400">- Cobertura de Saldo: {deficit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                    <p className="font-bold text-purple-400">= Nova Reserva no App: {(parseFloat(realReserve) - deficit).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                </div>
+                            )}
+
+                            <button onClick={handleConfirm} className="w-full mt-4 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-500 transition-colors">
+                                Confirmar e Ajustar
                             </button>
                             <button onClick={onClose} className="w-full py-2 text-gray-400 hover:text-white transition-colors text-sm">
                                 Cancelar
@@ -759,7 +787,7 @@
             }, [items, config]); 
         };
         
-        // --- COMPONENTE PRINCIPAL ---
+        // --- COMPONENTES PRINCIPAL ---
 
         function App() {
             const [user, setUser] = useState(null);
@@ -1112,38 +1140,124 @@
                 }
             };
 
-            const handleManualReserveAdjustment = async (diff) => {
+            // Logic to apply reserve adjustment (and possibly cover deficit)
+            const handleManualReserveAdjustment = async (userInputValue) => {
                 if (!user) return;
                 const currentDate = new Date();
                 
-                // Add hidden adjustment record
+                // 1. Check for Deficit using CURRENT state
+                const currentTwelveMonthAvg = currentTwelveMonthAverage; 
+                // We use the same filterYear logic for simplicity, assuming user is looking at current year.
+                // Or better, use current month data specifically.
+                // The modal was shown with 'deficit' calculated based on 'suggestedBalance - currentMonthBalance'.
+                // We need to re-calculate that exact deficit here to apply the logic.
+                
+                // Re-calculate monthly summary to find current month balance
+                const now = new Date();
+                const currentMonthIncome = filteredIncomes // Using filtered (no adjustments) to get raw income
+                    .filter(i => i.month === now.getMonth() && i.year === now.getFullYear())
+                    .reduce((sum, i) => sum + i.amount, 0);
+                
+                const currentMonthExpense = filteredExpenses
+                    .filter(e => e.month === now.getMonth() && e.year === now.getFullYear())
+                    .reduce((sum, e) => sum + e.amount, 0);
+                
+                const currentMonthBalance = currentMonthIncome - currentMonthExpense;
+                
+                // Re-calculate suggested balance (Moving Average)
+                // Note: currentTwelveMonthAverage is a memoized value that might depend on render cycle.
+                // It is safer to use the one available in scope or recalculate.
+                // Since calculateMovingAverage is a callback, we can use it.
+                const suggested = calculateMovingAverage(now.getFullYear(), now.getMonth());
+                
+                const deficit = Math.max(0, suggested - currentMonthBalance);
+                const incomeToAdd = deficit > 0 ? deficit : 0;
+                
                 try {
-                    // If diff is positive, add to incomes. If negative, add to expenses (or negative income).
-                    // We'll use 'incomes' with negative values allowed or 'expenses'.
-                    // To keep logic simple: positive diff -> income, negative diff -> expense.
-                    let collectionName = 'incomes';
-                    let amount = diff;
-                    
-                    if (diff < 0) {
-                        collectionName = 'expenses';
-                        amount = Math.abs(diff);
+                    // Step 1: If there is a deficit, add Income record to cover it
+                    if (incomeToAdd > 0) {
+                        const incomeRecord = {
+                            description: "Cobertura de Saldo (da Reserva)",
+                            amount: incomeToAdd,
+                            month: currentDate.getMonth(),
+                            year: currentDate.getFullYear(),
+                            createdAt: new Date(),
+                            isReserveAdjustment: false, // Counts as income!
+                            isTransferFromReserve: true // Just a flag for UI
+                        };
+                        const incomeCol = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`);
+                        await addDoc(incomeCol, incomeRecord);
                     }
 
-                    const newRecord = {
+                    // Step 2: Adjust Reserve to match user input
+                    // Logic: The user says "I have X".
+                    // But we just moved 'incomeToAdd' from Reserve to Available.
+                    // So the final reserve state in the app should be mathematically: X - incomeToAdd.
+                    // (Because X was the gross amount before transfer).
+                    
+                    // We need to create an adjustment record such that:
+                    // CalculatedReserve + NewAdjustment = TargetReserve
+                    // TargetReserve = userInputValue - incomeToAdd
+                    
+                    // We need the *current calculated reserve* including all history.
+                    // finalStabilityReserve is the current calculated value (before these new ops).
+                    // Wait, if we just added an income record above, the 'finalStabilityReserve' calculation will increase by 'incomeToAdd' (surplus increases).
+                    // So NewCalculatedReserve = finalStabilityReserve + incomeToAdd.
+                    
+                    // Equation:
+                    // (finalStabilityReserve + incomeToAdd) + Adjustment = (userInputValue - incomeToAdd)
+                    // Adjustment = userInputValue - incomeToAdd - finalStabilityReserve - incomeToAdd
+                    // Adjustment = userInputValue - finalStabilityReserve - 2*incomeToAdd
+                    
+                    const adjustmentAmount = userInputValue - finalStabilityReserve - (2 * incomeToAdd);
+                    
+                    // Logic Check:
+                    // Start Reserve: 8000. Balance: 2000. Suggested: 3000. Deficit: 1000.
+                    // User says Real Reserve is 5000.
+                    // We want Final Reserve to be 4000 (5000 - 1000 transfer).
+                    // Step 1: Add Income 1000.
+                    // Reserve Calculation naturally goes to 8000 + 1000 = 9000.
+                    // We want it to be 4000.
+                    // Adjustment needed = 4000 - 9000 = -5000.
+                    // Formula check: 5000 - 8000 - 2(1000) = -3000 - 2000 = -5000. Correct.
+                    
+                    // Edge Case: Deficit = 0.
+                    // Adjustment = 5000 - 8000 - 0 = -3000. Correct (just fixing the number).
+
+                    // Wait, what if the adjustment amount is positive?
+                    // E.g. Start 2000. Real 5000. Deficit 0.
+                    // Adj = 5000 - 2000 = +3000.
+                    // We add it to 'incomes' with isReserveAdjustment=true.
+                    
+                    // What if adjustment is negative?
+                    // We add to 'incomes' (with negative amount if allowed?) or 'expenses'?
+                    // My previous logic used 'expenses' for negative adjustments to be safe.
+                    // Let's stick to that: Positive -> Income, Negative -> Expense.
+                    
+                    let collectionName = 'incomes';
+                    let finalAmount = adjustmentAmount;
+                    
+                    if (adjustmentAmount < 0) {
+                        collectionName = 'expenses';
+                        finalAmount = Math.abs(adjustmentAmount);
+                    }
+                    
+                    const adjustmentRecord = {
                         description: "Ajuste Manual de Reserva",
-                        amount: amount,
+                        amount: finalAmount,
                         month: currentDate.getMonth(),
                         year: currentDate.getFullYear(),
                         createdAt: new Date(),
-                        isReserveAdjustment: true // Hidden flag
+                        isReserveAdjustment: true // Hidden flag, counts for reserve calc only
                     };
 
-                    const colRef = collection(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`);
-                    await addDoc(colRef, newRecord);
+                    const adjCol = collection(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`);
+                    await addDoc(adjCol, adjustmentRecord);
                     
                     setSuccess("Reserva ajustada com sucesso!");
                     setShowAdjustReserveModal(false);
                 } catch (err) {
+                    console.error(err);
                     setError("Erro ao salvar ajuste.");
                 }
             };
@@ -1376,6 +1490,8 @@
                         onClose={() => setShowAdjustReserveModal(false)}
                         currentCalculatedReserve={finalStabilityReserve}
                         onConfirm={handleManualReserveAdjustment}
+                        currentMonthBalance={currentMonthBalanceForModal}
+                        suggestedBalance={currentTwelveMonthAverage}
                     />
                     <Tour steps={tourSteps} isOpen={isTourOpen} onClose={handleTourClose} />
                     {editingRecord && ( <EditModal record={editingRecord} onSave={handleUpdateRecord} onCancel={() => { setEditingRecord(null); setError(''); }} onError={setError} /> )}
