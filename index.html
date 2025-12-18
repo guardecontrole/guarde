@@ -663,25 +663,62 @@
             </div> 
         );
 
+        const EditModal = ({ record, onSave, onCancel, onError }) => { 
+            const [newDescription, setNewDescription] = useState(record.description); 
+            const [newAmount, setNewAmount] = useState(record.amount); 
+            
+            const handleSave = () => { 
+                if (!newDescription.trim() || !newAmount || isNaN(parseFloat(newAmount))) { 
+                    onError("Por favor, preencha a descrição e um valor válido."); 
+                    return; 
+                } 
+                onSave(record.id, record.type, { ...record, description: newDescription, amount: parseFloat(newAmount) }); 
+            }; 
+            
+            return ( 
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"> 
+                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-md"> 
+                        <h2 className="text-2xl font-bold text-gray-100 mb-4">Editar Registro</h2> 
+                        <div className="space-y-4"> 
+                            <div> 
+                                <label htmlFor="edit-description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> 
+                                <input id="edit-description" type="text" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> 
+                            </div> 
+                            <div> 
+                                <label htmlFor="edit-amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> 
+                                <input id="edit-amount" type="number" step="0.01" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> 
+                            </div> 
+                        </div> 
+                        <div className="mt-6 flex justify-end gap-4"> 
+                            <button onClick={onCancel} className="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors">Cancelar</button> 
+                            <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors">Salvar</button> 
+                        </div> 
+                    </div> 
+                </div> 
+            ); 
+        };
+
         const FinancialEvolutionChart = ({ data }) => { 
-            const [visibility, setVisibility] = useState({ balance: true, avgBalance: true, expense: true, stabilityReserve: true, }); 
+            const [visibility, setVisibility] = useState({ balance: true, saldoSugerido: true, expense: true, stabilityReserve: true, avgIncome: false }); // avgIncome default hidden or visible? Let's make it visible.
             const handleLegendClick = (e) => { const { dataKey } = e; setVisibility(prev => ({ ...prev, [dataKey]: !prev[dataKey] })); }; 
             const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value); 
             const formatCompactCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(value); 
             
             return ( 
                 <div id="financial-chart" className="bg-gray-800 p-6 rounded-xl shadow-md"> 
-                    <h2 className="text-2xl font-semibold text-gray-200 mb-4">Evolução Financeira</h2> 
+                    <h2 className="text-2xl font-semibold text-gray-200 mb-4">Evolução Financeira (Últimos 12 Meses)</h2> 
                     <div style={{ width: '100%', height: 350 }}> 
                         <ResponsiveContainer> 
                             <ComposedChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}> 
                                 <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" /> 
-                                <XAxis dataKey="monthName" stroke="#A0AEC0" tickFormatter={(tick) => tick.split(' ')[0]} /> 
+                                <XAxis dataKey="monthName" stroke="#A0AEC0" /> 
                                 <YAxis stroke="#A0AEC0" tickFormatter={formatCompactCurrency} /> 
                                 <Tooltip contentStyle={{ backgroundColor: '#2D3748', border: '1px solid #4A5568', color: '#E2E8F0' }} formatter={(value, name) => [formatCurrency(value), name]} /> 
                                 <Legend onClick={handleLegendClick} wrapperStyle={{ color: '#E2E8F0', cursor: 'pointer' }} /> 
+                                
                                 <Line type="monotone" dataKey="balance" name="Renda Líquida Mensal" stroke="#48BB78" strokeWidth={2} hide={!visibility.balance} /> 
-                                <Line type="monotone" dataKey="avgBalance" name="Média Móvel (12m)" stroke="#4299E1" strokeDasharray="5 5" strokeWidth={2} hide={!visibility.avgBalance} /> 
+                                <Line type="monotone" dataKey="saldoSugerido" name="Saldo Sugerido" stroke="#4299E1" strokeDasharray="5 5" strokeWidth={2} hide={!visibility.saldoSugerido} /> 
+                                <Line type="monotone" dataKey="avgIncome" name="Média de Entradas (12m)" stroke="#9F7AEA" strokeDasharray="3 3" strokeWidth={2} hide={visibility.avgIncome === false} /> 
                                 <Line type="monotone" dataKey="expense" name="Saída Mensal" stroke="#F56565" strokeWidth={2} hide={!visibility.expense} /> 
                                 <Line type="monotone" dataKey="stabilityReserve" name="Reserva de Estabilidade" stroke="#A0AEC0" strokeWidth={2} hide={!visibility.stabilityReserve} /> 
                             </ComposedChart> 
@@ -1322,9 +1359,23 @@
             const combinedIncomes = useMemo(() => isSimulation ? [...incomes, ...simIncomes] : incomes, [incomes, simIncomes, isSimulation]);
             const combinedExpenses = useMemo(() => isSimulation ? [...expenses, ...simExpenses] : expenses, [expenses, simExpenses, isSimulation]);
 
+            // NOVO: Determina a "Data Atual" do contexto. 
+            // No Dashboard normal, é HOJE.
+            // Na Simulação, se houver lançamentos futuros, a "Data Atual" avança para mostrar o impacto futuro.
+            const contextDate = useMemo(() => {
+                const now = new Date();
+                if (!isSimulation) return now;
+
+                let maxTimestamp = now.getTime();
+                [...combinedIncomes, ...combinedExpenses].forEach(r => {
+                    // Considera o primeiro dia do mês do registro
+                    const d = new Date(r.year, r.month, 1);
+                    if (d.getTime() > maxTimestamp) maxTimestamp = d.getTime();
+                });
+                return new Date(maxTimestamp);
+            }, [isSimulation, combinedIncomes, combinedExpenses]);
+
             // Filter out reserve adjustments from visible tables and totals
-            // IMPORTANT: We also want to separate 'Transfers' from 'Real Income'.
-            // filteredIncomes = Real Income (Work)
             const filteredIncomes = useMemo(() => combinedIncomes.filter(i => i.year === filterYear && !i.isReserveAdjustment && !i.isTransferFromReserve), [combinedIncomes, filterYear]);
             
             // Transfers Only
@@ -1340,8 +1391,7 @@
             
             const totalExpenses = useMemo(() => filteredExpenses.reduce((sum, e) => sum + e.amount, 0), [filteredExpenses]);
             
-            // CORREÇÃO: O saldo exibido deve ser estritamente Renda - Despesa para bater a conta visual
-            // Os resgates (transfers) são considerados "caixa extra" apenas para o alerta de déficit, não para o saldo contábil do mês.
+            // CORREÇÃO: Saldo = Income - Expense (ignorando transferências na visualização da tabela para manter consistência matemática)
             const balance = useMemo(() => totalRealIncome - totalExpenses, [totalRealIncome, totalExpenses]);
             
             // Nova função para calcular Média Móvel para um mês específico
@@ -1372,31 +1422,55 @@
                 return (totalIncome - totalExpense) / numMonthsWithData;
             }, [combinedIncomes, combinedExpenses]);
 
-            // Esta média atual (usada no Card) continua pegando os últimos 12 meses a partir de HOJE
-            const currentTwelveMonthAverage = useMemo(() => {
-                const now = new Date();
-                return calculateMovingAverage(now.getFullYear(), now.getMonth());
-            }, [calculateMovingAverage]);
-
-            // NOVO: Cálculo das médias separadas de Entrada e Saída para os últimos 12 meses (Solicitação do usuário)
-            const last12MonthsSummary = useMemo(() => {
-                const now = new Date();
-                // Janela: [Hoje - 11 meses] até [Fim do mês atual]
-                const windowStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+            // Nova função para calcular Média Móvel de ENTRADAS para um mês específico
+            const calculateMovingIncomeAverage = useCallback((targetYear, targetMonth) => {
+                const targetDate = new Date(targetYear, targetMonth, 1);
+                const windowStart = new Date(targetDate);
+                windowStart.setMonth(windowStart.getMonth() - 11);
                 
                 const relevantIncomes = combinedIncomes.filter(i => {
                     const d = new Date(i.year, i.month, 1);
-                    // Inclui mês atual e passados até 11 meses atrás
-                    return d >= windowStart && (d.getFullYear() < now.getFullYear() || (d.getFullYear() === now.getFullYear() && d.getMonth() <= now.getMonth())) && !i.isReserveAdjustment && !i.isTransferFromReserve;
+                    return d >= windowStart && d <= targetDate && !i.isReserveAdjustment && !i.isTransferFromReserve;
+                });
+                
+                // We use expenses just to determine active months to be fair? 
+                // Or strictly active income months? Let's use same active month set logic for consistency.
+                const relevantExpenses = combinedExpenses.filter(e => {
+                    const d = new Date(e.year, e.month, 1);
+                    return d >= windowStart && d <= targetDate && !e.isReserveAdjustment;
+                });
+                
+                const activeMonths = new Set([...relevantIncomes, ...relevantExpenses].map(t => `${t.year}-${t.month}`));
+                const numMonthsWithData = activeMonths.size > 0 ? activeMonths.size : 1;
+                
+                const totalIncome = relevantIncomes.reduce((sum, i) => sum + i.amount, 0);
+                
+                return totalIncome / numMonthsWithData;
+            }, [combinedIncomes, combinedExpenses]);
+
+            // Esta média atual (usada no Card) AGORA SEGUE O CONTEXTO (Hoje ou Futuro Simulado)
+            const currentTwelveMonthAverage = useMemo(() => {
+                return calculateMovingAverage(contextDate.getFullYear(), contextDate.getMonth());
+            }, [calculateMovingAverage, contextDate]);
+
+            // NOVO: Cálculo das médias separadas de Entrada e Saída para os últimos 12 meses (baseado no contextDate)
+            const last12MonthsSummary = useMemo(() => {
+                // Janela: [contextDate - 11 meses] até [contextDate]
+                const windowStart = new Date(contextDate.getFullYear(), contextDate.getMonth() - 11, 1);
+                // Limite superior inclusivo (mês do contextDate)
+                const windowEnd = new Date(contextDate.getFullYear(), contextDate.getMonth() + 1, 0); // Fim do mês
+                
+                const relevantIncomes = combinedIncomes.filter(i => {
+                    const d = new Date(i.year, i.month, 1);
+                    return d >= windowStart && d <= windowEnd && !i.isReserveAdjustment && !i.isTransferFromReserve;
                 });
 
                 const relevantExpenses = combinedExpenses.filter(e => {
                     const d = new Date(e.year, e.month, 1);
-                    return d >= windowStart && (d.getFullYear() < now.getFullYear() || (d.getFullYear() === now.getFullYear() && d.getMonth() <= now.getMonth())) && !e.isReserveAdjustment;
+                    return d >= windowStart && d <= windowEnd && !e.isReserveAdjustment;
                 });
 
                 const activeMonths = new Set([...relevantIncomes, ...relevantExpenses].map(t => `${t.year}-${t.month}`));
-                // Usa activeMonths.size para consistência com o cálculo de saldo sugerido
                 const numMonths = activeMonths.size > 0 ? activeMonths.size : 1;
 
                 const totalIncome = relevantIncomes.reduce((sum, i) => sum + i.amount, 0);
@@ -1406,7 +1480,7 @@
                     avgIncome: totalIncome / numMonths,
                     avgExpense: totalExpense / numMonths
                 };
-            }, [combinedIncomes, combinedExpenses]);
+            }, [combinedIncomes, combinedExpenses, contextDate]);
             
             const stabilityReserveHistory = useMemo(() => { 
                 const monthlyNetIncomes = {}; 
@@ -1491,31 +1565,99 @@
                 return (income + transfers) - expense;
             }, [filteredIncomes, reserveTransfers, filteredExpenses]);
 
-            const chartData = useMemo(() => { 
-                const reserveMap = new Map(stabilityReserveHistory.map(entry => [entry.monthKey, { total: entry.totalReserve, movingAvg: entry.movingAverageUsed }])); 
+            const deficitAlertData = useMemo(() => {
+                const now = new Date();
+                const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
                 
-                return monthlySummary.map(summaryMonth => { 
-                    const monthKey = `${filterYear}-${String(summaryMonth.month).padStart(2, '0')}`; 
-                    let reserveVal = 0;
-                    let movAvgVal = 0; 
+                const lastMonthHistory = stabilityReserveHistory.find(h => h.monthKey === currentMonthKey);
+                if (!lastMonthHistory) return { show: false };
 
-                    if (reserveMap.has(monthKey)) { 
-                        const entry = reserveMap.get(monthKey);
-                        reserveVal = entry.total;
-                        movAvgVal = entry.movingAvg;
-                    } else {
-                         if (summaryMonth.income > 0 || summaryMonth.expense > 0) { 
-                             movAvgVal = calculateMovingAverage(filterYear, summaryMonth.month);
-                         }
-                    }
+                const netIncomeCurrentMonth = monthlySummary.find(m => m.month === now.getMonth())?.balance || 0;
+                const suggestedBalance = currentTwelveMonthAverage;
+                
+                // Calculate transfers FROM reserve to checking (Expenses marked as adjustments)
+                // This means the user withdrew from reserve to cover expenses.
+                const transfersFromReserve = combinedExpenses
+                    .filter(e => e.month === now.getMonth() && e.year === now.getFullYear() && e.isReserveAdjustment)
+                    .reduce((sum, e) => sum + e.amount, 0);
+
+                // We treat this withdrawal as "Available Income" for the purpose of meeting the suggested balance target.
+                const actualAvailableBalance = netIncomeCurrentMonth + transfersFromReserve;
+                
+                if (actualAvailableBalance < suggestedBalance) {
+                    const deficit = suggestedBalance - actualAvailableBalance;
+                    // Check if remaining reserve can cover the deficit (though deficit is calculated after withdrawal).
+                    // Actually, if there is ANY deficit, we show the alert.
+                    // The alert logic previously checked if reserve covers it.
+                    // Now, if actualAvailableBalance < suggestedBalance, there is a GAP.
+                    // We check if the user has enough Reserve (after the withdrawal) to cover this GAP.
                     
-                    return { 
-                        ...summaryMonth, 
-                        avgBalance: movAvgVal, 
-                        stabilityReserve: reserveVal 
-                    }; 
-                }); 
-            }, [monthlySummary, stabilityReserveHistory, filterYear, calculateMovingAverage]); 
+                    const currentReserveTotal = lastMonthHistory.totalReserve; // This already reflects the withdrawal.
+
+                    if (currentReserveTotal < deficit && deficit > 0) {
+                         return {
+                            show: true,
+                            missingAmount: deficit,
+                            actualBalance: actualAvailableBalance,
+                            transfersFromReserve: transfersFromReserve // Pass to UI to show breakdown
+                        };
+                    }
+                }
+                return { show: false };
+            }, [stabilityReserveHistory, monthlySummary, currentTwelveMonthAverage, filterYear, combinedExpenses]);
+
+            const chartData = useMemo(() => { 
+                const data = [];
+                
+                // Mapeia histórico de reserva para acesso rápido
+                const reserveMap = new Map();
+                const sortedHistory = [...stabilityReserveHistory].sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+                
+                // Loop para os últimos 12 meses (do mais antigo para o atual/simulado) com base no contextDate
+                for (let i = 11; i >= 0; i--) {
+                    const d = new Date(contextDate.getFullYear(), contextDate.getMonth() - i, 1);
+                    const month = d.getMonth();
+                    const year = d.getFullYear();
+                    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+                    const label = d.toLocaleString('pt-BR', { month: 'short' }).replace('.','') + '/' + year.toString().slice(2);
+
+                    // Calc Values for this specific month
+                    const income = combinedIncomes
+                        .filter(r => r.month === month && r.year === year && !r.isReserveAdjustment && !r.isTransferFromReserve)
+                        .reduce((sum, r) => sum + r.amount, 0);
+                    
+                    const transfers = combinedIncomes
+                        .filter(r => r.month === month && r.year === year && r.isTransferFromReserve)
+                        .reduce((sum, r) => sum + r.amount, 0);
+
+                    const expense = combinedExpenses
+                        .filter(r => r.month === month && r.year === year && !r.isReserveAdjustment)
+                        .reduce((sum, r) => sum + r.amount, 0);
+                    
+                    const displayBalance = income - expense; 
+
+                    // Averages at that point in time
+                    const saldoSugerido = calculateMovingAverage(year, month);
+                    const avgIncome = calculateMovingIncomeAverage(year, month);
+
+                    // Reserve at that point in time
+                    let reserveVal = 0;
+                    const relevantHistoryEntry = sortedHistory.filter(h => h.monthKey <= monthKey).pop();
+                    if (relevantHistoryEntry) {
+                        reserveVal = relevantHistoryEntry.totalReserve;
+                    }
+
+                    data.push({
+                        monthName: label,
+                        balance: displayBalance,
+                        expense,
+                        saldoSugerido,
+                        avgIncome,
+                        stabilityReserve: reserveVal
+                    });
+                }
+                return data;
+            }, [stabilityReserveHistory, combinedIncomes, combinedExpenses, calculateMovingAverage, calculateMovingIncomeAverage, contextDate]); 
             
             const monthlyBalanceHistory = useMemo(() => monthlySummary.filter(m => m.income > 0 || m.transfers > 0 || m.expense > 0), [monthlySummary]);
             
@@ -1607,7 +1749,7 @@
                                         <div id="monthly-salary-card" className={`relative group p-4 rounded-lg border ${currentTwelveMonthAverage >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}>
                                              <h3 className={`flex items-center gap-2 text-lg font-semibold ${currentTwelveMonthAverage >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>
                                                 <span role="img" aria-label="Sugestão">💡</span>
-                                                Saldo Sugerido (Hoje)
+                                                Saldo Sugerido ({isSimulation && contextDate > new Date() ? 'Simulado' : 'Hoje'})
                                              </h3>
                                               <span className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-600 text-white text-xs rounded py-1 px-2 w-72 text-center z-10">
                                                   Este é o seu saldo médio dos últimos 12 meses. Use como guia para seus gastos mensais.
