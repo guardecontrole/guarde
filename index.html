@@ -1377,7 +1377,10 @@
             const totalAvailable = totalRealIncome + totalTransfers;
             
             const totalExpenses = useMemo(() => filteredExpenses.reduce((sum, e) => sum + e.amount, 0), [filteredExpenses]);
-            const balance = useMemo(() => totalAvailable - totalExpenses, [totalAvailable, totalExpenses]);
+            
+            // CORREÇÃO: O saldo exibido deve ser estritamente Renda - Despesa para bater a conta visual
+            // Os resgates (transfers) são considerados "caixa extra" apenas para o alerta de déficit, não para o saldo contábil do mês.
+            const balance = useMemo(() => totalRealIncome - totalExpenses, [totalRealIncome, totalExpenses]);
             
             // Nova função para calcular Média Móvel para um mês específico
             const calculateMovingAverage = useCallback((targetYear, targetMonth) => {
@@ -1478,7 +1481,9 @@
                 filteredIncomes.forEach(income => { summary[income.month].income += income.amount; }); 
                 reserveTransfers.forEach(t => { summary[t.month].transfers += t.amount; });
                 filteredExpenses.forEach(expense => { summary[expense.month].expense += expense.amount; }); 
-                summary.forEach(monthData => { monthData.balance = (monthData.income + monthData.transfers) - monthData.expense; }); 
+                
+                // CORREÇÃO: Saldo = Income - Expense (ignorando transferências na visualização da tabela para manter consistência matemática)
+                summary.forEach(monthData => { monthData.balance = monthData.income - monthData.expense; }); 
                 return summary; 
             }, [filteredIncomes, reserveTransfers, filteredExpenses, filterYear]);
             
@@ -1649,12 +1654,7 @@
                                                     <p className="text-3xl font-bold text-green-400 mt-2">{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
                                                 </div>
                                                 
-                                                {totalTransfers > 0 && (
-                                                    <div className="bg-yellow-900/50 p-4 rounded-lg border border-yellow-700"> 
-                                                        <h3 className="text-lg font-semibold text-yellow-300">Resgates da Reserva</h3> 
-                                                        <p className="text-3xl font-bold text-yellow-400 mt-2">{totalTransfers.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
-                                                    </div>
-                                                )}
+                                                {/* Card de Resgates REMOVIDO conforme solicitado */}
 
                                                 <div className="bg-red-900/50 p-4 rounded-lg border border-red-700"> <h3 className="text-lg font-semibold text-red-300">Total de Saídas</h3> <p className="text-3xl font-bold text-red-400 mt-2">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
                                                 
