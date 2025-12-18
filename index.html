@@ -313,7 +313,7 @@
                                 <p className="text-xl font-bold text-gray-300">{currentCalculatedReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                             </div>
                             
-                            {deficit > 0 && (
+                            {deficit > 0 && parseFloat(realReserve) !== 0 && (
                                 <div className="bg-yellow-900/40 border border-yellow-600/50 p-3 rounded-lg text-sm">
                                     <p className="font-bold text-yellow-400 mb-1">Atenção!</p>
                                     <p className="text-gray-300 mb-2">
@@ -337,43 +337,52 @@
                                 />
                             </div>
                             
-                            {realReserve && (
-                                <div className="bg-gray-700/50 p-3 rounded-lg space-y-2">
-                                    <p className="text-sm font-medium text-gray-300">Qual a origem da diferença?</p>
-                                    <div className="space-y-2">
-                                        <label className="flex items-start cursor-pointer">
-                                            <input 
-                                                type="radio" 
-                                                name="adjustmentType" 
-                                                value="correction"
-                                                checked={adjustmentType === 'correction'}
-                                                onChange={() => setAdjustmentType('correction')}
-                                                className="mt-1 mr-2 text-purple-500 focus:ring-purple-500"
-                                            />
-                                            <span className="text-sm text-gray-400">
-                                                <span className="block text-white font-medium">Apenas Correção / Saldo Antigo</span>
-                                                <span className="text-xs">O dinheiro já estava lá (ou não estava), apenas esqueci de anotar. (Não afeta relatórios de Renda)</span>
-                                            </span>
-                                        </label>
-                                        <label className="flex items-start cursor-pointer">
-                                            <input 
-                                                type="radio" 
-                                                name="adjustmentType" 
-                                                value="movement"
-                                                checked={adjustmentType === 'movement'}
-                                                onChange={() => setAdjustmentType('movement')}
-                                                className="mt-1 mr-2 text-purple-500 focus:ring-purple-500"
-                                            />
-                                            <span className="text-sm text-gray-400">
-                                                <span className="block text-white font-medium">Nova Movimentação Real</span>
-                                                <span className="text-xs">Ganhei ou gastei esse dinheiro hoje. (Afeta relatórios como Entrada/Saída)</span>
-                                            </span>
-                                        </label>
-                                    </div>
+                            {parseFloat(realReserve) === 0 ? (
+                                <div className="bg-red-900/40 border border-red-600/50 p-3 rounded-lg text-sm mt-2 animate-pulse">
+                                    <p className="font-bold text-red-400 mb-1">Reiniciar Reserva?</p>
+                                    <p className="text-gray-300 text-xs">
+                                        Definir como <strong>0</strong> irá apagar todos os ajustes manuais e resgates automáticos anteriores, permitindo recalcular e reajustar do zero.
+                                    </p>
                                 </div>
+                            ) : (
+                                realReserve && (
+                                    <div className="bg-gray-700/50 p-3 rounded-lg space-y-2">
+                                        <p className="text-sm font-medium text-gray-300">Qual a origem da diferença?</p>
+                                        <div className="space-y-2">
+                                            <label className="flex items-start cursor-pointer">
+                                                <input 
+                                                    type="radio" 
+                                                    name="adjustmentType" 
+                                                    value="correction"
+                                                    checked={adjustmentType === 'correction'}
+                                                    onChange={() => setAdjustmentType('correction')}
+                                                    className="mt-1 mr-2 text-purple-500 focus:ring-purple-500"
+                                                />
+                                                <span className="text-sm text-gray-400">
+                                                    <span className="block text-white font-medium">Apenas Correção / Saldo Antigo</span>
+                                                    <span className="text-xs">O dinheiro já estava lá (ou não estava), apenas esqueci de anotar. (Não afeta relatórios de Renda)</span>
+                                                </span>
+                                            </label>
+                                            <label className="flex items-start cursor-pointer">
+                                                <input 
+                                                    type="radio" 
+                                                    name="adjustmentType" 
+                                                    value="movement"
+                                                    checked={adjustmentType === 'movement'}
+                                                    onChange={() => setAdjustmentType('movement')}
+                                                    className="mt-1 mr-2 text-purple-500 focus:ring-purple-500"
+                                                />
+                                                <span className="text-sm text-gray-400">
+                                                    <span className="block text-white font-medium">Nova Movimentação Real</span>
+                                                    <span className="text-xs">Ganhei ou gastei esse dinheiro hoje. (Afeta relatórios como Entrada/Saída)</span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                )
                             )}
 
-                            {deficit > 0 && realReserve && (
+                            {deficit > 0 && realReserve && parseFloat(realReserve) !== 0 && (
                                 <div className="text-xs text-gray-500 mt-1 border-t border-gray-700 pt-2">
                                     <p>Cálculo Final:</p>
                                     <p>Reserva Informada: {parseFloat(realReserve).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
@@ -382,8 +391,8 @@
                                 </div>
                             )}
 
-                            <button onClick={handleConfirm} className="w-full mt-4 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-500 transition-colors">
-                                Confirmar e Ajustar
+                            <button onClick={handleConfirm} className={`w-full mt-4 py-2 text-white font-bold rounded-lg transition-colors ${parseFloat(realReserve) === 0 ? 'bg-red-600 hover:bg-red-500' : 'bg-purple-600 hover:bg-purple-500'}`}>
+                                {parseFloat(realReserve) === 0 ? 'Confirmar Reset' : 'Confirmar e Ajustar'}
                             </button>
                             <button onClick={onClose} className="w-full py-2 text-gray-400 hover:text-white transition-colors text-sm">
                                 Cancelar
@@ -1183,6 +1192,38 @@
             // Logic to apply reserve adjustment (and possibly cover deficit)
             const handleManualReserveAdjustment = async (userInputValue, adjustmentType) => {
                 if (!user) return;
+                
+                // --- RESET LOGIC (New) ---
+                if (userInputValue === 0) {
+                     if (!confirm("Tem certeza que deseja zerar? Isso apagará todos os históricos de ajustes manuais e resgates de reserva para reiniciar a contagem.")) {
+                         return;
+                     }
+                     try {
+                         setIsLoading(true);
+                         // Identifica registros para apagar
+                         const recordsToDelete = [];
+                         incomes.forEach(doc => {
+                             if (doc.isReserveAdjustment || doc.isTransferFromReserve) recordsToDelete.push({ col: 'incomes', id: doc.id });
+                         });
+                         expenses.forEach(doc => {
+                             if (doc.isReserveAdjustment) recordsToDelete.push({ col: 'expenses', id: doc.id });
+                         });
+                         
+                         // Executa deleção em lote
+                         await Promise.all(recordsToDelete.map(r => deleteDoc(doc(db, `/artifacts/${appId}/users/${user.uid}/${r.col}`, r.id))));
+                         
+                         setSuccess("Histórico de ajustes e resgates reiniciado. Você pode ajustar o valor novamente agora.");
+                         setShowAdjustReserveModal(false);
+                     } catch (err) {
+                         console.error(err);
+                         setError("Erro ao reiniciar reserva.");
+                     } finally {
+                         setIsLoading(false);
+                     }
+                     return;
+                }
+                // -------------------------
+
                 const currentDate = new Date();
                 
                 // 1. Calculate Current State
