@@ -412,58 +412,6 @@
             );
         };
 
-        const DepletionWarningModal = ({ isOpen, onClose, reserveAmount, suggestedBalance }) => {
-            const [leanMonths, setLeanMonths] = useState(null);
-
-            const suggestion = useMemo(() => {
-                if (!leanMonths || !reserveAmount) return null;
-                return reserveAmount / leanMonths;
-            }, [leanMonths, reserveAmount]);
-
-            const handleSelectMonths = (months) => {
-                setLeanMonths(months);
-            };
-            
-            if(!isOpen) return null;
-
-            return (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-lg text-center">
-                        <div className="flex justify-center items-center gap-4 mb-4">
-                            <AlertTriangleIcon />
-                            <h2 className="text-2xl font-bold text-yellow-400">Alerta de Reserva Baixa</h2>
-                        </div>
-                        <p className="text-gray-400 mb-6">
-                            Sua Reserva de Estabilidade está em <span className="font-bold text-white">{reserveAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>.
-                            Este valor é menor que seu Saldo Sugerido de <span className="font-bold text-white">{suggestedBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>, 
-                            o que indica que ela pode se esgotar em breve se precisar ser utilizada.
-                        </p>
-                        <div className="bg-gray-700/50 p-4 rounded-lg text-left">
-                            <p className="text-gray-300 mb-4 font-semibold text-center">Para te ajudar a se planejar, como você prevê os próximos meses?</p>
-                            <div className="flex justify-center gap-4 mb-4">
-                                <button onClick={() => handleSelectMonths(1)} className={`px-4 py-2 rounded-lg transition-colors ${leanMonths === 1 ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500'}`}>Apenas 1 mês difícil</button>
-                                <button onClick={() => handleSelectMonths(2)} className={`px-4 py-2 rounded-lg transition-colors ${leanMonths === 2 ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500'}`}>2 meses difíceis</button>
-                                <button onClick={() => handleSelectMonths(3)} className={`px-4 py-2 rounded-lg transition-colors ${leanMonths === 3 ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500'}`}>3 meses difíceis</button>
-                            </div>
-                            {suggestion !== null && (
-                                <div className="mt-6 text-center bg-gray-900/50 p-4 rounded-lg">
-                                    <p className="text-green-400 font-bold text-lg">
-                                        Sugestão de Saque Inteligente:
-                                    </p>
-                                    <p className="text-gray-300 mt-2">
-                                        Para fazer sua reserva durar por {leanMonths} mese{leanMonths > 1 ? 's' : ''}, sugerimos que você utilize no máximo <span className="font-bold text-white">{suggestion.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span> por mês.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                        <button onClick={onClose} className="mt-6 w-full py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors">
-                            Entendido, fechar
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
         const Tour = ({ steps, isOpen, onClose }) => { 
             const [currentStepIndex, setCurrentStepIndex] = useState(0); 
             const [style, setStyle] = useState({}); 
@@ -769,8 +717,6 @@
             const [showFullSummary, setShowFullSummary] = useState(false);
             const [showOnboarding, setShowOnboarding] = useState(false);
             const [dataLoaded, setDataLoaded] = useState(false);
-            const [showDepletionModal, setShowDepletionModal] = useState(false);
-            const [depletionModalShownThisSession, setDepletionModalShownThisSession] = useState(false);
             const [showRedoButton, setShowRedoButton] = useState(false);
             const [showLeanCalculator, setShowLeanCalculator] = useState(false);
             const [showAdjustReserveModal, setShowAdjustReserveModal] = useState(false);
@@ -1252,20 +1198,36 @@
                 const netIncomeCurrentMonth = monthlySummary.find(m => m.month === now.getMonth())?.balance || 0;
                 const suggestedBalance = currentTwelveMonthAverage;
                 
-                if (netIncomeCurrentMonth < suggestedBalance) {
-                    const deficit = suggestedBalance - netIncomeCurrentMonth;
-                    const reserve = lastMonthHistory.totalReserve - lastMonthHistory.amountAdded; // Reserva no início do mês
-                    if (reserve < deficit) {
-                        const actualAvailableBalance = netIncomeCurrentMonth + reserve;
-                        return {
+                // Calculate transfers FROM reserve to checking (Expenses marked as adjustments)
+                // This means the user withdrew from reserve to cover expenses.
+                const transfersFromReserve = combinedExpenses
+                    .filter(e => e.month === now.getMonth() && e.year === now.getFullYear() && e.isReserveAdjustment)
+                    .reduce((sum, e) => sum + e.amount, 0);
+
+                // We treat this withdrawal as "Available Income" for the purpose of meeting the suggested balance target.
+                const actualAvailableBalance = netIncomeCurrentMonth + transfersFromReserve;
+                
+                if (actualAvailableBalance < suggestedBalance) {
+                    const deficit = suggestedBalance - actualAvailableBalance;
+                    // Check if remaining reserve can cover the deficit (though deficit is calculated after withdrawal).
+                    // Actually, if there is ANY deficit, we show the alert.
+                    // The alert logic previously checked if reserve covers it.
+                    // Now, if actualAvailableBalance < suggestedBalance, there is a GAP.
+                    // We check if the user has enough Reserve (after the withdrawal) to cover this GAP.
+                    
+                    const currentReserveTotal = lastMonthHistory.totalReserve; // This already reflects the withdrawal.
+
+                    if (currentReserveTotal < deficit && deficit > 0) {
+                         return {
                             show: true,
-                            missingAmount: suggestedBalance - actualAvailableBalance,
+                            missingAmount: deficit,
                             actualBalance: actualAvailableBalance,
+                            transfersFromReserve: transfersFromReserve // Pass to UI to show breakdown
                         };
                     }
                 }
                 return { show: false };
-            }, [stabilityReserveHistory, monthlySummary, currentTwelveMonthAverage, filterYear]);
+            }, [stabilityReserveHistory, monthlySummary, currentTwelveMonthAverage, filterYear, combinedExpenses]);
 
             const depletionProjectionData = useMemo(() => {
                 const endOfMonthReserve = finalStabilityReserve;
@@ -1338,12 +1300,6 @@
             return (
                 <div className="bg-gray-900 text-gray-300 min-h-screen font-sans">
                     {showOnboarding && <OnboardingModal onSave={handleSaveInitialAverage} onCancel={handleStartFromZero} />}
-                    <DepletionWarningModal 
-                        isOpen={showDepletionModal} 
-                        onClose={() => setShowDepletionModal(false)}
-                        reserveAmount={depletionProjectionData.reserveAmount || 0}
-                        suggestedBalance={depletionProjectionData.suggestedBalance || 0}
-                    />
                     <LeanTimesCalculatorModal 
                         isOpen={showLeanCalculator}
                         onClose={() => setShowLeanCalculator(false)}
@@ -1395,8 +1351,17 @@
                                 <AlertTriangleIcon />
                                 <div>
                                     <p className="font-bold">Atenção: Reserva de Estabilidade Insuficiente!</p>
-                                    <p className="text-sm">Seu saldo disponível (<span className="font-bold">{deficitAlertData.actualBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>) não atingiu o Saldo Sugerido.</p>
-                                    <p className="text-sm">Faltaram <span className="font-bold">{deficitAlertData.missingAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span> para completar o valor.</p>
+                                    <p className="text-sm">
+                                        Seu saldo disponível: 
+                                        <span className="font-bold mx-1">{deficitAlertData.actualBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                        {deficitAlertData.transfersFromReserve > 0 && (
+                                            <span className="text-xs text-gray-400 block sm:inline">
+                                                (Saldo {((deficitAlertData.actualBalance - deficitAlertData.transfersFromReserve).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))} + Resgate {deficitAlertData.transfersFromReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
+                                            </span>
+                                        )}
+                                        ainda não atingiu o Saldo Sugerido.
+                                    </p>
+                                    <p className="text-sm">Faltam <span className="font-bold">{deficitAlertData.missingAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>.</p>
                                 </div>
                             </div>
                         )}
