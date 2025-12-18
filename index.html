@@ -279,11 +279,14 @@
         const AdjustReserveModal = ({ isOpen, onClose, currentCalculatedReserve, onConfirm, currentMonthBalance, suggestedBalance }) => {
             const [realReserve, setRealReserve] = useState('');
             const [deficit, setDeficit] = useState(0);
+            const [adjustmentType, setAdjustmentType] = useState('correction'); // 'correction' or 'movement'
 
             useEffect(() => {
                 if (isOpen) {
                     setRealReserve('');
+                    setAdjustmentType('correction');
                     // Calculate deficit if current balance is below suggested
+                    // Note: We use the balance BEFORE any potential reserve transfer here to show the gap.
                     const gap = suggestedBalance - currentMonthBalance;
                     setDeficit(gap > 0 ? gap : 0);
                 }
@@ -295,8 +298,7 @@
                     alert("Por favor, insira um valor válido.");
                     return;
                 }
-                // We pass the raw user value to parent to handle the complex logic (Transfer + Adjustment)
-                onConfirm(value);
+                onConfirm(value, adjustmentType);
             };
 
             if (!isOpen) return null;
@@ -318,7 +320,7 @@
                                         Seu saldo atual está abaixo do sugerido. Faltam <span className="font-bold">{deficit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>.
                                     </p>
                                     <p className="text-gray-400 text-xs">
-                                        Ao confirmar, esse valor será automaticamente <strong>retirado da reserva</strong> que você informar abaixo e <strong>adicionado ao seu saldo</strong> para cobrir a meta.
+                                        Ao confirmar, esse valor será automaticamente <strong>retirado da reserva</strong> para cobrir a meta (registrado como "Resgate").
                                     </p>
                                 </div>
                             )}
@@ -335,6 +337,42 @@
                                 />
                             </div>
                             
+                            {realReserve && (
+                                <div className="bg-gray-700/50 p-3 rounded-lg space-y-2">
+                                    <p className="text-sm font-medium text-gray-300">Qual a origem da diferença?</p>
+                                    <div className="space-y-2">
+                                        <label className="flex items-start cursor-pointer">
+                                            <input 
+                                                type="radio" 
+                                                name="adjustmentType" 
+                                                value="correction"
+                                                checked={adjustmentType === 'correction'}
+                                                onChange={() => setAdjustmentType('correction')}
+                                                className="mt-1 mr-2 text-purple-500 focus:ring-purple-500"
+                                            />
+                                            <span className="text-sm text-gray-400">
+                                                <span className="block text-white font-medium">Apenas Correção / Saldo Antigo</span>
+                                                <span className="text-xs">O dinheiro já estava lá (ou não estava), apenas esqueci de anotar. (Não afeta relatórios de Renda)</span>
+                                            </span>
+                                        </label>
+                                        <label className="flex items-start cursor-pointer">
+                                            <input 
+                                                type="radio" 
+                                                name="adjustmentType" 
+                                                value="movement"
+                                                checked={adjustmentType === 'movement'}
+                                                onChange={() => setAdjustmentType('movement')}
+                                                className="mt-1 mr-2 text-purple-500 focus:ring-purple-500"
+                                            />
+                                            <span className="text-sm text-gray-400">
+                                                <span className="block text-white font-medium">Nova Movimentação Real</span>
+                                                <span className="text-xs">Ganhei ou gastei esse dinheiro hoje. (Afeta relatórios como Entrada/Saída)</span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+
                             {deficit > 0 && realReserve && (
                                 <div className="text-xs text-gray-500 mt-1 border-t border-gray-700 pt-2">
                                     <p>Cálculo Final:</p>
@@ -380,17 +418,9 @@
                     return;
                 }
                 
-                // Formula: (BaseValue + Reserve + Next) / 2 = Limit
-                // Spending Limit = (Current + Reserve + Next) / 2
                 const limit = (baseValue + currentReserve + nextInc) / 2;
                 setSuggestedLimit(limit);
 
-                // Withdrawal Amount = Limit - BaseValue
-                // If limit is greater than what I have now, I need to pull from reserve.
-                // If limit is less, I am saving (negative withdrawal).
-                // Logic check: "Eu somava o quanto ia ganhar naquele mês, mais a reserva de estabilidade disponível com o possível salario previsto que eu iria receber no próximo e dividia tudo por 2 para gastar naquele mes atual."
-                // "The result would be the salary I could spend in January."
-                // So if I can spend 'limit', and I have 'baseValue', the difference comes from reserve.
                 const withdrawal = limit - baseValue;
                 setReserveWithdrawal(withdrawal);
             };
@@ -398,8 +428,18 @@
             const handleApply = () => {
                 if (reserveWithdrawal > 0) {
                     // Apply withdrawal: deduct from reserve. 
-                    // Manual adjustment needs negative value to deduct.
-                    onApply(-reserveWithdrawal); 
+                    // This is a transfer logic, so we pass type 'correction' to treat it as internal or we can adapt handleManual.
+                    // Actually handleManualReserveAdjustment logic handles deficit coverage automatically.
+                    // But here we are forcing a withdrawal amount.
+                    // Let's call onApply with the TARGET reserve value.
+                    // Target = CurrentReserve - Withdrawal.
+                    // But we want to register this withdrawal as a "Transfer" to cover balance.
+                    // We can reuse the logic but forcing the deficit/incomeToAdd amount.
+                    // To simplify, let's just pass the negative diff and let a specific handler manage it, or update handleManual to accept it.
+                    // The simplest way for now is to pass the raw target reserve value, but that might trigger the "Deficit" logic again which calculates based on Suggested Balance.
+                    // Here the "Suggested Balance" is the calculated limit.
+                    // This is complex. Let's make a specific action for this tool.
+                    onApply(reserveWithdrawal); // Passing the withdrawal amount directly
                     onClose();
                 } else {
                     alert("O valor calculado não exige retirada da reserva (você está economizando!). Nenhum ajuste necessário.");
@@ -787,7 +827,7 @@
             }, [items, config]); 
         };
         
-        // --- COMPONENTES PRINCIPAL ---
+        // --- COMPONENTE PRINCIPAL ---
 
         function App() {
             const [user, setUser] = useState(null);
@@ -1141,20 +1181,15 @@
             };
 
             // Logic to apply reserve adjustment (and possibly cover deficit)
-            const handleManualReserveAdjustment = async (userInputValue) => {
+            const handleManualReserveAdjustment = async (userInputValue, adjustmentType) => {
                 if (!user) return;
                 const currentDate = new Date();
                 
-                // 1. Check for Deficit using CURRENT state
-                const currentTwelveMonthAvg = currentTwelveMonthAverage; 
-                // We use the same filterYear logic for simplicity, assuming user is looking at current year.
-                // Or better, use current month data specifically.
-                // The modal was shown with 'deficit' calculated based on 'suggestedBalance - currentMonthBalance'.
-                // We need to re-calculate that exact deficit here to apply the logic.
-                
-                // Re-calculate monthly summary to find current month balance
+                // 1. Calculate Current State
                 const now = new Date();
-                const currentMonthIncome = filteredIncomes // Using filtered (no adjustments) to get raw income
+                
+                // Get strictly INCOME (from work/sales), excluding any reserve transfers
+                const currentMonthIncome = filteredIncomes // filteredIncomes excludes 'isReserveAdjustment' AND 'isTransferFromReserve' if we update logic below
                     .filter(i => i.month === now.getMonth() && i.year === now.getFullYear())
                     .reduce((sum, i) => sum + i.amount, 0);
                 
@@ -1162,77 +1197,69 @@
                     .filter(e => e.month === now.getMonth() && e.year === now.getFullYear())
                     .reduce((sum, e) => sum + e.amount, 0);
                 
+                // Balance before transfers
                 const currentMonthBalance = currentMonthIncome - currentMonthExpense;
                 
-                // Re-calculate suggested balance (Moving Average)
-                // Note: currentTwelveMonthAverage is a memoized value that might depend on render cycle.
-                // It is safer to use the one available in scope or recalculate.
-                // Since calculateMovingAverage is a callback, we can use it.
+                // Target: Suggested Balance
                 const suggested = calculateMovingAverage(now.getFullYear(), now.getMonth());
                 
-                const deficit = Math.max(0, suggested - currentMonthBalance);
-                const incomeToAdd = deficit > 0 ? deficit : 0;
+                // Check if we already have transfers covering this?
+                // The deficit calculation in the modal was based on 'currentMonthBalance' derived from 'filteredIncomes'.
+                // If the user already did a transfer previously, 'filteredIncomes' might exclude it (if we set it to exclude transfers).
+                // Let's ensure 'filteredIncomes' excludes 'isTransferFromReserve' so Renda is pure.
                 
+                // Deficit GAP
+                const deficit = Math.max(0, suggested - currentMonthBalance);
+                
+                // If user is doing a "Correction" (type = correction), we just want the reserve number to match X.
+                // We do NOT move money to cover the deficit because the user said "It's just a correction".
+                // HOWEVER, if the user said "Movement" (type = movement) OR if there is an explicit deficit logic we want to enforce.
+                // The prompt says: "se o meu saldo final nao alcancçar o Saldo Sugerido, o app deve informar usuario que um valor sera descontado automaticamente"
+                // This implies a FORCED transfer if there is a gap, regardless of "Correction" or "Movement"? 
+                // OR does it imply that this action IS a "Movement"?
+                // Let's assume if there is a Deficit, we MUST cover it to balance the month, so we treat the difference as a transfer.
+                
+                let incomeToAdd = 0;
+                
+                // Only cover deficit if the new reserve value implies a REDUCTION that could cover it?
+                // Or always cover it?
+                // Let's cover it if there is a deficit.
+                if (deficit > 0) {
+                    incomeToAdd = deficit;
+                }
+
                 try {
-                    // Step 1: If there is a deficit, add Income record to cover it
+                    // Step 1: Add Transfer Record (Cover Deficit)
+                    // We only do this if there is a deficit AND the user didn't explicitly say "Don't touch my month balance" (which isn't an option here).
                     if (incomeToAdd > 0) {
                         const incomeRecord = {
-                            description: "Cobertura de Saldo (da Reserva)",
+                            description: "Resgate da Reserva (Cobrir Meta)",
                             amount: incomeToAdd,
                             month: currentDate.getMonth(),
                             year: currentDate.getFullYear(),
                             createdAt: new Date(),
-                            isReserveAdjustment: false, // Counts as income!
-                            isTransferFromReserve: true // Just a flag for UI
+                            isReserveAdjustment: false, // It IS an income for the month balance...
+                            isTransferFromReserve: true // ...but flagged as Transfer so we can separate it from "Renda"
                         };
                         const incomeCol = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`);
                         await addDoc(incomeCol, incomeRecord);
                     }
 
                     // Step 2: Adjust Reserve to match user input
-                    // Logic: The user says "I have X".
-                    // But we just moved 'incomeToAdd' from Reserve to Available.
-                    // So the final reserve state in the app should be mathematically: X - incomeToAdd.
-                    // (Because X was the gross amount before transfer).
+                    // We want Final Reserve = userInputValue.
+                    // But we just moved 'incomeToAdd' OUT of the reserve logic (by adding it as income, the reserve calc increases).
+                    // Wait, Reserve Calc = (Total Incomes - Total Expenses) - Moving Average? No.
+                    // Reserve Calc = Cumulative (Monthly Surplus - Monthly Average).
+                    // If we add 'incomeToAdd' to Incomes:
+                    // Monthly Surplus increases by 'incomeToAdd'.
+                    // So Calculated Reserve INCREASES by 'incomeToAdd'.
+                    // We want it to equal 'userInputValue'.
+                    // But 'userInputValue' is the FINAL amount the user has.
+                    // So we need an adjustment 'Adj' such that:
+                    // (OldCalculated + incomeToAdd) + Adj = userInputValue
+                    // Adj = userInputValue - OldCalculated - incomeToAdd.
                     
-                    // We need to create an adjustment record such that:
-                    // CalculatedReserve + NewAdjustment = TargetReserve
-                    // TargetReserve = userInputValue - incomeToAdd
-                    
-                    // We need the *current calculated reserve* including all history.
-                    // finalStabilityReserve is the current calculated value (before these new ops).
-                    // Wait, if we just added an income record above, the 'finalStabilityReserve' calculation will increase by 'incomeToAdd' (surplus increases).
-                    // So NewCalculatedReserve = finalStabilityReserve + incomeToAdd.
-                    
-                    // Equation:
-                    // (finalStabilityReserve + incomeToAdd) + Adjustment = (userInputValue - incomeToAdd)
-                    // Adjustment = userInputValue - incomeToAdd - finalStabilityReserve - incomeToAdd
-                    // Adjustment = userInputValue - finalStabilityReserve - 2*incomeToAdd
-                    
-                    const adjustmentAmount = userInputValue - finalStabilityReserve - (2 * incomeToAdd);
-                    
-                    // Logic Check:
-                    // Start Reserve: 8000. Balance: 2000. Suggested: 3000. Deficit: 1000.
-                    // User says Real Reserve is 5000.
-                    // We want Final Reserve to be 4000 (5000 - 1000 transfer).
-                    // Step 1: Add Income 1000.
-                    // Reserve Calculation naturally goes to 8000 + 1000 = 9000.
-                    // We want it to be 4000.
-                    // Adjustment needed = 4000 - 9000 = -5000.
-                    // Formula check: 5000 - 8000 - 2(1000) = -3000 - 2000 = -5000. Correct.
-                    
-                    // Edge Case: Deficit = 0.
-                    // Adjustment = 5000 - 8000 - 0 = -3000. Correct (just fixing the number).
-
-                    // Wait, what if the adjustment amount is positive?
-                    // E.g. Start 2000. Real 5000. Deficit 0.
-                    // Adj = 5000 - 2000 = +3000.
-                    // We add it to 'incomes' with isReserveAdjustment=true.
-                    
-                    // What if adjustment is negative?
-                    // We add to 'incomes' (with negative amount if allowed?) or 'expenses'?
-                    // My previous logic used 'expenses' for negative adjustments to be safe.
-                    // Let's stick to that: Positive -> Income, Negative -> Expense.
+                    const adjustmentAmount = userInputValue - finalStabilityReserve - incomeToAdd;
                     
                     let collectionName = 'incomes';
                     let finalAmount = adjustmentAmount;
@@ -1242,13 +1269,17 @@
                         finalAmount = Math.abs(adjustmentAmount);
                     }
                     
+                    // If adjustmentType is 'movement', we might want to log this differently?
+                    // For now, the internal math is the same to align the number.
+                    // The 'isReserveAdjustment' flag hides it from monthly views anyway.
+                    
                     const adjustmentRecord = {
-                        description: "Ajuste Manual de Reserva",
+                        description: `Ajuste Manual (${adjustmentType === 'correction' ? 'Correção' : 'Movimentação'})`,
                         amount: finalAmount,
                         month: currentDate.getMonth(),
                         year: currentDate.getFullYear(),
                         createdAt: new Date(),
-                        isReserveAdjustment: true // Hidden flag, counts for reserve calc only
+                        isReserveAdjustment: true 
                     };
 
                     const adjCol = collection(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`);
@@ -1262,17 +1293,91 @@
                 }
             };
             
+            const handleLeanCalculatorApply = (withdrawalAmount) => {
+                 // Logic from Lean Calculator: we determined we need X amount from reserve.
+                 // This acts exactly like a "Transfer from Reserve".
+                 // We add it as Income (Transfer) and then adjust reserve to balance it out if needed?
+                 // No, if we add Income, the reserve calc (Surplus - Avg) will increase the reserve.
+                 // We want the reserve to DECREASE.
+                 // If we just add Income, the system thinks we earned money, so reserve goes UP.
+                 // We need to explicitly tell the system: "This money CAME FROM reserve".
+                 // So we add Income (Available goes up), and we add a negative Adjustment to Reserve equal to 2x amount?
+                 // Let's see:
+                 // Target Reserve = OldReserve - Withdrawal.
+                 // New Calc Reserve = OldReserve + Withdrawal (due to income entry).
+                 // (Old + W) + Adj = (Old - W)
+                 // Adj = -2W.
+                 
+                 // So we call handleManualReserveAdjustment with the target value.
+                 const targetReserve = finalStabilityReserve - withdrawalAmount;
+                 // But we also want to ensure the 'incomeToAdd' logic inside handleManual...
+                 // Actually, handleManual calculates deficit based on Suggested Balance.
+                 // The Lean Calculator calculates based on a specific custom limit.
+                 // It's safer to implement the logic directly here to be precise.
+                 
+                 const performLeanUpdate = async () => {
+                     if (!user) return;
+                     try {
+                        const currentDate = new Date();
+                        // 1. Add Income (Transfer)
+                        const incomeRecord = {
+                            description: "Resgate (Vacas Magras)",
+                            amount: withdrawalAmount,
+                            month: currentDate.getMonth(),
+                            year: currentDate.getFullYear(),
+                            createdAt: new Date(),
+                            isReserveAdjustment: false,
+                            isTransferFromReserve: true
+                        };
+                        await addDoc(collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`), incomeRecord);
+
+                        // 2. Adjust Reserve down
+                        // We want reserve to decrease by withdrawalAmount.
+                        // Adding income increased it by withdrawalAmount.
+                        // So adjustment = -2 * withdrawalAmount.
+                        const adjustmentAmount = -2 * withdrawalAmount;
+                        
+                        const adjRecord = {
+                            description: "Saída p/ Cobertura (Vacas Magras)",
+                            amount: Math.abs(adjustmentAmount),
+                            month: currentDate.getMonth(),
+                            year: currentDate.getFullYear(),
+                            createdAt: new Date(),
+                            isReserveAdjustment: true // Hidden
+                        };
+                        // Negative adjustment -> Expense
+                        await addDoc(collection(db, `/artifacts/${appId}/users/${user.uid}/expenses`), adjRecord);
+                        
+                        setSuccess("Plano de Vacas Magras aplicado!");
+                     } catch(err) {
+                         setError("Erro ao aplicar plano.");
+                     }
+                 };
+                 performLeanUpdate();
+            };
+            
             // --- Hooks de Cálculo (Memoização) ---
             const combinedIncomes = useMemo(() => isSimulation ? [...incomes, ...simIncomes] : incomes, [incomes, simIncomes, isSimulation]);
             const combinedExpenses = useMemo(() => isSimulation ? [...expenses, ...simExpenses] : expenses, [expenses, simExpenses, isSimulation]);
 
             // Filter out reserve adjustments from visible tables and totals
-            const filteredIncomes = useMemo(() => combinedIncomes.filter(i => i.year === filterYear && !i.isReserveAdjustment), [combinedIncomes, filterYear]);
+            // IMPORTANT: We also want to separate 'Transfers' from 'Real Income'.
+            // filteredIncomes = Real Income (Work)
+            const filteredIncomes = useMemo(() => combinedIncomes.filter(i => i.year === filterYear && !i.isReserveAdjustment && !i.isTransferFromReserve), [combinedIncomes, filterYear]);
+            
+            // Transfers Only
+            const reserveTransfers = useMemo(() => combinedIncomes.filter(i => i.year === filterYear && i.isTransferFromReserve), [combinedIncomes, filterYear]);
+            
             const filteredExpenses = useMemo(() => combinedExpenses.filter(e => e.year === filterYear && !e.isReserveAdjustment), [combinedExpenses, filterYear]);
             
-            const totalIncomes = useMemo(() => filteredIncomes.reduce((sum, i) => sum + i.amount, 0), [filteredIncomes]);
+            const totalRealIncome = useMemo(() => filteredIncomes.reduce((sum, i) => sum + i.amount, 0), [filteredIncomes]);
+            const totalTransfers = useMemo(() => reserveTransfers.reduce((sum, i) => sum + i.amount, 0), [reserveTransfers]);
+            
+            // Total Available for Month = Real Income + Transfers
+            const totalAvailable = totalRealIncome + totalTransfers;
+            
             const totalExpenses = useMemo(() => filteredExpenses.reduce((sum, e) => sum + e.amount, 0), [filteredExpenses]);
-            const balance = useMemo(() => totalIncomes - totalExpenses, [totalIncomes, totalExpenses]);
+            const balance = useMemo(() => totalAvailable - totalExpenses, [totalAvailable, totalExpenses]);
             
             // Nova função para calcular Média Móvel para um mês específico
             const calculateMovingAverage = useCallback((targetYear, targetMonth) => {
@@ -1282,9 +1387,10 @@
                 windowStart.setMonth(windowStart.getMonth() - 11);
                 
                 // Exclude reserve adjustments from average calculation
+                // AND exclude transfers (we want average of REAL income/capacity)
                 const relevantIncomes = combinedIncomes.filter(i => {
                     const d = new Date(i.year, i.month, 1);
-                    return d >= windowStart && d <= targetDate && !i.isReserveAdjustment;
+                    return d >= windowStart && d <= targetDate && !i.isReserveAdjustment && !i.isTransferFromReserve;
                 });
                 
                 const relevantExpenses = combinedExpenses.filter(e => {
@@ -1312,6 +1418,16 @@
                 const adjustmentFlags = {}; // Rastreia meses com ajuste manual
 
                 // Include adjustments in reserve calculation!
+                // For reserve calculation, we consider ALL incomes (Real + Transfers) vs Expenses?
+                // If we include Transfers as Income, surplus increases.
+                // But Reserve = Cumulative (Surplus - Avg).
+                // If we transfer from Reserve to Income, we don't want Reserve to increase!
+                // This is the tricky part. 
+                // If we have a Transfer Record:
+                // It is an Income.
+                // We need to offset it in the math if it's internal?
+                // No, the adjustment record (-2x) handles the offset.
+                // So we just sum everything.
                 combinedIncomes.forEach(record => { 
                     const key = `${record.year}-${String(record.month).padStart(2, '0')}`; 
                     if (!monthlyNetIncomes[key]) monthlyNetIncomes[key] = 0; 
@@ -1333,9 +1449,6 @@
                 
                 for (const monthKey of sortedMonthKeys) { 
                     const [currentYear, currentMonthIndex] = monthKey.split('-').map(Number); 
-                    
-                    // AQUI ESTÁ A MUDANÇA PRINCIPAL:
-                    // Calculamos a média móvel *para aquele mês específico*
                     const avgBalanceForThisMonth = calculateMovingAverage(currentYear, currentMonthIndex);
 
                     const previousReserve = runningReserve; 
@@ -1352,7 +1465,7 @@
                         amountAdded: amountAdded, 
                         totalReserve: runningReserve, 
                         movingAverageUsed: avgBalanceForThisMonth,
-                        hasAdjustment: adjustmentFlags[monthKey] // Passa flag para a tabela
+                        hasAdjustment: adjustmentFlags[monthKey] 
                     }); 
                 } 
                 return history; 
@@ -1361,17 +1474,18 @@
             const finalStabilityReserve = useMemo(() => { return stabilityReserveHistory.length > 0 ? stabilityReserveHistory[stabilityReserveHistory.length - 1].totalReserve : 0; }, [stabilityReserveHistory]);
             
             const monthlySummary = useMemo(() => { 
-                const summary = Array.from({ length: 12 }, (_, i) => ({ month: i, monthName: new Date(filterYear, i).toLocaleString('pt-BR', { month: 'short' }).replace('.', ''), income: 0, expense: 0, balance: 0, })); 
+                const summary = Array.from({ length: 12 }, (_, i) => ({ month: i, monthName: new Date(filterYear, i).toLocaleString('pt-BR', { month: 'short' }).replace('.', ''), income: 0, expense: 0, balance: 0, transfers: 0 })); 
                 filteredIncomes.forEach(income => { summary[income.month].income += income.amount; }); 
+                reserveTransfers.forEach(t => { summary[t.month].transfers += t.amount; });
                 filteredExpenses.forEach(expense => { summary[expense.month].expense += expense.amount; }); 
-                summary.forEach(monthData => { monthData.balance = monthData.income - monthData.expense; }); 
+                summary.forEach(monthData => { monthData.balance = (monthData.income + monthData.transfers) - monthData.expense; }); 
                 return summary; 
-            }, [filteredIncomes, filteredExpenses, filterYear]);
+            }, [filteredIncomes, reserveTransfers, filteredExpenses, filterYear]);
             
             // Dados para o Card de Receita atual (para passar pro modal)
             const currentMonthIncomeForModal = useMemo(() => {
                 const now = new Date();
-                return filteredIncomes // Use filtered here to avoid adjustments counting as income
+                return filteredIncomes 
                     .filter(i => i.month === now.getMonth() && i.year === now.getFullYear())
                     .reduce((sum, i) => sum + i.amount, 0);
             }, [filteredIncomes]);
@@ -1381,52 +1495,14 @@
                 const income = filteredIncomes
                     .filter(i => i.month === now.getMonth() && i.year === now.getFullYear())
                     .reduce((sum, i) => sum + i.amount, 0);
+                const transfers = reserveTransfers
+                    .filter(i => i.month === now.getMonth() && i.year === now.getFullYear())
+                    .reduce((sum, i) => sum + i.amount, 0);
                 const expense = filteredExpenses
                     .filter(e => e.month === now.getMonth() && e.year === now.getFullYear())
                     .reduce((sum, e) => sum + e.amount, 0);
-                return income - expense;
-            }, [filteredIncomes, filteredExpenses]);
-
-            const deficitAlertData = useMemo(() => {
-                const now = new Date();
-                const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
-                
-                const lastMonthHistory = stabilityReserveHistory.find(h => h.monthKey === currentMonthKey);
-                if (!lastMonthHistory) return { show: false };
-
-                const netIncomeCurrentMonth = monthlySummary.find(m => m.month === now.getMonth())?.balance || 0;
-                const suggestedBalance = currentTwelveMonthAverage;
-                
-                // Calculate transfers FROM reserve to checking (Expenses marked as adjustments)
-                // This means the user withdrew from reserve to cover expenses.
-                const transfersFromReserve = combinedExpenses
-                    .filter(e => e.month === now.getMonth() && e.year === now.getFullYear() && e.isReserveAdjustment)
-                    .reduce((sum, e) => sum + e.amount, 0);
-
-                // We treat this withdrawal as "Available Income" for the purpose of meeting the suggested balance target.
-                const actualAvailableBalance = netIncomeCurrentMonth + transfersFromReserve;
-                
-                if (actualAvailableBalance < suggestedBalance) {
-                    const deficit = suggestedBalance - actualAvailableBalance;
-                    // Check if remaining reserve can cover the deficit (though deficit is calculated after withdrawal).
-                    // Actually, if there is ANY deficit, we show the alert.
-                    // The alert logic previously checked if reserve covers it.
-                    // Now, if actualAvailableBalance < suggestedBalance, there is a GAP.
-                    // We check if the user has enough Reserve (after the withdrawal) to cover this GAP.
-                    
-                    const currentReserveTotal = lastMonthHistory.totalReserve; // This already reflects the withdrawal.
-
-                    if (currentReserveTotal < deficit && deficit > 0) {
-                         return {
-                            show: true,
-                            missingAmount: deficit,
-                            actualBalance: actualAvailableBalance,
-                            transfersFromReserve: transfersFromReserve // Pass to UI to show breakdown
-                        };
-                    }
-                }
-                return { show: false };
-            }, [stabilityReserveHistory, monthlySummary, currentTwelveMonthAverage, filterYear, combinedExpenses]);
+                return (income + transfers) - expense;
+            }, [filteredIncomes, reserveTransfers, filteredExpenses]);
 
             const chartData = useMemo(() => { 
                 const reserveMap = new Map(stabilityReserveHistory.map(entry => [entry.monthKey, { total: entry.totalReserve, movingAvg: entry.movingAverageUsed }])); 
@@ -1454,7 +1530,7 @@
                 }); 
             }, [monthlySummary, stabilityReserveHistory, filterYear, calculateMovingAverage]); 
             
-            const monthlyBalanceHistory = useMemo(() => monthlySummary.filter(m => m.income > 0 || m.expense > 0), [monthlySummary]);
+            const monthlyBalanceHistory = useMemo(() => monthlySummary.filter(m => m.income > 0 || m.transfers > 0 || m.expense > 0), [monthlySummary]);
             
             const sortedMonthlyBalanceHistory = useSortableData(monthlyBalanceHistory, sortConfigs.summary);
             const sortedStabilityReserveHistory = useSortableData(stabilityReserveHistory, sortConfigs.reserve);
@@ -1483,7 +1559,7 @@
                         currentMonthIncome={currentMonthIncomeForModal}
                         currentMonthBalance={currentMonthBalanceForModal}
                         currentReserve={finalStabilityReserve}
-                        onApply={handleManualReserveAdjustment}
+                        onApply={handleLeanCalculatorApply}
                     />
                     <AdjustReserveModal
                         isOpen={showAdjustReserveModal}
@@ -1527,27 +1603,6 @@
                         {error && <div className="bg-red-900/50 border border-red-500 text-red-400 px-4 py-3 rounded-lg relative mb-6" role="alert">{error}</div>}
                         {success && <div className="bg-green-900/50 border border-green-500 text-green-400 px-4 py-3 rounded-lg relative mb-6" role="alert">{success}</div>}
 
-                        {deficitAlertData.show && !isSimulation && (
-                             <div className="bg-yellow-900/50 border border-yellow-700 text-yellow-300 px-4 py-4 rounded-lg relative mb-6 flex items-center gap-4" role="alert">
-                                <AlertTriangleIcon />
-                                <div>
-                                    <p className="font-bold">Atenção: Reserva de Estabilidade Insuficiente!</p>
-                                    <p className="text-sm">
-                                        Seu saldo disponível: 
-                                        <span className="font-bold mx-1">{deficitAlertData.actualBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                                        {deficitAlertData.transfersFromReserve > 0 && (
-                                            <span className="text-xs text-gray-400 block sm:inline">
-                                                (Saldo {((deficitAlertData.actualBalance - deficitAlertData.transfersFromReserve).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))} + Resgate {deficitAlertData.transfersFromReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
-                                            </span>
-                                        )}
-                                        ainda não atingiu o Saldo Sugerido.
-                                    </p>
-                                    <p className="text-sm">Faltam <span className="font-bold">{deficitAlertData.missingAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>.</p>
-                                </div>
-                            </div>
-                        )}
-
-
                         <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-8">
                             
                             {/* Coluna Principal (Esquerda) */}
@@ -1589,19 +1644,33 @@
 
                                         {showFullSummary && (
                                             <>
-                                                <div className="bg-green-900/50 p-4 rounded-lg border border-green-700"> <h3 className="text-lg font-semibold text-green-300">Total de Entradas</h3> <p className="text-3xl font-bold text-green-400 mt-2">{totalIncomes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
+                                                <div className="bg-green-900/50 p-4 rounded-lg border border-green-700"> 
+                                                    <h3 className="text-lg font-semibold text-green-300">Total de Entradas (Renda)</h3> 
+                                                    <p className="text-3xl font-bold text-green-400 mt-2">{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
+                                                </div>
+                                                
+                                                {totalTransfers > 0 && (
+                                                    <div className="bg-yellow-900/50 p-4 rounded-lg border border-yellow-700"> 
+                                                        <h3 className="text-lg font-semibold text-yellow-300">Resgates da Reserva</h3> 
+                                                        <p className="text-3xl font-bold text-yellow-400 mt-2">{totalTransfers.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
+                                                    </div>
+                                                )}
+
                                                 <div className="bg-red-900/50 p-4 rounded-lg border border-red-700"> <h3 className="text-lg font-semibold text-red-300">Total de Saídas</h3> <p className="text-3xl font-bold text-red-400 mt-2">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
                                                 
                                                 <div className="bg-green-900/50 p-4 rounded-lg border border-green-700/50">
                                                     <h3 className="text-base font-semibold text-green-300/80">Média de Entradas (Ano)</h3>
-                                                    <p className="text-2xl font-bold text-green-400/90 mt-2">{(totalIncomes/12).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                                    <p className="text-2xl font-bold text-green-400/90 mt-2">{(totalRealIncome/12).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                                                 </div>
                                                 <div className="bg-red-900/50 p-4 rounded-lg border border-red-700/50">
                                                     <h3 className="text-base font-semibold text-red-300/80">Média de Saídas (Ano)</h3>
                                                     <p className="text-2xl font-bold text-red-400/90 mt-2">{(totalExpenses/12).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                                                 </div>
 
-                                                <div className={`md:col-span-2 p-4 rounded-lg border ${balance >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}> <h3 className={`text-lg font-semibold ${balance >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>Saldo Final do Ano</h3> <p className={`text-3xl font-bold mt-2 ${balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}>{balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
+                                                <div className={`md:col-span-2 p-4 rounded-lg border ${balance >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}> 
+                                                    <h3 className={`text-lg font-semibold ${balance >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>Saldo Final do Ano (Disponível)</h3> 
+                                                    <p className={`text-3xl font-bold mt-2 ${balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}>{balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
+                                                </div>
                                             </>
                                         )}
                                     </div>
