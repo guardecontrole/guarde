@@ -1229,28 +1229,6 @@
                 return { show: false };
             }, [stabilityReserveHistory, monthlySummary, currentTwelveMonthAverage, filterYear, combinedExpenses]);
 
-            const depletionProjectionData = useMemo(() => {
-                const endOfMonthReserve = finalStabilityReserve;
-                const suggestedBalance = currentTwelveMonthAverage;
-
-                if (endOfMonthReserve > 0 && endOfMonthReserve < suggestedBalance && stabilityReserveHistory.length > 1) {
-                    return { 
-                        show: true, 
-                        reserveAmount: endOfMonthReserve,
-                        suggestedBalance: suggestedBalance
-                    };
-                }
-                return { show: false };
-            }, [finalStabilityReserve, currentTwelveMonthAverage, stabilityReserveHistory]);
-
-            useEffect(() => {
-                if (depletionProjectionData.show && !depletionModalShownThisSession && !isSimulation) {
-                    setShowDepletionModal(true);
-                    setDepletionModalShownThisSession(true);
-                }
-            }, [depletionProjectionData, depletionModalShownThisSession, isSimulation]);
-
-
             const chartData = useMemo(() => { 
                 const reserveMap = new Map(stabilityReserveHistory.map(entry => [entry.monthKey, { total: entry.totalReserve, movingAvg: entry.movingAverageUsed }])); 
                 
