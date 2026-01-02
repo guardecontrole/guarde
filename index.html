@@ -635,12 +635,9 @@
                                     <th className="p-3 text-sm font-semibold text-gray-400 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('month')}> 
                                         <div className="flex items-center justify-start group"> <span>Mês</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="month" /></span> </div> 
                                     </th> 
-                                    <th className="p-3 text-sm font-semibold text-gray-400 w-1/3 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('description')}> 
+                                    <th className="p-3 text-sm font-semibold text-gray-400 w-1/2 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('description')}> 
                                         <div className="flex items-center justify-start group"> <span>Descrição</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="description" /></span> </div> 
                                     </th> 
-                                     <th className="p-3 text-sm font-semibold text-gray-400 w-1/6 cursor-pointer hover:bg-gray-700/70">
-                                         <div className="flex items-center justify-start group"><span>Tag</span></div>
-                                     </th>
                                      <th className="p-3 text-sm font-semibold text-gray-400 w-1/6 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('responsible')}>
                                          <div className="flex items-center justify-start group"><span>Resp.</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="responsible" /></span></div>
                                      </th>
@@ -655,7 +652,6 @@
                                     <tr key={record.id} className={`border-b border-gray-700 hover:bg-gray-700/70 ${record.isSimulated ? 'italic text-cyan-400' : ''}`}> 
                                         <td className="p-3 text-gray-300 capitalize">{new Date(record.year, record.month).toLocaleString('pt-BR', { month: 'short' }).replace('.','')}</td> 
                                         <td className="p-3">{record.description} {record.isSimulated && <span className="text-xs text-cyan-500">(Simulação)</span>}</td> 
-                                        <td className="p-3 text-gray-400 text-xs">{record.category || '-'}</td>
                                         <td className="p-3 text-gray-300 text-xs">
                                             <span className={`px-2 py-1 rounded-full ${record.responsible === 'Parceiro(a)' ? 'bg-pink-900/50 text-pink-300' : 'bg-blue-900/50 text-blue-300'}`}>
                                                 {record.responsible || 'Eu'}
@@ -682,11 +678,11 @@
         const EditModal = ({ record, onSave, onCancel, onError }) => { 
             const [newDescription, setNewDescription] = useState(record.description); 
             const [newAmount, setNewAmount] = useState(record.amount); 
-            const [newCategory, setNewCategory] = useState(record.category || '');
             const [newResponsible, setNewResponsible] = useState(record.responsible || 'Eu');
             
             const handleSave = () => { 
-                if (!newDescription.trim() || !newAmount || isNaN(parseFloat(newAmount))) { 
+                // CORREÇÃO: Permitir valor 0. A verificação anterior (!newAmount) bloqueava o 0.
+                if (!newDescription.trim() || newAmount === '' || newAmount === null || isNaN(parseFloat(newAmount))) { 
                     onError("Por favor, preencha a descrição e um valor válido."); 
                     return; 
                 } 
@@ -694,7 +690,6 @@
                     ...record, 
                     description: newDescription, 
                     amount: parseFloat(newAmount),
-                    category: newCategory,
                     responsible: newResponsible
                 }); 
             }; 
@@ -708,35 +703,22 @@
                                 <label htmlFor="edit-description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> 
                                 <input id="edit-description" type="text" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> 
                             </div> 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label htmlFor="edit-category" className="block text-sm font-medium text-gray-400 mb-1">Tag/Categoria</label>
-                                    <input id="edit-category" list="category-options" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Mercado"/>
-                                    <datalist id="category-options">
-                                        <option value="Moradia" />
-                                        <option value="Alimentação" />
-                                        <option value="Lazer" />
-                                        <option value="Transporte" />
-                                        <option value="Saúde" />
-                                    </datalist>
-                                </div>
-                                <div>
-                                    <label htmlFor="edit-responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
-                                    <input 
-                                        id="edit-responsible" 
-                                        list="responsible-options"
-                                        value={newResponsible} 
-                                        onChange={(e) => setNewResponsible(e.target.value)} 
-                                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                                        placeholder="Ex: Nome da pessoa"
-                                    />
-                                    <datalist id="responsible-options">
-                                        <option value="Eu" />
-                                        <option value="Parceiro(a)" />
-                                        <option value="Conjunto" />
-                                        <option value="Filho(a)" />
-                                    </datalist>
-                                </div>
+                            <div>
+                                <label htmlFor="edit-responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
+                                <input 
+                                    id="edit-responsible" 
+                                    list="responsible-options"
+                                    value={newResponsible} 
+                                    onChange={(e) => setNewResponsible(e.target.value)} 
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                    placeholder="Ex: Nome da pessoa"
+                                />
+                                <datalist id="responsible-options">
+                                    <option value="Eu" />
+                                    <option value="Parceiro(a)" />
+                                    <option value="Conjunto" />
+                                    <option value="Filho(a)" />
+                                </datalist>
                             </div>
                             <div> 
                                 <label htmlFor="edit-amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> 
@@ -867,14 +849,17 @@
                                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
                                         <span className="font-medium text-gray-200">{item.name}</span>
                                     </div>
-                                    <span className="text-xl font-bold text-green-400">
-                                        {item.avg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                        <span className="text-xs text-gray-500 font-normal ml-1">/mês (ativo)</span>
-                                    </span>
+                                    <div className="text-right">
+                                         <span className="block text-xl font-bold text-green-400">
+                                            {item.avg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            <span className="text-xs text-gray-500 font-normal ml-1">/mês</span>
+                                        </span>
+                                        <span className="text-xs text-gray-400">({item.monthsCount} meses ativos)</span>
+                                    </div>
                                 </div>
                             ))}
                             <p className="text-xs text-gray-500 mt-2">
-                                * Calculado considerando apenas os meses em que cada responsável teve entradas nos últimos 12 meses.
+                                * Média calculada apenas sobre os meses com contribuição.
                             </p>
                         </div>
                     </div>
@@ -953,7 +938,7 @@
             const [formType, setFormType] = useState('income');
             const [description, setDescription] = useState('');
             const [amount, setAmount] = useState('');
-            const [category, setCategory] = useState('');
+            // REMOVED category state
             const [responsible, setResponsible] = useState('Eu');
             const [month, setMonth] = useState(new Date().getMonth());
             const [year, setYear] = useState(new Date().getFullYear());
@@ -1067,14 +1052,15 @@
 
             const handleAddRecord = async (e) => { 
                 e.preventDefault(); 
-                if (!description.trim() || !amount || isNaN(parseFloat(amount))) { 
+                // CORREÇÃO: Permitir valor 0 (zero) como entrada válida.
+                // Verifica se amount é string vazia ou não é número. Se for 0, passa.
+                if (!description.trim() || amount === '' || amount === null || isNaN(parseFloat(amount))) { 
                     setError("Por favor, preencha a descrição e um valor válido."); return; 
                 } 
                 setError(''); 
                 const newRecord = { 
                     description, 
                     amount: parseFloat(amount), 
-                    category,
                     responsible,
                     month: parseInt(month), 
                     year: parseInt(year), 
@@ -1101,7 +1087,6 @@
                 } 
                 setDescription(''); 
                 setAmount(''); 
-                setCategory('');
                 // Keep responsible same for quick entry
             };
 
@@ -1643,7 +1628,12 @@
                         if (!grouping[who]) grouping[who] = 0;
                         grouping[who] += inc.amount;
 
-                        // Registra mês ativo
+                        // Registra mês ativo, MAS APENAS SE O VALOR FOR > 0.
+                        // Se o valor for 0 (lançamento manual para marcar presença sem dinheiro), 
+                        // ele ainda conta como mês ativo, pois o usuário registrou "algo".
+                        // O pedido foi: "se ele quiser continuar no grupo mas não retribuiu, então é só eu digitar uma receita com '0' reais"
+                        // Isso significa que o registro com 0 DEVE contar para o divisor da média.
+                        // Como 'inc' existe, o mês existe. Então a lógica abaixo já está correta.
                         const monthKey = `${inc.year}-${inc.month}`;
                         if (!activeMonthsPerPerson[who]) activeMonthsPerPerson[who] = new Set();
                         activeMonthsPerPerson[who].add(monthKey);
@@ -1968,35 +1958,22 @@
                                     <div className="mb-4 border-b border-gray-700 flex"> <button onClick={() => setFormType('income')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'income' ? 'text-green-400 border-b-2 border-green-400' : 'text-gray-400 hover:text-green-400'}`}> Entrada </button> <button onClick={() => setFormType('expense')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'expense' ? 'text-red-400 border-b-2 border-red-400' : 'text-gray-400 hover:text-red-400'}`}> Saída </button> </div>
                                     <form onSubmit={handleAddRecord} className="space-y-4">
                                         <div> <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> <input id="description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={formType === 'income' ? 'Ex: Salário, Venda' : 'Ex: Aluguel, Compras'} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label htmlFor="category" className="block text-sm font-medium text-gray-400 mb-1">Tag/Categoria</label>
-                                                <input id="category" list="category-options-add" value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Mercado"/>
-                                                <datalist id="category-options-add">
-                                                    <option value="Moradia" />
-                                                    <option value="Alimentação" />
-                                                    <option value="Lazer" />
-                                                    <option value="Transporte" />
-                                                    <option value="Saúde" />
-                                                </datalist>
-                                            </div>
-                                            <div>
-                                                <label htmlFor="responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
-                                                <input 
-                                                    id="responsible" 
-                                                    list="responsible-options-add"
-                                                    value={responsible} 
-                                                    onChange={(e) => setResponsible(e.target.value)} 
-                                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    placeholder="Quem?"
-                                                />
-                                                <datalist id="responsible-options-add">
-                                                    <option value="Eu" />
-                                                    <option value="Parceiro(a)" />
-                                                    <option value="Conjunto" />
-                                                    <option value="Filho(a)" />
-                                                </datalist>
-                                            </div>
+                                        <div>
+                                            <label htmlFor="responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
+                                            <input 
+                                                id="responsible" 
+                                                list="responsible-options-add"
+                                                value={responsible} 
+                                                onChange={(e) => setResponsible(e.target.value)} 
+                                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Quem?"
+                                            />
+                                            <datalist id="responsible-options-add">
+                                                <option value="Eu" />
+                                                <option value="Parceiro(a)" />
+                                                <option value="Conjunto" />
+                                                <option value="Filho(a)" />
+                                            </datalist>
                                         </div>
                                         <div> <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> <input id="amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1500.00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
                                         <div className="flex gap-4"> <div className="flex-1"> <label htmlFor="month" className="block text-sm font-medium text-gray-400 mb-1">Mês</label> <select id="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> {Array.from({length: 12}, (_, i) => <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}</option>)} </select> </div> <div className="flex-1"> <label htmlFor="year" className="block text-sm font-medium text-gray-400 mb-1">Ano</label> <input id="year" type="number" value={year} onChange={(e) => setYear(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div> </div>
