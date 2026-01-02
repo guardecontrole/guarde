@@ -58,7 +58,7 @@
     
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef, useCallback } = React;
-        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } = Recharts;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, PieChart, Pie, Cell } = Recharts;
 
         // --- Configuração e Inicialização do Firebase (SDK v9+) ---
         const firebaseConfig = {
@@ -82,6 +82,9 @@
         const auth = getAuth(app);
         const appId = firebaseConfig.appId || 'default-app-id';
 
+        // --- Cores para Gráficos ---
+        const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
         // --- Ícones SVG ---
         const TrashIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400 hover:text-red-300"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg> );
         const EditIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400 hover:text-blue-300"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> );
@@ -101,6 +104,7 @@
         const CalculatorIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg> );
         const AdjustIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> );
         const InfoIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block ml-1 text-yellow-500"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> );
+        const UsersIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> );
 
         const SortIndicator = ({ sortConfig, columnKey }) => { if (sortConfig.key === columnKey) { return sortConfig.direction === 'ascending' ? <SortAscIcon /> : <SortDescIcon />; } return <NeutralSortIcon />; };
         
@@ -631,9 +635,15 @@
                                     <th className="p-3 text-sm font-semibold text-gray-400 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('month')}> 
                                         <div className="flex items-center justify-start group"> <span>Mês</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="month" /></span> </div> 
                                     </th> 
-                                    <th className="p-3 text-sm font-semibold text-gray-400 w-2/3 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('description')}> 
+                                    <th className="p-3 text-sm font-semibold text-gray-400 w-1/3 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('description')}> 
                                         <div className="flex items-center justify-start group"> <span>Descrição</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="description" /></span> </div> 
                                     </th> 
+                                     <th className="p-3 text-sm font-semibold text-gray-400 w-1/6 cursor-pointer hover:bg-gray-700/70">
+                                         <div className="flex items-center justify-start group"><span>Tag</span></div>
+                                     </th>
+                                     <th className="p-3 text-sm font-semibold text-gray-400 w-1/6 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('responsible')}>
+                                         <div className="flex items-center justify-start group"><span>Resp.</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="responsible" /></span></div>
+                                     </th>
                                     <th className="p-3 text-sm font-semibold text-gray-400 text-right cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('amount')}> 
                                         <div className="flex items-center justify-end group"> <span>Valor</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="amount" /></span> </div> 
                                     </th> 
@@ -645,6 +655,12 @@
                                     <tr key={record.id} className={`border-b border-gray-700 hover:bg-gray-700/70 ${record.isSimulated ? 'italic text-cyan-400' : ''}`}> 
                                         <td className="p-3 text-gray-300 capitalize">{new Date(record.year, record.month).toLocaleString('pt-BR', { month: 'short' }).replace('.','')}</td> 
                                         <td className="p-3">{record.description} {record.isSimulated && <span className="text-xs text-cyan-500">(Simulação)</span>}</td> 
+                                        <td className="p-3 text-gray-400 text-xs">{record.category || '-'}</td>
+                                        <td className="p-3 text-gray-300 text-xs">
+                                            <span className={`px-2 py-1 rounded-full ${record.responsible === 'Parceiro(a)' ? 'bg-pink-900/50 text-pink-300' : 'bg-blue-900/50 text-blue-300'}`}>
+                                                {record.responsible || 'Eu'}
+                                            </span>
+                                        </td>
                                         <td className={`p-3 font-medium text-right ${type === 'income' ? 'text-green-400' : 'text-red-400'}`}> {record.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} </td> 
                                         <td className="p-3 text-center"> 
                                             <div className="flex justify-center items-center gap-3"> 
@@ -666,13 +682,21 @@
         const EditModal = ({ record, onSave, onCancel, onError }) => { 
             const [newDescription, setNewDescription] = useState(record.description); 
             const [newAmount, setNewAmount] = useState(record.amount); 
+            const [newCategory, setNewCategory] = useState(record.category || '');
+            const [newResponsible, setNewResponsible] = useState(record.responsible || 'Eu');
             
             const handleSave = () => { 
                 if (!newDescription.trim() || !newAmount || isNaN(parseFloat(newAmount))) { 
                     onError("Por favor, preencha a descrição e um valor válido."); 
                     return; 
                 } 
-                onSave(record.id, record.type, { ...record, description: newDescription, amount: parseFloat(newAmount) }); 
+                onSave(record.id, record.type, { 
+                    ...record, 
+                    description: newDescription, 
+                    amount: parseFloat(newAmount),
+                    category: newCategory,
+                    responsible: newResponsible
+                }); 
             }; 
             
             return ( 
@@ -684,6 +708,27 @@
                                 <label htmlFor="edit-description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> 
                                 <input id="edit-description" type="text" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> 
                             </div> 
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label htmlFor="edit-category" className="block text-sm font-medium text-gray-400 mb-1">Tag/Categoria</label>
+                                    <input id="edit-category" list="category-options" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Mercado"/>
+                                    <datalist id="category-options">
+                                        <option value="Moradia" />
+                                        <option value="Alimentação" />
+                                        <option value="Lazer" />
+                                        <option value="Transporte" />
+                                        <option value="Saúde" />
+                                    </datalist>
+                                </div>
+                                <div>
+                                    <label htmlFor="edit-responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
+                                    <select id="edit-responsible" value={newResponsible} onChange={(e) => setNewResponsible(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="Eu">Eu</option>
+                                        <option value="Parceiro(a)">Parceiro(a)</option>
+                                        <option value="Conjunto">Conjunto</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div> 
                                 <label htmlFor="edit-amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> 
                                 <input id="edit-amount" type="number" step="0.01" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> 
@@ -769,6 +814,65 @@
             </div> 
         );
 
+        const ContributionAnalysis = ({ contributionData, individualAverages }) => {
+            const chartData = contributionData.map(d => ({ name: d.name, value: d.value }));
+
+            return (
+                <div className="bg-gray-800/50 p-6 rounded-b-xl rounded-r-xl shadow-inner space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Gráfico de Pizza - Contribuição no Ano */}
+                        <div className="bg-gray-700/30 p-4 rounded-xl flex flex-col items-center">
+                            <h3 className="text-lg font-semibold text-gray-300 mb-4">Contribuição de Renda (Este Ano)</h3>
+                            {chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <PieChart>
+                                        <Pie
+                                            data={chartData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            fill="#8884d8"
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {chartData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <p className="text-gray-500 my-10">Sem dados de renda para este ano.</p>
+                            )}
+                        </div>
+
+                        {/* Médias Individuais */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-gray-300 mb-2">Médias de Entradas (Últimos 12 Meses)</h3>
+                            {individualAverages.map((item, index) => (
+                                <div key={item.name} className="bg-gray-700/50 p-4 rounded-lg border border-gray-600 flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                                        <span className="font-medium text-gray-200">{item.name}</span>
+                                    </div>
+                                    <span className="text-xl font-bold text-green-400">
+                                        {item.avg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                        <span className="text-xs text-gray-500 font-normal ml-1">/mês</span>
+                                    </span>
+                                </div>
+                            ))}
+                            <p className="text-xs text-gray-500 mt-2">
+                                * Calculado com base nas entradas dos últimos 12 meses corridos.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const StabilityReserveHistoryTable = ({ data, sortConfig, requestSort }) => ( 
             <div className="bg-gray-800/50 p-6 rounded-b-xl rounded-r-xl shadow-inner"> 
                 <h2 className="text-xl font-semibold text-gray-200 mb-4">Histórico da Reserva de Estabilidade</h2> 
@@ -840,6 +944,8 @@
             const [formType, setFormType] = useState('income');
             const [description, setDescription] = useState('');
             const [amount, setAmount] = useState('');
+            const [category, setCategory] = useState('');
+            const [responsible, setResponsible] = useState('Eu');
             const [month, setMonth] = useState(new Date().getMonth());
             const [year, setYear] = useState(new Date().getFullYear());
             const [filterYear, setFilterYear] = useState(new Date().getFullYear());
@@ -956,7 +1062,15 @@
                     setError("Por favor, preencha a descrição e um valor válido."); return; 
                 } 
                 setError(''); 
-                const newRecord = { description, amount: parseFloat(amount), month: parseInt(month), year: parseInt(year), createdAt: new Date() }; 
+                const newRecord = { 
+                    description, 
+                    amount: parseFloat(amount), 
+                    category,
+                    responsible,
+                    month: parseInt(month), 
+                    year: parseInt(year), 
+                    createdAt: new Date() 
+                }; 
                 
                 if(isSimulation){ 
                     const simId = `sim-${Date.now()}`; 
@@ -978,6 +1092,8 @@
                 } 
                 setDescription(''); 
                 setAmount(''); 
+                setCategory('');
+                // Keep responsible same for quick entry
             };
 
             const handleDeleteRecord = async (id, type) => { 
@@ -1482,6 +1598,45 @@
                 };
             }, [combinedIncomes, combinedExpenses, contextDate]);
             
+            // Dados de contribuição para a nova Aba
+            const contributionData = useMemo(() => {
+                // Filtrar entradas dos últimos 12 meses (baseado no contextDate)
+                const windowStart = new Date(contextDate.getFullYear(), contextDate.getMonth() - 11, 1);
+                const windowEnd = new Date(contextDate.getFullYear(), contextDate.getMonth() + 1, 0);
+                
+                const data = {};
+                
+                combinedIncomes.forEach(inc => {
+                    const d = new Date(inc.year, inc.month, 1);
+                     if (d >= windowStart && d <= windowEnd && !inc.isReserveAdjustment && !inc.isTransferFromReserve) {
+                        const who = inc.responsible || 'Eu';
+                        if (!data[who]) data[who] = 0;
+                        data[who] += inc.amount;
+                    }
+                });
+                
+                return Object.entries(data).map(([name, value]) => ({ name, value }));
+            }, [combinedIncomes, contextDate]);
+            
+            const individualAverages = useMemo(() => {
+                 const windowStart = new Date(contextDate.getFullYear(), contextDate.getMonth() - 11, 1);
+                 const windowEnd = new Date(contextDate.getFullYear(), contextDate.getMonth() + 1, 0);
+                 
+                 const grouping = {};
+                 
+                 combinedIncomes.forEach(inc => {
+                    const d = new Date(inc.year, inc.month, 1);
+                     if (d >= windowStart && d <= windowEnd && !inc.isReserveAdjustment && !inc.isTransferFromReserve) {
+                        const who = inc.responsible || 'Eu';
+                        if (!grouping[who]) grouping[who] = 0;
+                        grouping[who] += inc.amount;
+                    }
+                 });
+                 
+                 // Simplesmente dividir por 12 para média mensal
+                 return Object.entries(grouping).map(([name, total]) => ({ name, avg: total / 12 }));
+            }, [combinedIncomes, contextDate]);
+
             const stabilityReserveHistory = useMemo(() => { 
                 const monthlyNetIncomes = {}; 
                 const adjustmentFlags = {}; // Rastreia meses com ajuste manual
@@ -1564,47 +1719,6 @@
                     .reduce((sum, e) => sum + e.amount, 0);
                 return (income + transfers) - expense;
             }, [filteredIncomes, reserveTransfers, filteredExpenses]);
-
-            const deficitAlertData = useMemo(() => {
-                const now = new Date();
-                const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
-                
-                const lastMonthHistory = stabilityReserveHistory.find(h => h.monthKey === currentMonthKey);
-                if (!lastMonthHistory) return { show: false };
-
-                const netIncomeCurrentMonth = monthlySummary.find(m => m.month === now.getMonth())?.balance || 0;
-                const suggestedBalance = currentTwelveMonthAverage;
-                
-                // Calculate transfers FROM reserve to checking (Expenses marked as adjustments)
-                // This means the user withdrew from reserve to cover expenses.
-                const transfersFromReserve = combinedExpenses
-                    .filter(e => e.month === now.getMonth() && e.year === now.getFullYear() && e.isReserveAdjustment)
-                    .reduce((sum, e) => sum + e.amount, 0);
-
-                // We treat this withdrawal as "Available Income" for the purpose of meeting the suggested balance target.
-                const actualAvailableBalance = netIncomeCurrentMonth + transfersFromReserve;
-                
-                if (actualAvailableBalance < suggestedBalance) {
-                    const deficit = suggestedBalance - actualAvailableBalance;
-                    // Check if remaining reserve can cover the deficit (though deficit is calculated after withdrawal).
-                    // Actually, if there is ANY deficit, we show the alert.
-                    // The alert logic previously checked if reserve covers it.
-                    // Now, if actualAvailableBalance < suggestedBalance, there is a GAP.
-                    // We check if the user has enough Reserve (after the withdrawal) to cover this GAP.
-                    
-                    const currentReserveTotal = lastMonthHistory.totalReserve; // This already reflects the withdrawal.
-
-                    if (currentReserveTotal < deficit && deficit > 0) {
-                         return {
-                            show: true,
-                            missingAmount: deficit,
-                            actualBalance: actualAvailableBalance,
-                            transfersFromReserve: transfersFromReserve // Pass to UI to show breakdown
-                        };
-                    }
-                }
-                return { show: false };
-            }, [stabilityReserveHistory, monthlySummary, currentTwelveMonthAverage, filterYear, combinedExpenses]);
 
             const chartData = useMemo(() => { 
                 const data = [];
@@ -1778,8 +1892,6 @@
                                                     <p className="text-3xl font-bold text-green-400 mt-2">{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
                                                 </div>
                                                 
-                                                {/* Card de Resgates REMOVIDO conforme solicitado */}
-
                                                 <div className="bg-red-900/50 p-4 rounded-lg border border-red-700"> <h3 className="text-lg font-semibold text-red-300">Total de Saídas</h3> <p className="text-3xl font-bold text-red-400 mt-2">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
                                                 
                                                 <div className="bg-green-900/50 p-4 rounded-lg border border-green-700/50">
@@ -1815,6 +1927,7 @@
                                         <button onClick={() => setActiveTab('reserve')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'reserve' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Reserva de Estabilidade </button>
                                         <button onClick={() => setActiveTab('incomes')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'incomes' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Entradas </button>
                                         <button onClick={() => setActiveTab('expenses')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'expenses' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Saídas </button>
+                                        <button onClick={() => setActiveTab('couple')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'couple' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Visão Casal </button>
                                     </div>
                                     <div className="mt-4"> 
                                         {isLoading && !user ? (<p className="text-gray-500 text-center py-4">Carregando dados...</p>) : ( <> 
@@ -1822,6 +1935,7 @@
                                             {activeTab === 'reserve' && <StabilityReserveHistoryTable data={sortedStabilityReserveHistory} sortConfig={sortConfigs.reserve} requestSort={(key) => handleRequestSort('reserve', key)} />} 
                                             {activeTab === 'incomes' && <RecordsTable title={`Detalhes de Entradas (${filterYear})`} records={sortedFilteredIncomes} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="income" sortConfig={sortConfigs.incomes} requestSort={(key) => handleRequestSort('incomes', key)} isSimulation={isSimulation} />} 
                                             {activeTab === 'expenses' && <RecordsTable title={`Detalhes de Saídas (${filterYear})`} records={sortedFilteredExpenses} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="expense" sortConfig={sortConfigs.expenses} requestSort={(key) => handleRequestSort('expenses', key)} isSimulation={isSimulation} />} 
+                                            {activeTab === 'couple' && <ContributionAnalysis contributionData={contributionData} individualAverages={individualAverages} />}
                                         </> )} 
                                     </div>
                                 </div>
@@ -1834,6 +1948,27 @@
                                     <div className="mb-4 border-b border-gray-700 flex"> <button onClick={() => setFormType('income')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'income' ? 'text-green-400 border-b-2 border-green-400' : 'text-gray-400 hover:text-green-400'}`}> Entrada </button> <button onClick={() => setFormType('expense')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'expense' ? 'text-red-400 border-b-2 border-red-400' : 'text-gray-400 hover:text-red-400'}`}> Saída </button> </div>
                                     <form onSubmit={handleAddRecord} className="space-y-4">
                                         <div> <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> <input id="description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={formType === 'income' ? 'Ex: Salário, Venda' : 'Ex: Aluguel, Compras'} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label htmlFor="category" className="block text-sm font-medium text-gray-400 mb-1">Tag/Categoria</label>
+                                                <input id="category" list="category-options-add" value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Mercado"/>
+                                                <datalist id="category-options-add">
+                                                    <option value="Moradia" />
+                                                    <option value="Alimentação" />
+                                                    <option value="Lazer" />
+                                                    <option value="Transporte" />
+                                                    <option value="Saúde" />
+                                                </datalist>
+                                            </div>
+                                            <div>
+                                                <label htmlFor="responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
+                                                <select id="responsible" value={responsible} onChange={(e) => setResponsible(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <option value="Eu">Eu</option>
+                                                    <option value="Parceiro(a)">Parceiro(a)</option>
+                                                    <option value="Conjunto">Conjunto</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                         <div> <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> <input id="amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1500.00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
                                         <div className="flex gap-4"> <div className="flex-1"> <label htmlFor="month" className="block text-sm font-medium text-gray-400 mb-1">Mês</label> <select id="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> {Array.from({length: 12}, (_, i) => <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}</option>)} </select> </div> <div className="flex-1"> <label htmlFor="year" className="block text-sm font-medium text-gray-400 mb-1">Ano</label> <input id="year" type="number" value={year} onChange={(e) => setYear(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div> </div>
                                         <button type="submit" className={`w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${formType === 'income' ? 'bg-green-600 hover:bg-green-500 focus:ring-green-500' : 'bg-red-600 hover:bg-red-500 focus:ring-red-500'}`}> Adicionar {formType === 'income' ? 'Entrada' : 'Saída'} </button>
