@@ -1,15 +1,14 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Controle Financeiro Moderno</title>
+    <title>Painel de Administração</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -21,46 +20,18 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-300">
+<body class="bg-gray-900">
     <div id="root"></div>
 
-    <!-- SDKs do Firebase (Versão Modular v9+) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged, 
-            signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword,
-            GoogleAuthProvider,
-            signInWithPopup,
-            signOut
-        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            doc, 
-            onSnapshot, 
-            addDoc, 
-            deleteDoc, 
-            updateDoc, 
-            setDoc, 
-            getDoc,
-            serverTimestamp 
-        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+    <!-- SDKs do Firebase (Versão de Compatibilidade v8) -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
 
-        window.firebase = {
-             initializeApp,
-             getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut,
-             getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, setDoc, getDoc, serverTimestamp
-        };
-    </script>
-    
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef, useCallback } = React;
-        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, PieChart, Pie, Cell } = Recharts;
+        const { useState, useEffect, useMemo } = React;
 
-        // --- Configuração e Inicialização do Firebase (SDK v9+) ---
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCjRdWFxR07ryhlI4bB8XJjBoxqXjw2LBE",
             authDomain: "guardecontrolefinanceiro.firebaseapp.com",
@@ -71,1957 +42,328 @@
             measurementId: "G-9D98TPEQ7V"
         };
         
-        const {
-            initializeApp, getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-            GoogleAuthProvider, signInWithPopup, signOut, getFirestore, collection, doc, onSnapshot,
-            addDoc, deleteDoc, updateDoc, setDoc, getDoc, serverTimestamp
-        } = window.firebase;
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const appId = firebaseConfig.appId || 'default-app-id';
-
-        // --- Cores para Gráficos ---
-        const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
+        let adminApp;
+        if (!firebase.apps.length) {
+            adminApp = firebase.initializeApp(firebaseConfig);
+        } else {
+            adminApp = firebase.initializeApp(firebaseConfig, "adminApp");
+        }
+        
+        const db = adminApp.firestore();
+        const auth = adminApp.auth();
 
         // --- Ícones SVG ---
-        const TrashIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400 hover:text-red-300"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg> );
-        const EditIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400 hover:text-blue-300"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> );
-        const ShieldIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> );
-        const ExportIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> );
-        const ImportIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 5 17 10"></polyline><line x1="12" y1="5" x2="12" y2="19"></line></svg> );
-        const UndoIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg> );
-        const RedoIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"></path></svg> );
-        const HelpIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> );
+        const UsersIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> );
         const LogoutIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> );
-        const GoogleIcon = () => ( <svg className="w-5 h-5 mr-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 381.5 512 244 512 109.8 512 0 402.2 0 261.8 0 122.4 109.8 13.6 244 13.6c70.3 0 129.8 27.8 174.3 71.9l-64.8 64.8C327.5 112.5 289.1 90.9 244 90.9c-86.1 0-156.2 69.1-156.2 154.9s70.1 154.9 156.2 154.9c94.2 0 135.3-72.2 140.8-109.9H244V261.8h244z"></path></svg> );
-        const SortAscIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-blue-400"><path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14l-6-6z"></path></svg> );
-        const SortDescIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-blue-400"><path d="M12 16l-6-6 1.41-1.41L12 13.17l4.59-4.58L18 10l-6 6z"></path></svg> );
-        const NeutralSortIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity"><path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path></svg> );
-        const AlertTriangleIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-400"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>);
-        const ResetIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg> );
-        const CalculatorIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg> );
-        const AdjustIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> );
-        const InfoIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block ml-1 text-yellow-500"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> );
-        const UsersIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> );
+        const TrashIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-red-500"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> );
+        const AddUserIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line></svg> );
 
-        const SortIndicator = ({ sortConfig, columnKey }) => { if (sortConfig.key === columnKey) { return sortConfig.direction === 'ascending' ? <SortAscIcon /> : <SortDescIcon />; } return <NeutralSortIcon />; };
-        
-        // --- COMPONENTES ---
-
-        const AuthModal = ({ auth, db }) => {
-            const [isLoginView, setIsLoginView] = useState(true);
+        // --- Componente de Login do Admin ---
+        const AdminLogin = ({ auth }) => {
             const [email, setEmail] = useState('');
             const [password, setPassword] = useState('');
             const [error, setError] = useState('');
             const [loading, setLoading] = useState(false);
 
-            const handleAuthSuccess = async (userCredential) => {
-                const user = userCredential.user;
-                const userRef = doc(db, "users", user.uid);
-                const userData = {
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName,
-                    photoURL: user.photoURL,
-                    lastLoginAt: serverTimestamp(),
-                };
-                await setDoc(userRef, userData, { merge: true });
-            };
+            const ADMIN_EMAILS = ['admin@example.com', 'tidiegolemes@gmail.com'];
 
-            const handleAuthAction = async (e) => {
+            const handleLogin = async (e) => {
                 e.preventDefault();
                 setLoading(true);
                 setError('');
-                try {
-                    let userCredential;
-                    if (isLoginView) {
-                        userCredential = await signInWithEmailAndPassword(auth, email, password);
-                    } else {
-                        userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                        const userRef = doc(db, "users", userCredential.user.uid);
-                        await setDoc(userRef, { plan: 'free', createdAt: serverTimestamp() }, { merge: true });
-                    }
-                    await handleAuthSuccess(userCredential);
-                } catch (err) {
-                    setError(getFriendlyAuthError(err.code));
-                }
-                setLoading(false);
-            };
 
-            const handleGoogleSignIn = async () => {
-                setLoading(true);
-                setError('');
+                if (!ADMIN_EMAILS.includes(email)) {
+                    setError("Acesso negado. Esta conta não tem permissão de administrador.");
+                    setLoading(false);
+                    return;
+                }
+
                 try {
-                    const provider = new GoogleAuthProvider();
-                    const result = await signInWithPopup(auth, provider);
-                    const userRef = doc(db, "users", result.user.uid);
-                    const docSnap = await getDoc(userRef);
-                    if (!docSnap.exists()) {
-                        await setDoc(userRef, { plan: 'free', createdAt: serverTimestamp() }, { merge: true });
-                    }
-                    await handleAuthSuccess(result);
+                    await auth.signInWithEmailAndPassword(email, password);
                 } catch (err) {
-                    setError(getFriendlyAuthError(err.code));
+                    setError("E-mail ou senha inválidos.");
+                    console.error("Erro de login do admin:", err);
                 }
                 setLoading(false);
-            };
-            
-            const getFriendlyAuthError = (code) => {
-                switch (code) {
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                        return 'E-mail ou senha inválidos.';
-                    case 'auth/email-already-in-use':
-                        return 'Este e-mail já está em uso.';
-                    case 'auth/weak-password':
-                        return 'A senha deve ter pelo menos 6 caracteres.';
-                    case 'auth/invalid-email':
-                        return 'O formato do e-mail é inválido.';
-                    default:
-                        return 'Ocorreu um erro. Por favor, tente novamente.';
-                }
             };
 
             return (
-                <div className="fixed inset-0 bg-gray-900 flex justify-center items-center z-50">
-                    <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-700">
-                        <h2 className="text-3xl font-bold text-gray-100 mb-2 text-center">{isLoginView ? 'Bem-vindo de volta!' : 'Crie sua conta'}</h2>
-                        <p className="text-gray-400 text-center mb-6">{isLoginView ? 'Insira suas credenciais para acessar.' : 'Cadastre-se para começar a controlar suas finanças.'}</p>
-                        {error && <div className="bg-red-900/50 border border-red-500 text-red-400 px-4 py-3 rounded-lg mb-4" role="alert">{error}</div>}
-                        <form onSubmit={handleAuthAction}>
-                            <div className="space-y-4">
-                                <input type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                                <input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                <div className="bg-gray-900 min-h-screen flex items-center justify-center">
+                    <div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
+                        <div>
+                            <img src="https://media.bio.site/sites/22b0c520-f325-4c8a-81ca-529cca4ddd29/DsFpxmnAEUeowbT6Dw9s2J.jpg" alt="Logo" className="w-20 h-20 mx-auto rounded-full" />
+                            <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+                                Painel de Administração
+                            </h2>
+                        </div>
+                        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+                            <div className="rounded-md shadow-sm -space-y-px">
+                                <div>
+                                    <input id="email-address" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Endereço de e-mail" />
+                                </div>
+                                <div>
+                                    <input id="password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Senha" />
+                                </div>
                             </div>
-                            <button type="submit" disabled={loading} className="w-full mt-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 transition-colors disabled:bg-blue-800 disabled:cursor-not-allowed">
-                                {loading ? 'Processando...' : (isLoginView ? 'Entrar' : 'Cadastrar')}
-                            </button>
+                            {error && <p className="mt-2 text-center text-sm text-red-400">{error}</p>}
+                            <div>
+                                <button type="submit" disabled={loading} className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-800">
+                                    {loading ? 'Entrando...' : 'Entrar'}
+                                </button>
+                            </div>
                         </form>
-                        <div className="relative my-6"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-600"></div></div><div className="relative flex justify-center text-sm"><span className="px-2 bg-gray-800 text-gray-500">OU</span></div></div>
-                        <button onClick={handleGoogleSignIn} disabled={loading} className="w-full flex justify-center items-center py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors border border-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed">
-                            <GoogleIcon />
-                            {isLoginView ? 'Entrar com o Google' : 'Cadastrar com o Google'}
-                        </button>
-                        <p className="mt-6 text-center text-sm text-gray-400">
-                            {isLoginView ? 'Não tem uma conta?' : 'Já tem uma conta?'}
-                            <button onClick={() => { setIsLoginView(!isLoginView); setError(''); }} className="font-medium text-blue-400 hover:text-blue-300 ml-1">
-                                {isLoginView ? 'Cadastre-se' : 'Entrar'}
-                            </button>
-                        </p>
                     </div>
                 </div>
             );
         };
 
-        const OnboardingModal = ({ onSave, onCancel }) => {
-            const [initialAverage, setInitialAverage] = useState('');
-            const [months, setMonths] = useState('');
+        // --- Componente Modal para Adicionar Usuário ---
+        const AddUserModal = ({ onClose, onCreateUser }) => {
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
 
-            const handleSave = () => {
-                const avg = parseFloat(initialAverage);
-                const numMonths = parseInt(months, 10);
-                if (isNaN(avg) || avg <= 0 || isNaN(numMonths) || numMonths <= 0 || numMonths > 120) {
-                     alert("Por favor, insira valores válidos (Média > 0, Meses entre 1 e 120).");
+            const handleCreate = async (e) => {
+                e.preventDefault();
+                if (password.length < 6) {
+                    setError("A senha deve ter pelo menos 6 caracteres.");
                     return;
                 }
-                onSave(avg, numMonths);
+                setLoading(true);
+                setError('');
+                const success = await onCreateUser(email, password);
+                if (success) {
+                    onClose();
+                } else {
+                    setError("Não foi possível criar o usuário. O e-mail pode já estar em uso.");
+                }
+                setLoading(false);
             };
-            
+
             return (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-lg text-center">
-                        <h2 className="text-2xl font-bold text-gray-100 mb-4">Configuração Inicial</h2>
-                        <p className="text-gray-400 mb-6">Para que o "Saldo Sugerido" funcione bem, precisamos de uma base. Como você prefere começar?</p>
-                        <div className="space-y-4">
-                            <button onClick={onCancel} className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 transition-colors">
-                                Começar do Zero
-                            </button>
-                            <div className="relative my-4">
-                                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-600"></div></div>
-                                <div className="relative flex justify-center text-sm"><span className="px-2 bg-gray-800 text-gray-500">OU</span></div>
+                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-md border border-gray-700">
+                        <h2 className="text-2xl font-bold text-gray-100 mb-6">Criar Novo Usuário</h2>
+                        {error && <p className="mb-4 text-center text-sm text-red-400">{error}</p>}
+                        <form onSubmit={handleCreate}>
+                            <div className="space-y-4">
+                                <input type="email" placeholder="E-mail do novo usuário" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                                <input type="password" placeholder="Senha (mínimo 6 caracteres)" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                             </div>
-                            <div className="bg-gray-700/50 p-4 rounded-lg text-left">
-                                <p className="text-gray-300 mb-2 font-semibold">Já tem um controle financeiro?</p>
-                                <p className="text-sm text-gray-400 mb-4">Informe sua média de saldo mensal e por quantos meses você a calculou.</p>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                    <div className="md:col-span-2">
-                                        <label htmlFor="avg-input" className="block text-sm font-medium text-gray-400 mb-1">Sua Média de Saldo (R$)</label>
-                                        <input 
-                                            id="avg-input"
-                                            type="number" 
-                                            step="0.01" 
-                                            value={initialAverage}
-                                            onChange={(e) => setInitialAverage(e.target.value)}
-                                            placeholder="Ex: 4500.50" 
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                        />
-                                    </div>
-                                    <div>
-                                         <label htmlFor="months-input" className="block text-sm font-medium text-gray-400 mb-1">Nº de Meses</label>
-                                        <input 
-                                            id="months-input"
-                                            type="number"
-                                            value={months}
-                                            onChange={(e) => setMonths(e.target.value)}
-                                            placeholder="Ex: 6" 
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                        />
-                                    </div>
-                                </div>
-                                <button onClick={handleSave} className="mt-4 w-full px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-500 transition-colors">
-                                    Salvar Média Inicial
+                            <div className="mt-8 flex justify-end gap-4">
+                                <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors">Cancelar</button>
+                                <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors disabled:bg-blue-800">
+                                    {loading ? 'Criando...' : 'Criar Usuário'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Componente do Painel Principal ---
+        const Dashboard = ({ auth, db, adminUser }) => {
+            const [users, setUsers] = useState([]);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [loading, setLoading] = useState(true);
+            const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
+
+            useEffect(() => {
+                const usersCollection = db.collection("users");
+                const unsubscribe = usersCollection.onSnapshot((snapshot) => {
+                    const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setUsers(usersData);
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Erro ao buscar usuários: ", error);
+                    setLoading(false);
+                });
+                return () => unsubscribe();
+            }, [db]);
+
+            const handleCreateUser = async (email, password) => {
+                // NOTA: Esta abordagem client-side tem uma limitação: ela irá logar o novo usuário
+                // temporariamente e depois deslogá-lo para manter o admin logado.
+                // A abordagem ideal para produção seria usar Firebase Cloud Functions.
+                try {
+                    const tempAuthApp = firebase.initializeApp(firebaseConfig, "temp-user-creation");
+                    const tempAuth = tempAuthApp.auth();
+                    const userCredential = await tempAuth.createUserWithEmailAndPassword(email, password);
+                    
+                    const userRef = db.collection("users").doc(userCredential.user.uid);
+                    await userRef.set({
+                        uid: userCredential.user.uid,
+                        email: userCredential.user.email,
+                        plan: 'free',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    await tempAuth.signOut();
+                    await tempAuthApp.delete(); // Limpa a instância temporária
+                    
+                    alert(`Usuário ${email} criado com sucesso!`);
+                    return true;
+                } catch (error) {
+                    console.error("Erro ao criar usuário:", error);
+                    return false;
+                }
+            };
+
+            const handlePlanChange = async (userId, newPlan) => {
+                const userDocRef = db.collection("users").doc(userId);
+                try {
+                    await userDocRef.update({ plan: newPlan });
+                    alert(`Plano do usuário atualizado para ${newPlan}.`);
+                } catch (error) {
+                    console.error("Erro ao atualizar plano: ", error);
+                    alert("Falha ao atualizar o plano.");
+                }
+            };
+
+            const handleDeleteUser = async (userId) => {
+                if (window.confirm(`Tem certeza que deseja apagar os dados do usuário do Firestore? Esta ação não pode ser desfeita e não apaga o usuário da Autenticação.`)) {
+                    try {
+                        await db.collection("users").doc(userId).delete();
+                        alert("Dados do usuário apagados do Firestore com sucesso.");
+                    } catch (error) {
+                        console.error("Erro ao apagar dados do usuário: ", error);
+                        alert("Falha ao apagar dados do usuário.");
+                    }
+                }
+            };
+
+            const filteredUsers = useMemo(() => 
+                users.filter(user => 
+                    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
+                ), 
+            [users, searchTerm]);
+
+            const formatDate = (timestamp) => {
+                if (timestamp && timestamp.toDate) {
+                    return timestamp.toDate().toLocaleString('pt-BR');
+                }
+                return 'N/A';
+            };
+
+            return (
+                <div className="bg-gray-900 min-h-screen text-gray-300">
+                    {isAddUserModalOpen && <AddUserModal onClose={() => setAddUserModalOpen(false)} onCreateUser={handleCreateUser} />}
+                    <header className="bg-gray-800 shadow-md">
+                        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <img src="https://media.bio.site/sites/22b0c520-f325-4c8a-81ca-529cca4ddd29/DsFpxmnAEUeowbT6Dw9s2J.jpg" alt="Logo" className="w-10 h-10 rounded-full" />
+                                <h1 className="text-2xl font-bold text-white">Painel de Administração</h1>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm text-gray-400 hidden sm:block">{adminUser.email}</span>
+                                <button onClick={() => auth.signOut()} className="flex items-center justify-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-500 transition-colors text-sm">
+                                    <LogoutIcon />
+                                    Sair
                                 </button>
                             </div>
                         </div>
-                    </div>
-                </div>
-            );
-        };
-        
-        const AdjustReserveModal = ({ isOpen, onClose, currentCalculatedReserve, onConfirm, currentMonthBalance, suggestedBalance }) => {
-            const [realReserve, setRealReserve] = useState('');
-            const [deficit, setDeficit] = useState(0);
-            const [adjustmentType, setAdjustmentType] = useState('correction'); // 'correction' or 'movement'
-
-            useEffect(() => {
-                if (isOpen) {
-                    setRealReserve('');
-                    setAdjustmentType('correction');
-                    // Calculate deficit if current balance is below suggested
-                    // Note: We use the balance BEFORE any potential reserve transfer here to show the gap.
-                    const gap = suggestedBalance - currentMonthBalance;
-                    setDeficit(gap > 0 ? gap : 0);
-                }
-            }, [isOpen, currentMonthBalance, suggestedBalance]);
-
-            const handleConfirm = () => {
-                const value = parseFloat(realReserve);
-                if (isNaN(value)) {
-                    alert("Por favor, insira um valor válido.");
-                    return;
-                }
-                onConfirm(value, adjustmentType);
-            };
-
-            if (!isOpen) return null;
-
-            return (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-sm">
-                        <h2 className="text-xl font-bold text-gray-100 mb-4">Ajustar Reserva Manualmente</h2>
-                        <div className="space-y-4">
-                            <div>
-                                <p className="text-sm text-gray-400 mb-1">Valor Calculado pelo App:</p>
-                                <p className="text-xl font-bold text-gray-300">{currentCalculatedReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                            </div>
-                            
-                            {deficit > 0 && parseFloat(realReserve) !== 0 && (
-                                <div className="bg-yellow-900/40 border border-yellow-600/50 p-3 rounded-lg text-sm">
-                                    <p className="font-bold text-yellow-400 mb-1">Atenção!</p>
-                                    <p className="text-gray-300 mb-2">
-                                        Seu saldo atual está abaixo do sugerido. Faltam <span className="font-bold">{deficit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>.
-                                    </p>
-                                    <p className="text-gray-400 text-xs">
-                                        Ao confirmar, esse valor será automaticamente <strong>retirado da reserva</strong> para cobrir a meta (registrado como "Resgate").
-                                    </p>
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="block text-sm font-medium text-purple-300 mb-1">Qual o valor REAL da reserva hoje?</label>
-                                <input 
-                                    type="number" 
-                                    step="0.01" 
-                                    value={realReserve}
-                                    onChange={(e) => setRealReserve(e.target.value)}
-                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="Ex: 5000.00"
-                                />
-                            </div>
-                            
-                            {parseFloat(realReserve) === 0 ? (
-                                <div className="bg-red-900/40 border border-red-600/50 p-3 rounded-lg text-sm mt-2 animate-pulse">
-                                    <p className="font-bold text-red-400 mb-1">Reiniciar Reserva?</p>
-                                    <p className="text-gray-300 text-xs">
-                                        Definir como <strong>0</strong> irá apagar todos os ajustes manuais e resgates automáticos anteriores, permitindo recalcular e reajustar do zero.
-                                    </p>
-                                </div>
-                            ) : (
-                                realReserve && (
-                                    <div className="bg-gray-700/50 p-3 rounded-lg space-y-2">
-                                        <p className="text-sm font-medium text-gray-300">Qual a origem da diferença?</p>
-                                        <div className="space-y-2">
-                                            <label className="flex items-start cursor-pointer">
-                                                <input 
-                                                    type="radio" 
-                                                    name="adjustmentType" 
-                                                    value="correction"
-                                                    checked={adjustmentType === 'correction'}
-                                                    onChange={() => setAdjustmentType('correction')}
-                                                    className="mt-1 mr-2 text-purple-500 focus:ring-purple-500"
-                                                />
-                                                <span className="text-sm text-gray-400">
-                                                    <span className="block text-white font-medium">Apenas Correção / Saldo Antigo</span>
-                                                    <span className="text-xs">O dinheiro já estava lá (ou não estava), apenas esqueci de anotar. (Não afeta relatórios de Renda)</span>
-                                                </span>
-                                            </label>
-                                            <label className="flex items-start cursor-pointer">
-                                                <input 
-                                                    type="radio" 
-                                                    name="adjustmentType" 
-                                                    value="movement"
-                                                    checked={adjustmentType === 'movement'}
-                                                    onChange={() => setAdjustmentType('movement')}
-                                                    className="mt-1 mr-2 text-purple-500 focus:ring-purple-500"
-                                                />
-                                                <span className="text-sm text-gray-400">
-                                                    <span className="block text-white font-medium">Nova Movimentação Real</span>
-                                                    <span className="text-xs">Ganhei ou gastei esse dinheiro hoje. (Afeta relatórios como Entrada/Saída)</span>
-                                                </span>
-                                            </label>
+                    </header>
+                    <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                        <div className="px-4 py-6 sm:px-0">
+                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                <div className="bg-gray-800 overflow-hidden shadow rounded-lg">
+                                    <div className="p-5">
+                                        <div className="flex items-center">
+                                            <div className="flex-shrink-0"><UsersIcon /></div>
+                                            <div className="ml-5 w-0 flex-1"><dl><dt className="text-sm font-medium text-gray-400 truncate">Total de Usuários</dt><dd className="text-3xl font-bold text-white">{users.length}</dd></dl></div>
                                         </div>
                                     </div>
-                                )
-                            )}
-
-                            {deficit > 0 && realReserve && parseFloat(realReserve) !== 0 && (
-                                <div className="text-xs text-gray-500 mt-1 border-t border-gray-700 pt-2">
-                                    <p>Cálculo Final:</p>
-                                    <p>Reserva Informada: {parseFloat(realReserve).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                    <p className="text-red-400">- Cobertura de Saldo: {deficit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                    <p className="font-bold text-purple-400">= Nova Reserva no App: {(parseFloat(realReserve) - deficit).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                                 </div>
-                            )}
-
-                            <button onClick={handleConfirm} className={`w-full mt-4 py-2 text-white font-bold rounded-lg transition-colors ${parseFloat(realReserve) === 0 ? 'bg-red-600 hover:bg-red-500' : 'bg-purple-600 hover:bg-purple-500'}`}>
-                                {parseFloat(realReserve) === 0 ? 'Confirmar Reset' : 'Confirmar e Ajustar'}
-                            </button>
-                            <button onClick={onClose} className="w-full py-2 text-gray-400 hover:text-white transition-colors text-sm">
-                                Cancelar
-                            </button>
+                            </div>
                         </div>
-                    </div>
+
+                        <div className="mt-8 bg-gray-800 shadow rounded-lg p-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                                <h2 className="text-xl font-bold text-white">Gerenciamento de Usuários</h2>
+                                <div className="flex items-center gap-4">
+                                    <input type="text" placeholder="Buscar por e-mail ou nome..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="px-4 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"/>
+                                    <button onClick={() => setAddUserModalOpen(true)} className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors text-sm">
+                                        <AddUserIcon />
+                                        Novo Usuário
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-700">
+                                    <thead className="bg-gray-700/50">
+                                        <tr>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Usuário</th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Último Login</th>
+                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Plano</th>
+                                            <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-gray-800 divide-y divide-gray-700">
+                                        {loading ? (
+                                            <tr><td colSpan="4" className="text-center py-4">Carregando usuários...</td></tr>
+                                        ) : filteredUsers.map((user) => (
+                                            <tr key={user.id} className="hover:bg-gray-700/50">
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center">
+                                                        <div className="flex-shrink-0 h-10 w-10"><img className="h-10 w-10 rounded-full" src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=random`} alt="" /></div>
+                                                        <div className="ml-4"><div className="text-sm font-medium text-white">{user.displayName || 'Sem nome'}</div><div className="text-sm text-gray-400">{user.email}</div></div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{formatDate(user.lastLoginAt)}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <select value={user.plan || 'free'} onChange={(e) => handlePlanChange(user.id, e.target.value)} className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 ${user.plan === 'premium' ? 'bg-green-800 text-green-300' : 'bg-gray-700 text-gray-300'}`}>
+                                                        <option value="free">Free</option>
+                                                        <option value="premium">Premium</option>
+                                                    </select>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                    <button onClick={() => handleDeleteUser(user.id)} className="p-1"><TrashIcon /></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </main>
                 </div>
             );
         };
 
-        const LeanTimesCalculatorModal = ({ isOpen, onClose, currentMonthIncome, currentMonthBalance, currentReserve, onApply }) => {
-            const [nextMonthIncome, setNextMonthIncome] = useState('');
-            const [suggestedLimit, setSuggestedLimit] = useState(null);
-            const [baseType, setBaseType] = useState('income'); // 'income' or 'balance'
-            const [reserveWithdrawal, setReserveWithdrawal] = useState(0);
-
-            useEffect(() => {
-                if (isOpen) {
-                    setNextMonthIncome('');
-                    setSuggestedLimit(null);
-                    setReserveWithdrawal(0);
-                    setBaseType('income');
-                }
-            }, [isOpen]);
-
-            const baseValue = baseType === 'income' ? currentMonthIncome : currentMonthBalance;
-
-            const calculate = () => {
-                const nextInc = parseFloat(nextMonthIncome);
-                if (isNaN(nextInc) || nextInc < 0) {
-                    alert("Por favor, insira um valor válido para a receita prevista.");
-                    return;
-                }
-                
-                const limit = (baseValue + currentReserve + nextInc) / 2;
-                setSuggestedLimit(limit);
-
-                const withdrawal = limit - baseValue;
-                setReserveWithdrawal(withdrawal);
-            };
-
-            const handleApply = () => {
-                if (reserveWithdrawal > 0) {
-                    onApply(reserveWithdrawal); // Passing the withdrawal amount directly
-                    onClose();
-                } else {
-                    alert("O valor calculado não exige retirada da reserva (você está economizando!). Nenhum ajuste necessário.");
-                }
-            };
-
-            if (!isOpen) return null;
-
-            return (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
-                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-lg">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-100 flex items-center gap-2">
-                                <CalculatorIcon />
-                                Calculadora "Vacas Magras"
-                            </h2>
-                            <button onClick={onClose} className="text-gray-400 hover:text-white">&times;</button>
-                        </div>
-                        
-                        <p className="text-gray-400 mb-6 text-sm">
-                            Calcule um teto de gastos seguro para tempos difíceis.
-                        </p>
-
-                        <div className="space-y-4 mb-6">
-                            {/* Base Value Selection */}
-                            <div className="bg-gray-700/50 p-3 rounded-lg">
-                                <p className="text-sm font-medium text-gray-300 mb-2">1. Escolha a base de cálculo para este mês:</p>
-                                <div className="flex gap-4">
-                                    <label className="flex items-center cursor-pointer">
-                                        <input 
-                                            type="radio" 
-                                            name="baseType" 
-                                            checked={baseType === 'income'} 
-                                            onChange={() => setBaseType('income')}
-                                            className="mr-2 text-blue-500 focus:ring-blue-500"
-                                        />
-                                        <span className={`text-sm ${baseType === 'income' ? 'text-white' : 'text-gray-400'}`}>
-                                            Total Entradas ({currentMonthIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
-                                        </span>
-                                    </label>
-                                    <label className="flex items-center cursor-pointer">
-                                        <input 
-                                            type="radio" 
-                                            name="baseType" 
-                                            checked={baseType === 'balance'} 
-                                            onChange={() => setBaseType('balance')}
-                                            className="mr-2 text-blue-500 focus:ring-blue-500"
-                                        />
-                                        <span className={`text-sm ${baseType === 'balance' ? 'text-white' : 'text-gray-400'}`}>
-                                            Saldo Atual ({currentMonthBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
-                                        </span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-gray-700/50 p-3 rounded-lg">
-                                    <p className="text-xs text-gray-400">Reserva Atual</p>
-                                    <p className="text-lg font-bold text-purple-400">{currentReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1">Previsão Próximo Mês</label>
-                                    <input 
-                                        type="number" 
-                                        step="0.01" 
-                                        value={nextMonthIncome}
-                                        onChange={(e) => setNextMonthIncome(e.target.value)}
-                                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                        placeholder="0.00"
-                                    />
-                                </div>
-                            </div>
-
-                            <button onClick={calculate} className="w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 transition-colors">
-                                Calcular Limite
-                            </button>
-                        </div>
-
-                        {suggestedLimit !== null && (
-                            <div className="space-y-4 animate-fade-in">
-                                <div className="bg-green-900/40 border border-green-600/50 p-4 rounded-lg text-center">
-                                    <p className="text-gray-300 text-sm mb-1">Seu Teto de Gastos Sugerido:</p>
-                                    <p className="text-3xl font-bold text-green-400">{suggestedLimit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                    <p className="text-xs text-gray-400 mt-2 italic">Fórmula: (Base + Reserva + Próximo) / 2</p>
-                                </div>
-
-                                {reserveWithdrawal > 0 ? (
-                                    <div className="bg-yellow-900/40 border border-yellow-600/50 p-4 rounded-lg text-center">
-                                        <p className="text-gray-300 text-sm mb-1">Necessário retirar da Reserva:</p>
-                                        <p className="text-xl font-bold text-yellow-400">{reserveWithdrawal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                        <button 
-                                            onClick={handleApply}
-                                            className="mt-3 w-full py-2 bg-yellow-700 hover:bg-yellow-600 text-white text-sm font-semibold rounded transition-colors">
-                                            Confirmar e Descontar da Reserva
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="bg-blue-900/40 border border-blue-600/50 p-3 rounded-lg text-center">
-                                        <p className="text-gray-300 text-sm">Este plano não exige retirada da reserva. Você conseguirá economizar!</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        
-                         <div className="mt-6 text-right">
-                             <button onClick={onClose} className="text-sm text-gray-400 hover:text-white underline">Fechar</button>
-                         </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const Tour = ({ steps, isOpen, onClose }) => { 
-            const [currentStepIndex, setCurrentStepIndex] = useState(0); 
-            const [style, setStyle] = useState({}); 
-
-            useEffect(() => { 
-                if (!isOpen) return; 
-                const currentStep = steps[currentStepIndex]; 
-                const targetElement = document.querySelector(currentStep.target); 
-                if (targetElement) { 
-                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
-                    const targetRect = targetElement.getBoundingClientRect(); 
-                    targetElement.classList.add('tour-highlight'); 
-                    const popoverStyle = { 
-                        position: 'absolute', 
-                        top: `${targetRect.bottom + window.scrollY + 10}px`, 
-                        left: `${targetRect.left + window.scrollX}px`, 
-                        maxWidth: '350px', 
-                        transform: 'translateX(0)', 
-                    }; 
-                    if (targetRect.left + 350 > window.innerWidth) { 
-                        popoverStyle.left = `${targetRect.right + window.scrollX - 350}px`; 
-                    } 
-                    if (targetRect.top < 200) { 
-                        popoverStyle.top = `${targetRect.bottom + window.scrollY + 10}px`; 
-                    } else { 
-                        popoverStyle.top = `${targetRect.top + window.scrollY - 10}px`; 
-                        popoverStyle.transform = 'translateY(-100%)'; 
-                    } 
-                    setStyle(popoverStyle); 
-                } else { 
-                    setStyle({ 
-                        position: 'fixed', 
-                        top: '50%', 
-                        left: '50%', 
-                        transform: 'translate(-50%, -50%)', 
-                        maxWidth: '350px', 
-                    }); 
-                } 
-                return () => { 
-                    if (targetElement) { 
-                        targetElement.classList.remove('tour-highlight'); 
-                    } 
-                }; 
-            }, [currentStepIndex, isOpen, steps]); 
-
-            if (!isOpen) return null; 
-
-            const handleNext = () => currentStepIndex < steps.length - 1 ? setCurrentStepIndex(currentStepIndex + 1) : onClose(); 
-            const handlePrev = () => currentStepIndex > 0 && setCurrentStepIndex(currentStepIndex - 1); 
-            const currentStep = steps[currentStepIndex]; 
-
-            return ( 
-                <> 
-                    <div className="fixed inset-0 bg-black/70 z-40" onClick={onClose}></div> 
-                    <div style={style} className="bg-gray-700 text-gray-200 rounded-lg shadow-2xl p-5 z-50 transition-all duration-300"> 
-                        <h3 className="text-xl font-bold text-blue-400 mb-2">{currentStep.title}</h3> 
-                        <p className="text-sm mb-4">{currentStep.content}</p> 
-                        <div className="flex justify-between items-center"> 
-                            <span className="text-xs text-gray-400">Passo {currentStepIndex + 1} de {steps.length}</span> 
-                            <div className="flex gap-2"> 
-                                <button onClick={onClose} className="text-xs px-3 py-1 rounded hover:bg-gray-600 transition-colors">Pular</button> 
-                                {currentStepIndex > 0 && <button onClick={handlePrev} className="px-4 py-1 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors">Anterior</button>} 
-                                <button onClick={handleNext} className="px-4 py-1 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors"> {currentStepIndex === steps.length - 1 ? 'Concluir' : 'Próximo'} </button> 
-                            </div> 
-                        </div> 
-                    </div> 
-                    <style>{`.tour-highlight { position: relative; z-index: 50; border-radius: 8px; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.7); transition: box-shadow 0.3s ease-in-out; }`}</style> 
-                </> 
-            ); 
-        };
-
-        const RecordsTable = ({ title, records, onDelete, onEdit, type, sortConfig, requestSort, isSimulation }) => ( 
-            <div className="bg-gray-800/50 p-6 rounded-b-xl rounded-r-xl shadow-inner"> 
-                <h3 className="text-xl font-semibold text-gray-200 mb-4">{title}</h3> 
-                {records.length > 0 ? ( 
-                    <div className="overflow-x-auto max-h-[400px]"> 
-                        <table className="w-full text-left"> 
-                            <thead> 
-                                <tr className="border-b-2 border-gray-700 bg-gray-700/50 sticky top-0"> 
-                                    <th className="p-3 text-sm font-semibold text-gray-400 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('month')}> 
-                                        <div className="flex items-center justify-start group"> <span>Mês</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="month" /></span> </div> 
-                                    </th> 
-                                    <th className="p-3 text-sm font-semibold text-gray-400 w-1/2 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('description')}> 
-                                        <div className="flex items-center justify-start group"> <span>Descrição</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="description" /></span> </div> 
-                                    </th> 
-                                     <th className="p-3 text-sm font-semibold text-gray-400 w-1/6 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('responsible')}>
-                                         <div className="flex items-center justify-start group"><span>Resp.</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="responsible" /></span></div>
-                                     </th>
-                                    <th className="p-3 text-sm font-semibold text-gray-400 text-right cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('amount')}> 
-                                        <div className="flex items-center justify-end group"> <span>Valor</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="amount" /></span> </div> 
-                                    </th> 
-                                    <th className="p-3 text-sm font-semibold text-gray-400 text-center">Ações</th> 
-                                </tr> 
-                            </thead> 
-                            <tbody> 
-                                {records.map((record) => ( 
-                                    <tr key={record.id} className={`border-b border-gray-700 hover:bg-gray-700/70 ${record.isSimulated ? 'italic text-cyan-400' : ''}`}> 
-                                        <td className="p-3 text-gray-300 capitalize">{new Date(record.year, record.month).toLocaleString('pt-BR', { month: 'short' }).replace('.','')}</td> 
-                                        <td className="p-3">{record.description} {record.isSimulated && <span className="text-xs text-cyan-500">(Simulação)</span>}</td> 
-                                        <td className="p-3 text-gray-300 text-xs">
-                                            <span className={`px-2 py-1 rounded-full ${record.responsible === 'Parceiro(a)' ? 'bg-pink-900/50 text-pink-300' : 'bg-blue-900/50 text-blue-300'}`}>
-                                                {record.responsible || 'Eu'}
-                                            </span>
-                                        </td>
-                                        <td className={`p-3 font-medium text-right ${type === 'income' ? 'text-green-400' : 'text-red-400'}`}> {record.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} </td> 
-                                        <td className="p-3 text-center"> 
-                                            <div className="flex justify-center items-center gap-3"> 
-                                                <button onClick={() => onEdit(record, type)} className="p-1 rounded-full hover:bg-blue-800/50 transition-colors"> <EditIcon /> </button> 
-                                                <button onClick={() => onDelete(record.id, type)} className="p-1 rounded-full hover:bg-red-800/50 transition-colors"> <TrashIcon /> </button> 
-                                            </div> 
-                                        </td> 
-                                    </tr> 
-                                ))} 
-                            </tbody> 
-                        </table> 
-                    </div> 
-                ) : ( 
-                    <p className="text-gray-500 text-center py-4">Nenhum registro encontrado.</p> 
-                )} 
-            </div> 
-        );
-
-        const EditModal = ({ record, onSave, onCancel, onError }) => { 
-            const [newDescription, setNewDescription] = useState(record.description); 
-            const [newAmount, setNewAmount] = useState(record.amount); 
-            const [newResponsible, setNewResponsible] = useState(record.responsible || 'Eu');
-            
-            const handleSave = () => { 
-                // CORREÇÃO: Permitir valor 0. A verificação anterior (!newAmount) bloqueava o 0.
-                if (!newDescription.trim() || newAmount === '' || newAmount === null || isNaN(parseFloat(newAmount))) { 
-                    onError("Por favor, preencha a descrição e um valor válido."); 
-                    return; 
-                } 
-                onSave(record.id, record.type, { 
-                    ...record, 
-                    description: newDescription, 
-                    amount: parseFloat(newAmount),
-                    responsible: newResponsible
-                }); 
-            }; 
-            
-            return ( 
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"> 
-                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-md"> 
-                        <h2 className="text-2xl font-bold text-gray-100 mb-4">Editar Registro</h2> 
-                        <div className="space-y-4"> 
-                            <div> 
-                                <label htmlFor="edit-description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> 
-                                <input id="edit-description" type="text" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> 
-                            </div> 
-                            <div>
-                                <label htmlFor="edit-responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
-                                <input 
-                                    id="edit-responsible" 
-                                    list="responsible-options"
-                                    value={newResponsible} 
-                                    onChange={(e) => setNewResponsible(e.target.value)} 
-                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                                    placeholder="Ex: Nome da pessoa"
-                                />
-                                <datalist id="responsible-options">
-                                    <option value="Eu" />
-                                    <option value="Parceiro(a)" />
-                                    <option value="Conjunto" />
-                                    <option value="Filho(a)" />
-                                </datalist>
-                            </div>
-                            <div> 
-                                <label htmlFor="edit-amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> 
-                                <input id="edit-amount" type="number" step="0.01" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> 
-                            </div> 
-                        </div> 
-                        <div className="mt-6 flex justify-end gap-4"> 
-                            <button onClick={onCancel} className="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors">Cancelar</button> 
-                            <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors">Salvar</button> 
-                        </div> 
-                    </div> 
-                </div> 
-            ); 
-        };
-
-        const FinancialEvolutionChart = ({ data }) => { 
-            const [visibility, setVisibility] = useState({ balance: true, saldoSugerido: true, expense: true, stabilityReserve: true, avgIncome: false }); // avgIncome default hidden or visible? Let's make it visible.
-            const handleLegendClick = (e) => { const { dataKey } = e; setVisibility(prev => ({ ...prev, [dataKey]: !prev[dataKey] })); }; 
-            const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value); 
-            const formatCompactCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(value); 
-            
-            return ( 
-                <div id="financial-chart" className="bg-gray-800 p-6 rounded-xl shadow-md"> 
-                    <h2 className="text-2xl font-semibold text-gray-200 mb-4">Evolução Financeira (Últimos 12 Meses)</h2> 
-                    <div style={{ width: '100%', height: 350 }}> 
-                        <ResponsiveContainer> 
-                            <ComposedChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}> 
-                                <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" /> 
-                                <XAxis dataKey="monthName" stroke="#A0AEC0" /> 
-                                <YAxis stroke="#A0AEC0" tickFormatter={formatCompactCurrency} /> 
-                                <Tooltip contentStyle={{ backgroundColor: '#2D3748', border: '1px solid #4A5568', color: '#E2E8F0' }} formatter={(value, name) => [formatCurrency(value), name]} /> 
-                                <Legend onClick={handleLegendClick} wrapperStyle={{ color: '#E2E8F0', cursor: 'pointer' }} /> 
-                                
-                                <Line type="monotone" dataKey="balance" name="Renda Líquida Mensal" stroke="#48BB78" strokeWidth={2} hide={!visibility.balance} /> 
-                                <Line type="monotone" dataKey="saldoSugerido" name="Saldo Sugerido" stroke="#4299E1" strokeDasharray="5 5" strokeWidth={2} hide={!visibility.saldoSugerido} /> 
-                                <Line type="monotone" dataKey="avgIncome" name="Média de Entradas (12m)" stroke="#9F7AEA" strokeDasharray="3 3" strokeWidth={2} hide={visibility.avgIncome === false} /> 
-                                <Line type="monotone" dataKey="expense" name="Saída Mensal" stroke="#F56565" strokeWidth={2} hide={!visibility.expense} /> 
-                                <Line type="monotone" dataKey="stabilityReserve" name="Reserva de Estabilidade" stroke="#A0AEC0" strokeWidth={2} hide={!visibility.stabilityReserve} /> 
-                            </ComposedChart> 
-                        </ResponsiveContainer> 
-                    </div> 
-                </div> 
-            ); 
-        };
-
-        const MonthlyBalanceHistoryTable = ({ data, isLoading, sortConfig, requestSort }) => ( 
-            <div className="bg-gray-800/50 p-6 rounded-b-xl rounded-r-xl shadow-inner"> 
-                <h2 className="text-xl font-semibold text-gray-200 mb-4">Histórico de Saldo Mensal ({new Date().getFullYear()})</h2> 
-                <div className="overflow-y-auto" style={{maxHeight: '350px'}}> 
-                    <table className="w-full text-left"> 
-                        <thead className="sticky top-0 bg-gray-800"> 
-                            <tr className="border-b-2 border-gray-700 bg-gray-700/50"> 
-                                <th className="p-3 text-sm font-semibold text-gray-400 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('month')}> 
-                                    <div className="flex items-center justify-start group"> <span>Mês</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="month" /></span> </div> 
-                                </th> 
-                                <th className="p-3 text-sm font-semibold text-gray-400 text-right cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('income')}> 
-                                    <div className="flex items-center justify-end group"> <span>Entradas</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="income" /></span> </div> 
-                                </th> 
-                                <th className="p-3 text-sm font-semibold text-gray-400 text-right cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('expense')}> 
-                                    <div className="flex items-center justify-end group"> <span>Saídas</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="expense" /></span> </div> 
-                                </th> 
-                                <th className="p-3 text-sm font-semibold text-gray-400 text-right cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('balance')}> 
-                                    <div className="flex items-center justify-end group"> <span>Saldo do Mês</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="balance" /></span> </div> 
-                                </th> 
-                            </tr> 
-                        </thead> 
-                        <tbody> 
-                            {data.map((monthData) => ( 
-                                <tr key={monthData.month} className="border-b border-gray-700 hover:bg-gray-700/70"> 
-                                    <td className="p-3 text-gray-300 capitalize">{monthData.monthName}</td> 
-                                    <td className="p-3 text-green-400 font-medium text-right"> {monthData.income.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} </td> 
-                                    <td className="p-3 text-red-400 font-medium text-right"> {monthData.expense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} </td> 
-                                    <td className={`p-3 font-bold text-right ${monthData.balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}> {monthData.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} </td> 
-                                </tr> 
-                            ))} 
-                            {data.length === 0 && !isLoading && ( 
-                                <tr> 
-                                    <td colSpan="4" className="text-center text-gray-500 py-4"> Nenhuma atividade registrada para este ano. </td> 
-                                </tr> 
-                            )} 
-                        </tbody> 
-                    </table> 
-                </div> 
-            </div> 
-        );
-
-        const ContributionAnalysis = ({ contributionData, individualAverages }) => {
-            const chartData = contributionData.map(d => ({ name: d.name, value: d.value }));
-
-            return (
-                <div className="bg-gray-800/50 p-6 rounded-b-xl rounded-r-xl shadow-inner space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Gráfico de Pizza - Contribuição no Ano */}
-                        <div className="bg-gray-700/30 p-4 rounded-xl flex flex-col items-center">
-                            <h3 className="text-lg font-semibold text-gray-300 mb-4">Contribuição de Renda (Este Ano)</h3>
-                            {chartData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height={250}>
-                                    <PieChart>
-                                        <Pie
-                                            data={chartData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            fill="#8884d8"
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                        >
-                                            {chartData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <p className="text-gray-500 my-10">Sem dados de renda para este ano.</p>
-                            )}
-                        </div>
-
-                        {/* Médias Individuais */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-300 mb-2">Médias de Entradas (Últimos 12 Meses)</h3>
-                            {individualAverages.map((item, index) => (
-                                <div key={item.name} className="bg-gray-700/50 p-4 rounded-lg border border-gray-600 flex justify-between items-center">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                                        <span className="font-medium text-gray-200">{item.name}</span>
-                                    </div>
-                                    <div className="text-right">
-                                         <span className="block text-xl font-bold text-green-400">
-                                            {item.avg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                            <span className="text-xs text-gray-500 font-normal ml-1">/mês</span>
-                                        </span>
-                                        <span className="text-xs text-gray-400">({item.monthsCount} meses ativos)</span>
-                                    </div>
-                                </div>
-                            ))}
-                            <p className="text-xs text-gray-500 mt-2">
-                                * Média calculada apenas sobre os meses com contribuição.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const StabilityReserveHistoryTable = ({ data, sortConfig, requestSort }) => ( 
-            <div className="bg-gray-800/50 p-6 rounded-b-xl rounded-r-xl shadow-inner"> 
-                <h2 className="text-xl font-semibold text-gray-200 mb-4">Histórico da Reserva de Estabilidade</h2> 
-                <div className="overflow-y-auto" style={{maxHeight: '350px'}}> 
-                    <table className="w-full text-left"> 
-                        <thead className="sticky top-0 bg-gray-800"> 
-                            <tr className="border-b-2 border-gray-700 bg-gray-700/50"> 
-                                <th className="p-3 text-sm font-semibold text-gray-400 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('monthKey')}> 
-                                    <div className="flex items-center justify-start group"> <span>Mês</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="monthKey" /></span> </div> 
-                                </th> 
-                                <th className="p-3 text-sm font-semibold text-gray-400 text-right cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('amountAdded')}> 
-                                    <div className="flex items-center justify-end group"> <span>Valor Guardado</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="amountAdded" /></span> </div> 
-                                </th> 
-                                <th className="p-3 text-sm font-semibold text-gray-400 text-right cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('totalReserve')}> 
-                                    <div className="flex items-center justify-end group"> <span>Total na Reserva</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="totalReserve" /></span> </div> 
-                                </th> 
-                            </tr> 
-                        </thead> 
-                        <tbody> 
-                            {data.map((monthData) => ( 
-                                <tr key={monthData.monthKey} className="border-b border-gray-700 hover:bg-gray-700/70"> 
-                                    <td className="p-3 text-gray-300 capitalize">
-                                        {monthData.monthName}
-                                        {monthData.hasAdjustment && (
-                                            <span title="Houve um ajuste manual no saldo da reserva neste mês." className="cursor-help">
-                                                <InfoIcon />
-                                            </span>
-                                        )}
-                                    </td> 
-                                    <td className={`p-3 font-medium text-right ${ monthData.amountAdded > 0 ? 'text-green-400' : monthData.amountAdded < 0 ? 'text-red-400' : 'text-gray-400' }`}> {monthData.amountAdded.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} </td> 
-                                    <td className="p-3 text-purple-400 font-bold text-right"> {monthData.totalReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} </td> 
-                                </tr> 
-                            ))} 
-                            {data.length === 0 && ( 
-                                <tr> 
-                                    <td colSpan="3" className="text-center text-gray-500 py-4"> Dados insuficientes para calcular o histórico. </td> 
-                                </tr> 
-                            )} 
-                        </tbody> 
-                    </table> 
-                </div> 
-            </div> 
-        );
-
-        const useSortableData = (items, config) => { 
-            return useMemo(() => { 
-                if (!config) return items; 
-                const sortedItems = [...items]; 
-                sortedItems.sort((a, b) => { 
-                    if (a[config.key] < b[config.key]) { return config.direction === 'ascending' ? -1 : 1; } 
-                    if (a[config.key] > b[config.key]) { return config.direction === 'ascending' ? 1 : -1; } 
-                    return 0; 
-                }); 
-                return sortedItems; 
-            }, [items, config]); 
-        };
-        
-        // --- COMPONENTE PRINCIPAL ---
-
-        function App() {
-            const [user, setUser] = useState(null);
-            const [userProfile, setUserProfile] = useState(null);
-            const [incomes, setIncomes] = useState([]);
-            const [expenses, setExpenses] = useState([]);
-            const [simIncomes, setSimIncomes] = useState([]);
-            const [simExpenses, setSimExpenses] = useState([]);
-            const [view, setView] = useState('dashboard'); // 'dashboard' ou 'simulation'
-            
-            const [formType, setFormType] = useState('income');
-            const [description, setDescription] = useState('');
-            const [amount, setAmount] = useState('');
-            // REMOVED category state
-            const [responsible, setResponsible] = useState('Eu');
-            const [month, setMonth] = useState(new Date().getMonth());
-            const [year, setYear] = useState(new Date().getFullYear());
-            const [filterYear, setFilterYear] = useState(new Date().getFullYear());
-            const [editingRecord, setEditingRecord] = useState(null);
-            const [activeTab, setActiveTab] = useState('summary');
+        function AdminApp() {
+            const [adminUser, setAdminUser] = useState(null);
             const [isLoading, setIsLoading] = useState(true);
-            const [error, setError] = useState('');
-            const [success, setSuccess] = useState('');
-            const fileInputRef = useRef(null);
-            const [history, setHistory] = useState([]);
-            const [historyIndex, setHistoryIndex] = useState(-1);
-            const [isTourOpen, setIsTourOpen] = useState(false);
-            const [sortConfigs, setSortConfigs] = useState({ summary: { key: 'month', direction: 'descending' }, reserve: { key: 'monthKey', direction: 'descending' }, incomes: { key: 'month', direction: 'descending' }, expenses: { key: 'month', direction: 'descending' } });
-            const [showFullSummary, setShowFullSummary] = useState(false);
-            const [showOnboarding, setShowOnboarding] = useState(false);
-            const [dataLoaded, setDataLoaded] = useState(false);
-            const [showDepletionModal, setShowDepletionModal] = useState(false);
-            const [depletionModalShownThisSession, setDepletionModalShownThisSession] = useState(false);
-            const [showRedoButton, setShowRedoButton] = useState(false);
-            const [showLeanCalculator, setShowLeanCalculator] = useState(false);
-            const [showAdjustReserveModal, setShowAdjustReserveModal] = useState(false);
-
-            const isSimulation = view === 'simulation';
 
             useEffect(() => {
-                const unsubscribe = onAuthStateChanged(auth, (user) => {
-                    setUser(user);
-                    if (!user) {
-                        setIsLoading(false);
-                        setDataLoaded(false);
+                const unsubscribe = auth.onAuthStateChanged((user) => {
+                    const ADMIN_EMAILS = ['admin@example.com', 'tidiegolemes@gmail.com'];
+                    if (user && ADMIN_EMAILS.includes(user.email)) {
+                        setAdminUser(user);
+                    } else {
+                        setAdminUser(null);
+                        if (user) {
+                            auth.signOut();
+                        }
                     }
+                    setIsLoading(false);
                 });
                 return () => unsubscribe();
             }, []);
 
-            useEffect(() => {
-                if (!user) {
-                    setIncomes([]);
-                    setExpenses([]);
-                    setUserProfile(null);
-                    setDataLoaded(false);
-                    return;
-                }
+            if (isLoading) {
+                return <div className="bg-gray-900 min-h-screen flex items-center justify-center text-white">Carregando...</div>;
+            }
 
-                let profileData = null;
-                const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
-                const unsubProfile = onSnapshot(profileRef, (docSnap) => {
-                    profileData = docSnap.exists() ? docSnap.data() : { tourCompleted: false };
-                    setUserProfile(profileData);
-
-                    if (dataLoaded) {
-                        const isNewUser = !profileData.tourCompleted;
-                         if (isNewUser) {
-                            setIsTourOpen(true);
-                        } else if (!profileData.initialDataSeeded && incomes.length === 0 && expenses.length === 0) {
-                            setShowOnboarding(true);
-                        }
-                    }
-                });
-
-                const incomesCol = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`);
-                const unsubIncomes = onSnapshot(incomesCol, (snapshot) => {
-                    const incomeData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    setIncomes(incomeData);
-                    if (!dataLoaded) setDataLoaded(true);
-                });
-
-                const expensesCol = collection(db, `/artifacts/${appId}/users/${user.uid}/expenses`);
-                const unsubExpenses = onSnapshot(expensesCol, (snapshot) => {
-                    const expenseData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    setExpenses(expenseData);
-                    if (!dataLoaded) setDataLoaded(true);
-                });
-                
-                return () => { unsubProfile(); unsubIncomes(); unsubExpenses(); };
-            }, [user, dataLoaded]); 
-            
-             const handleTourClose = async () => {
-                setIsTourOpen(false);
-                if (user && userProfile && !userProfile.tourCompleted) {
-                    const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
-                    await setDoc(profileRef, { tourCompleted: true }, { merge: true });
-                    
-                    if (incomes.length === 0 && expenses.length === 0 && !userProfile.initialDataSeeded) {
-                        setShowOnboarding(true);
-                    }
-                }
-            };
-            
-            useEffect(() => {
-                if (userProfile && dataLoaded) {
-                    const hasOnlySeedData = userProfile.initialDataSeeded && incomes.length > 0 && incomes.every(inc => inc.description.startsWith('Média inicial')) && expenses.length === 0;
-                    const hasNoData = userProfile.initialDataSeeded && incomes.length === 0 && expenses.length === 0;
-                    setShowRedoButton(hasOnlySeedData || hasNoData);
-                } else {
-                    setShowRedoButton(false);
-                }
-            }, [incomes, expenses, userProfile, dataLoaded]);
-
-            useEffect(() => { if (error) { const timer = setTimeout(() => setError(''), 5000); return () => clearTimeout(timer); } }, [error]);
-            useEffect(() => { if (success) { const timer = setTimeout(() => setSuccess(''), 5000); return () => clearTimeout(timer); } }, [success]);
-            
-            const addActionToHistory = useCallback((action) => {
-                if(isSimulation) return;
-                const newHistory = history.slice(0, historyIndex + 1);
-                newHistory.push(action);
-                setHistory(newHistory);
-                setHistoryIndex(newHistory.length - 1);
-            }, [history, historyIndex, isSimulation]);
-
-            const handleAddRecord = async (e) => { 
-                e.preventDefault(); 
-                // CORREÇÃO: Permitir valor 0 (zero) como entrada válida.
-                // Verifica se amount é string vazia ou não é número. Se for 0, passa.
-                if (!description.trim() || amount === '' || amount === null || isNaN(parseFloat(amount))) { 
-                    setError("Por favor, preencha a descrição e um valor válido."); return; 
-                } 
-                setError(''); 
-                const newRecord = { 
-                    description, 
-                    amount: parseFloat(amount), 
-                    responsible,
-                    month: parseInt(month), 
-                    year: parseInt(year), 
-                    createdAt: new Date() 
-                }; 
-                
-                if(isSimulation){ 
-                    const simId = `sim-${Date.now()}`; 
-                    const recordWithSimFlag = {...newRecord, id: simId, isSimulated: true}; 
-                    if (formType === 'income') setSimIncomes(prev => [...prev, recordWithSimFlag]); 
-                    else setSimExpenses(prev => [...prev, recordWithSimFlag]); 
-                    setSuccess("Transação simulada adicionada."); 
-                } else { 
-                    if (!db || !user) { setError("A conexão com o banco de dados não está pronta."); return; } 
-                    const collectionName = formType === 'income' ? 'incomes' : 'expenses'; 
-                    try { 
-                        const colRef = collection(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`); 
-                        const docRef = await addDoc(colRef, newRecord); 
-                        addActionToHistory({ type: 'ADD', collection: collectionName, docId: docRef.id, data: newRecord }); 
-                        setSuccess(`Registro de ${formType === 'income' ? 'entrada' : 'saída'} adicionado com sucesso!`); 
-                    } catch (err) { 
-                        setError("Ocorreu um erro ao salvar o registro."); 
-                    } 
-                } 
-                setDescription(''); 
-                setAmount(''); 
-                // Keep responsible same for quick entry
-            };
-
-            const handleDeleteRecord = async (id, type) => { 
-                if(isSimulation){ 
-                    if(type === 'income') setSimIncomes(prev => prev.filter(r => r.id !== id)); 
-                    else setSimExpenses(prev => prev.filter(r => r.id !== id)); 
-                    return; 
-                } 
-                if (!db || !user) return; 
-                const collectionName = type === 'income' ? 'incomes' : 'expenses'; 
-                const recordToDelete = (type === 'income' ? incomes : expenses).find(r => r.id === id); 
-                if (!recordToDelete) { setError("Registro não encontrado para apagar."); return; } 
-                try { 
-                    const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, id); 
-                    await deleteDoc(docRef); 
-                    addActionToHistory({ type: 'DELETE', collection: collectionName, docId: id, data: recordToDelete }); 
-                    setSuccess("Registro apagado com sucesso."); 
-                } catch (err) { 
-                    setError("Ocorreu um erro ao apagar o registro."); 
-                } 
-            };
-
-            const handleUpdateRecord = async (id, type, updatedData) => { 
-                if(isSimulation){ 
-                    const updateSim = (prev) => prev.map(r => r.id === id ? updatedData : r); 
-                    if(type === 'income') setSimIncomes(updateSim); 
-                    else setSimExpenses(updateSim); 
-                    setEditingRecord(null); 
-                    return; 
-                } 
-                if (!db || !user) return; 
-                const collectionName = type === 'income' ? 'incomes' : 'expenses'; 
-                const originalRecord = (type === 'income' ? incomes : expenses).find(r => r.id === id); 
-                if (!originalRecord) { setError("Registro não encontrado para atualizar."); return; } 
-                try { 
-                    const {isSimulated, id: recordId, ...dataToSave} = updatedData; 
-                    const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, id); 
-                    await updateDoc(docRef, dataToSave); 
-                    addActionToHistory({ type: 'UPDATE', collection: collectionName, docId: id, oldData: { description: originalRecord.description, amount: originalRecord.amount }, newData: dataToSave }); 
-                    setEditingRecord(null); 
-                    setSuccess("Registro atualizado com sucesso."); 
-                } catch (err) { 
-                    setError("Ocorreu um erro ao atualizar o registro."); 
-                } 
-            };
-
-            const handleUndo = async () => { 
-                if (historyIndex < 0 || isSimulation) return; 
-                const actionToUndo = history[historyIndex]; 
-                const { type, collection: collectionName, docId, data, oldData } = actionToUndo; 
-                try { 
-                    const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, docId); 
-                    if (type === 'ADD') { await deleteDoc(docRef); } 
-                    else if (type === 'DELETE') { const { id, ...dataToRestore } = data; await setDoc(docRef, dataToRestore); } 
-                    else if (type === 'UPDATE') { await updateDoc(docRef, oldData); } 
-                    setHistoryIndex(prev => prev - 1); 
-                    setSuccess("Ação desfeita com sucesso."); 
-                } catch (err) { 
-                    setError("Falha ao desfazer a ação."); 
-                } 
-            };
-
-            const handleRedo = async () => { 
-                if (historyIndex >= history.length - 1 || isSimulation) return; 
-                const newIndex = historyIndex + 1; 
-                const actionToRedo = history[newIndex]; 
-                const { type, collection: collectionName, docId, data, newData } = actionToRedo; 
-                try { 
-                    const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`, docId); 
-                    if (type === 'ADD') { await setDoc(docRef, data); } 
-                    else if (type === 'DELETE') { await deleteDoc(docRef); } 
-                    else if (type === 'UPDATE') { await updateDoc(docRef, newData); } 
-                    setHistoryIndex(newIndex); 
-                    setSuccess("Ação refeita com sucesso."); 
-                } catch (err) { 
-                    setError("Falha ao refazer a ação."); 
-                } 
-            };
-
-            const handleExportData = () => { 
-                if (incomes.length === 0 && expenses.length === 0) { setError("Não há dados para exportar."); return; } 
-                const convertTimestamp = (data) => data.map(doc => { const { id, ...rest } = doc; if (rest.createdAt && typeof rest.createdAt.toDate === 'function') { rest.createdAt = rest.createdAt.toDate().toISOString(); } return rest; }); 
-                const dataToExport = { incomes: convertTimestamp(incomes), expenses: convertTimestamp(expenses), }; 
-                const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(dataToExport, null, 2))}`; 
-                const link = document.createElement("a"); link.href = jsonString; link.download = `dados_financeiros_${new Date().toISOString().slice(0, 10)}.json`; link.click(); 
-                setSuccess('Dados exportados com sucesso!'); 
-            };
-
-            const handleImportClick = () => { fileInputRef.current.click(); };
-            
-            const handleFileChange = async (event) => { 
-                const file = event.target.files[0]; 
-                if (!file) return; 
-                if (file.type !== "application/json") { setError("Por favor, selecione um arquivo .json válido."); return; } 
-                const reader = new FileReader(); 
-                reader.onload = async (e) => { 
-                    try { 
-                        const data = JSON.parse(e.target.result); 
-                        if (!data.incomes || !data.expenses || !Array.isArray(data.incomes) || !Array.isArray(data.expenses)) { throw new Error("Formato de arquivo inválido."); } 
-                        setIsLoading(true); 
-                        const createRecordIdentifier = (rec) => { const date = rec.createdAt?.toDate ? rec.createdAt.toDate() : new Date(rec.createdAt); return `${rec.description?.trim()}|${rec.amount}|${date.toISOString()}`; }; 
-                        const existingIncomes = new Set(incomes.map(createRecordIdentifier)); 
-                        const existingExpenses = new Set(expenses.map(createRecordIdentifier)); 
-                        let importedCount = 0; let skippedCount = 0; 
-                        const incomeCollectionRef = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`); 
-                        for (const record of data.incomes) { 
-                            const newRecord = { ...record, createdAt: record.createdAt ? new Date(record.createdAt) : new Date() }; 
-                            const identifier = createRecordIdentifier(newRecord); 
-                            if (!existingIncomes.has(identifier)) { await addDoc(incomeCollectionRef, newRecord); importedCount++; } else { skippedCount++; } 
-                        } 
-                        const expenseCollectionRef = collection(db, `/artifacts/${appId}/users/${user.uid}/expenses`); 
-                        for (const record of data.expenses) { 
-                            const newRecord = { ...record, createdAt: record.createdAt ? new Date(record.createdAt) : new Date() }; 
-                            const identifier = createRecordIdentifier(newRecord); 
-                            if (!existingExpenses.has(identifier)) { await addDoc(expenseCollectionRef, newRecord); importedCount++; } else { skippedCount++; } 
-                        } 
-                        setSuccess(`Importação concluída! ${importedCount} registros adicionados, ${skippedCount} duplicados ignorados.`); 
-                        setHistory([]); setHistoryIndex(-1); 
-                    } catch (err) { 
-                        setError(`Erro ao importar dados: ${err.message}`); 
-                    } finally { 
-                        if(fileInputRef.current) { fileInputRef.current.value = ""; } 
-                        setIsLoading(false); 
-                    } 
-                }; 
-                reader.readAsText(file); 
-            };
-
-            const handleRequestSort = (tab, key) => { 
-                setSortConfigs(prevConfigs => { 
-                    const currentConfig = prevConfigs[tab]; 
-                    let direction = 'ascending'; 
-                    if (currentConfig.key === key && currentConfig.direction === 'ascending') { direction = 'descending'; } 
-                    return { ...prevConfigs, [tab]: { key, direction } }; 
-                }); 
-            };
-            
-            const handleSaveInitialAverage = async (avg, months) => {
-                 if (user) {
-                    const incomesColRef = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`);
-                    const promises = [];
-                    const currentDate = new Date();
-
-                    for (let i = 0; i < months; i++) {
-                        const pastDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - (i + 1), 1);
-                        
-                        const seedRecord = {
-                            description: `Média inicial (Mês ${i + 1}/${months})`,
-                            amount: avg,
-                            month: pastDate.getMonth(),
-                            year: pastDate.getFullYear(),
-                            createdAt: new Date()
-                        };
-                        promises.push(addDoc(incomesColRef, seedRecord));
-                    }
-
-                    try {
-                        await Promise.all(promises);
-
-                        const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
-                        await setDoc(profileRef, { initialDataSeeded: true, tourCompleted: true }, { merge: true });
-
-                        setShowOnboarding(false);
-                    } catch (err) {
-                        setError("Não foi possível salvar os dados iniciais. Tente novamente.");
-                    }
-                }
-            };
-            
-            const handleStartFromZero = async () => {
-                 if(user) {
-                    const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
-                    await setDoc(profileRef, { initialDataSeeded: true, tourCompleted: true }, { merge: true });
-                    setShowOnboarding(false);
-                 }
-            };
-
-            const handleRedoInitialAverage = async () => {
-                if (!user) return;
-
-                try {
-                    setIsLoading(true);
-                    const seedRecords = incomes.filter(inc => inc.description.startsWith('Média inicial'));
-                    
-                    const deletePromises = seedRecords.map(record => {
-                        const docRef = doc(db, `/artifacts/${appId}/users/${user.uid}/incomes`, record.id);
-                        return deleteDoc(docRef);
-                    });
-
-                    await Promise.all(deletePromises);
-
-                    const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
-                    await setDoc(profileRef, { initialDataSeeded: false }, { merge: true });
-                    
-                } catch (err) {
-                    setError("Ocorreu um erro ao reiniciar a configuração.");
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-
-            // Logic to apply reserve adjustment (and possibly cover deficit)
-            const handleManualReserveAdjustment = async (userInputValue, adjustmentType) => {
-                if (!user) return;
-                
-                // --- RESET LOGIC (New) ---
-                if (userInputValue === 0) {
-                     if (!confirm("Tem certeza que deseja zerar? Isso apagará todos os históricos de ajustes manuais e resgates de reserva para reiniciar a contagem.")) {
-                         return;
-                     }
-                     try {
-                         setIsLoading(true);
-                         // Identifica registros para apagar
-                         const recordsToDelete = [];
-                         incomes.forEach(doc => {
-                             if (doc.isReserveAdjustment || doc.isTransferFromReserve) recordsToDelete.push({ col: 'incomes', id: doc.id });
-                         });
-                         expenses.forEach(doc => {
-                             if (doc.isReserveAdjustment) recordsToDelete.push({ col: 'expenses', id: doc.id });
-                         });
-                         
-                         // Executa deleção em lote
-                         await Promise.all(recordsToDelete.map(r => deleteDoc(doc(db, `/artifacts/${appId}/users/${user.uid}/${r.col}`, r.id))));
-                         
-                         setSuccess("Histórico de ajustes e resgates reiniciado. Você pode ajustar o valor novamente agora.");
-                         setShowAdjustReserveModal(false);
-                     } catch (err) {
-                         console.error(err);
-                         setError("Erro ao reiniciar reserva.");
-                     } finally {
-                         setIsLoading(false);
-                     }
-                     return;
-                }
-                // -------------------------
-
-                const currentDate = new Date();
-                const now = new Date();
-                
-                // Get strictly INCOME (from work/sales), excluding any reserve transfers
-                const currentMonthIncome = filteredIncomes // filteredIncomes excludes 'isReserveAdjustment' AND 'isTransferFromReserve' if we update logic below
-                    .filter(i => i.month === now.getMonth() && i.year === now.getFullYear())
-                    .reduce((sum, i) => sum + i.amount, 0);
-                
-                const currentMonthExpense = filteredExpenses
-                    .filter(e => e.month === now.getMonth() && e.year === now.getFullYear())
-                    .reduce((sum, e) => sum + e.amount, 0);
-                
-                // Balance before transfers
-                const currentMonthBalance = currentMonthIncome - currentMonthExpense;
-                
-                // Target: Suggested Balance
-                const suggested = calculateMovingAverage(now.getFullYear(), now.getMonth());
-                
-                // Deficit GAP
-                const deficit = Math.max(0, suggested - currentMonthBalance);
-                
-                let incomeToAdd = 0;
-                
-                if (deficit > 0) {
-                    incomeToAdd = deficit;
-                }
-
-                try {
-                    // Step 1: Add Transfer Record (Cover Deficit)
-                    if (incomeToAdd > 0) {
-                        const incomeRecord = {
-                            description: "Resgate da Reserva (Cobrir Meta)",
-                            amount: incomeToAdd,
-                            month: currentDate.getMonth(),
-                            year: currentDate.getFullYear(),
-                            createdAt: new Date(),
-                            isReserveAdjustment: false, 
-                            isTransferFromReserve: true 
-                        };
-                        const incomeCol = collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`);
-                        const docRef = await addDoc(incomeCol, incomeRecord);
-                        
-                        addActionToHistory({
-                            type: 'ADD',
-                            collection: 'incomes',
-                            docId: docRef.id,
-                            data: incomeRecord
-                        });
-                    }
-
-                    // Step 2: Adjust Reserve to match user input
-                    const adjustmentAmount = userInputValue - finalStabilityReserve - incomeToAdd;
-                    
-                    let collectionName = 'incomes';
-                    let finalAmount = adjustmentAmount;
-                    
-                    if (adjustmentAmount < 0) {
-                        collectionName = 'expenses';
-                        finalAmount = Math.abs(adjustmentAmount);
-                    }
-                    
-                    const adjustmentRecord = {
-                        description: `Ajuste Manual (${adjustmentType === 'correction' ? 'Correção' : 'Movimentação'})`,
-                        amount: finalAmount,
-                        month: currentDate.getMonth(),
-                        year: currentDate.getFullYear(),
-                        createdAt: new Date(),
-                        isReserveAdjustment: true 
-                    };
-
-                    const adjCol = collection(db, `/artifacts/${appId}/users/${user.uid}/${collectionName}`);
-                    const docRefAdj = await addDoc(adjCol, adjustmentRecord);
-                    
-                    addActionToHistory({
-                        type: 'ADD',
-                        collection: collectionName,
-                        docId: docRefAdj.id,
-                        data: adjustmentRecord
-                    });
-                    
-                    setSuccess("Reserva ajustada com sucesso!");
-                    setShowAdjustReserveModal(false);
-                } catch (err) {
-                    console.error(err);
-                    setError("Erro ao salvar ajuste.");
-                }
-            };
-            
-            const handleLeanCalculatorApply = (withdrawalAmount) => {
-                 const performLeanUpdate = async () => {
-                     if (!user) return;
-                     try {
-                        const currentDate = new Date();
-                        // 1. Add Income (Transfer)
-                        const incomeRecord = {
-                            description: "Resgate (Vacas Magras)",
-                            amount: withdrawalAmount,
-                            month: currentDate.getMonth(),
-                            year: currentDate.getFullYear(),
-                            createdAt: new Date(),
-                            isReserveAdjustment: false,
-                            isTransferFromReserve: true
-                        };
-                        const incRef = await addDoc(collection(db, `/artifacts/${appId}/users/${user.uid}/incomes`), incomeRecord);
-                        
-                        addActionToHistory({
-                            type: 'ADD',
-                            collection: 'incomes',
-                            docId: incRef.id,
-                            data: incomeRecord
-                        });
-
-                        // 2. Adjust Reserve down
-                        const adjustmentAmount = -2 * withdrawalAmount;
-                        
-                        const adjRecord = {
-                            description: "Saída p/ Cobertura (Vacas Magras)",
-                            amount: Math.abs(adjustmentAmount),
-                            month: currentDate.getMonth(),
-                            year: currentDate.getFullYear(),
-                            createdAt: new Date(),
-                            isReserveAdjustment: true // Hidden
-                        };
-                        // Negative adjustment -> Expense
-                        const expRef = await addDoc(collection(db, `/artifacts/${appId}/users/${user.uid}/expenses`), adjRecord);
-                        
-                        addActionToHistory({
-                            type: 'ADD',
-                            collection: 'expenses',
-                            docId: expRef.id,
-                            data: adjRecord
-                        });
-                        
-                        setSuccess("Plano de Vacas Magras aplicado!");
-                     } catch(err) {
-                         setError("Erro ao aplicar plano.");
-                     }
-                 };
-                 performLeanUpdate();
-            };
-            
-            // --- Hooks de Cálculo (Memoização) ---
-            const combinedIncomes = useMemo(() => isSimulation ? [...incomes, ...simIncomes] : incomes, [incomes, simIncomes, isSimulation]);
-            const combinedExpenses = useMemo(() => isSimulation ? [...expenses, ...simExpenses] : expenses, [expenses, simExpenses, isSimulation]);
-
-            // NOVO: Determina a "Data Atual" do contexto. 
-            // No Dashboard normal, é HOJE.
-            // Na Simulação, se houver lançamentos futuros, a "Data Atual" avança para mostrar o impacto futuro.
-            const contextDate = useMemo(() => {
-                const now = new Date();
-                if (!isSimulation) return now;
-
-                let maxTimestamp = now.getTime();
-                [...combinedIncomes, ...combinedExpenses].forEach(r => {
-                    // Considera o primeiro dia do mês do registro
-                    const d = new Date(r.year, r.month, 1);
-                    if (d.getTime() > maxTimestamp) maxTimestamp = d.getTime();
-                });
-                return new Date(maxTimestamp);
-            }, [isSimulation, combinedIncomes, combinedExpenses]);
-
-            // Filter out reserve adjustments from visible tables and totals
-            const filteredIncomes = useMemo(() => combinedIncomes.filter(i => i.year === filterYear && !i.isReserveAdjustment && !i.isTransferFromReserve), [combinedIncomes, filterYear]);
-            
-            // Transfers Only
-            const reserveTransfers = useMemo(() => combinedIncomes.filter(i => i.year === filterYear && i.isTransferFromReserve), [combinedIncomes, filterYear]);
-            
-            const filteredExpenses = useMemo(() => combinedExpenses.filter(e => e.year === filterYear && !e.isReserveAdjustment), [combinedExpenses, filterYear]);
-            
-            const totalRealIncome = useMemo(() => filteredIncomes.reduce((sum, i) => sum + i.amount, 0), [filteredIncomes]);
-            const totalTransfers = useMemo(() => reserveTransfers.reduce((sum, i) => sum + i.amount, 0), [reserveTransfers]);
-            
-            // Total Available for Month = Real Income + Transfers
-            const totalAvailable = totalRealIncome + totalTransfers;
-            
-            const totalExpenses = useMemo(() => filteredExpenses.reduce((sum, e) => sum + e.amount, 0), [filteredExpenses]);
-            
-            // CORREÇÃO: Saldo = Income - Expense (ignorando transferências na visualização da tabela para manter consistência matemática)
-            const balance = useMemo(() => totalRealIncome - totalExpenses, [totalRealIncome, totalExpenses]);
-            
-            // Nova função para calcular Média Móvel para um mês específico
-            const calculateMovingAverage = useCallback((targetYear, targetMonth) => {
-                const targetDate = new Date(targetYear, targetMonth, 1);
-                // Janela de 12 meses terminando no mês atual (target)
-                const windowStart = new Date(targetDate);
-                windowStart.setMonth(windowStart.getMonth() - 11);
-                
-                // Exclude reserve adjustments from average calculation
-                // AND exclude transfers (we want average of REAL income/capacity)
-                const relevantIncomes = combinedIncomes.filter(i => {
-                    const d = new Date(i.year, i.month, 1);
-                    return d >= windowStart && d <= targetDate && !i.isReserveAdjustment && !i.isTransferFromReserve;
-                });
-                
-                const relevantExpenses = combinedExpenses.filter(e => {
-                    const d = new Date(e.year, e.month, 1);
-                    return d >= windowStart && d <= targetDate && !e.isReserveAdjustment;
-                });
-                
-                const activeMonths = new Set([...relevantIncomes, ...relevantExpenses].map(t => `${t.year}-${t.month}`));
-                const numMonthsWithData = activeMonths.size > 0 ? activeMonths.size : 1;
-                
-                const totalIncome = relevantIncomes.reduce((sum, i) => sum + i.amount, 0);
-                const totalExpense = relevantExpenses.reduce((sum, e) => sum + e.amount, 0);
-                
-                return (totalIncome - totalExpense) / numMonthsWithData;
-            }, [combinedIncomes, combinedExpenses]);
-
-            // Nova função para calcular Média Móvel de ENTRADAS para um mês específico
-            const calculateMovingIncomeAverage = useCallback((targetYear, targetMonth) => {
-                const targetDate = new Date(targetYear, targetMonth, 1);
-                const windowStart = new Date(targetDate);
-                windowStart.setMonth(windowStart.getMonth() - 11);
-                
-                const relevantIncomes = combinedIncomes.filter(i => {
-                    const d = new Date(i.year, i.month, 1);
-                    return d >= windowStart && d <= targetDate && !i.isReserveAdjustment && !i.isTransferFromReserve;
-                });
-                
-                // We use expenses just to determine active months to be fair? 
-                // Or strictly active income months? Let's use same active month set logic for consistency.
-                const relevantExpenses = combinedExpenses.filter(e => {
-                    const d = new Date(e.year, e.month, 1);
-                    return d >= windowStart && d <= targetDate && !e.isReserveAdjustment;
-                });
-                
-                const activeMonths = new Set([...relevantIncomes, ...relevantExpenses].map(t => `${t.year}-${t.month}`));
-                const numMonthsWithData = activeMonths.size > 0 ? activeMonths.size : 1;
-                
-                const totalIncome = relevantIncomes.reduce((sum, i) => sum + i.amount, 0);
-                
-                return totalIncome / numMonthsWithData;
-            }, [combinedIncomes, combinedExpenses]);
-
-            // Esta média atual (usada no Card) AGORA SEGUE O CONTEXTO (Hoje ou Futuro Simulado)
-            const currentTwelveMonthAverage = useMemo(() => {
-                return calculateMovingAverage(contextDate.getFullYear(), contextDate.getMonth());
-            }, [calculateMovingAverage, contextDate]);
-
-            // NOVO: Cálculo das médias separadas de Entrada e Saída para os últimos 12 meses (baseado no contextDate)
-            const last12MonthsSummary = useMemo(() => {
-                // Janela: [contextDate - 11 meses] até [contextDate]
-                const windowStart = new Date(contextDate.getFullYear(), contextDate.getMonth() - 11, 1);
-                // Limite superior inclusivo (mês do contextDate)
-                const windowEnd = new Date(contextDate.getFullYear(), contextDate.getMonth() + 1, 0); // Fim do mês
-                
-                const relevantIncomes = combinedIncomes.filter(i => {
-                    const d = new Date(i.year, i.month, 1);
-                    return d >= windowStart && d <= windowEnd && !i.isReserveAdjustment && !i.isTransferFromReserve;
-                });
-
-                const relevantExpenses = combinedExpenses.filter(e => {
-                    const d = new Date(e.year, e.month, 1);
-                    return d >= windowStart && d <= windowEnd && !e.isReserveAdjustment;
-                });
-
-                const activeMonths = new Set([...relevantIncomes, ...relevantExpenses].map(t => `${t.year}-${t.month}`));
-                const numMonths = activeMonths.size > 0 ? activeMonths.size : 1;
-
-                const totalIncome = relevantIncomes.reduce((sum, i) => sum + i.amount, 0);
-                const totalExpense = relevantExpenses.reduce((sum, e) => sum + e.amount, 0);
-
-                return {
-                    avgIncome: totalIncome / numMonths,
-                    avgExpense: totalExpense / numMonths
-                };
-            }, [combinedIncomes, combinedExpenses, contextDate]);
-            
-            // Dados de contribuição para a nova Aba
-            const contributionData = useMemo(() => {
-                // Filtrar entradas dos últimos 12 meses (baseado no contextDate)
-                const windowStart = new Date(contextDate.getFullYear(), contextDate.getMonth() - 11, 1);
-                const windowEnd = new Date(contextDate.getFullYear(), contextDate.getMonth() + 1, 0);
-                
-                const data = {};
-                
-                combinedIncomes.forEach(inc => {
-                    const d = new Date(inc.year, inc.month, 1);
-                     if (d >= windowStart && d <= windowEnd && !inc.isReserveAdjustment && !inc.isTransferFromReserve) {
-                        const who = inc.responsible || 'Eu';
-                        if (!data[who]) data[who] = 0;
-                        data[who] += inc.amount;
-                    }
-                });
-                
-                return Object.entries(data).map(([name, value]) => ({ name, value }));
-            }, [combinedIncomes, contextDate]);
-            
-            const individualAverages = useMemo(() => {
-                 const windowStart = new Date(contextDate.getFullYear(), contextDate.getMonth() - 11, 1);
-                 const windowEnd = new Date(contextDate.getFullYear(), contextDate.getMonth() + 1, 0);
-                 
-                 const grouping = {}; // Soma total por pessoa
-                 const activeMonthsPerPerson = {}; // Meses ativos por pessoa
-                 
-                 combinedIncomes.forEach(inc => {
-                    const d = new Date(inc.year, inc.month, 1);
-                     if (d >= windowStart && d <= windowEnd && !inc.isReserveAdjustment && !inc.isTransferFromReserve) {
-                        const who = inc.responsible || 'Eu';
-                        
-                        // Soma valor
-                        if (!grouping[who]) grouping[who] = 0;
-                        grouping[who] += inc.amount;
-
-                        // Registra mês ativo, MAS APENAS SE O VALOR FOR > 0.
-                        // Se o valor for 0 (lançamento manual para marcar presença sem dinheiro), 
-                        // ele ainda conta como mês ativo, pois o usuário registrou "algo".
-                        // O pedido foi: "se ele quiser continuar no grupo mas não retribuiu, então é só eu digitar uma receita com '0' reais"
-                        // Isso significa que o registro com 0 DEVE contar para o divisor da média.
-                        // Como 'inc' existe, o mês existe. Então a lógica abaixo já está correta.
-                        const monthKey = `${inc.year}-${inc.month}`;
-                        if (!activeMonthsPerPerson[who]) activeMonthsPerPerson[who] = new Set();
-                        activeMonthsPerPerson[who].add(monthKey);
-                    }
-                 });
-                 
-                 return Object.entries(grouping).map(([name, total]) => {
-                     const monthsActive = activeMonthsPerPerson[name] ? activeMonthsPerPerson[name].size : 1;
-                     const divisor = monthsActive > 0 ? monthsActive : 1;
-                     return { name, avg: total / divisor, monthsCount: monthsActive };
-                 });
-            }, [combinedIncomes, contextDate]);
-
-            const stabilityReserveHistory = useMemo(() => { 
-                const monthlyNetIncomes = {}; 
-                const adjustmentFlags = {}; // Rastreia meses com ajuste manual
-
-                // Include adjustments in reserve calculation!
-                combinedIncomes.forEach(record => { 
-                    const key = `${record.year}-${String(record.month).padStart(2, '0')}`; 
-                    if (!monthlyNetIncomes[key]) monthlyNetIncomes[key] = 0; 
-                    monthlyNetIncomes[key] += record.amount; 
-                    if (record.isReserveAdjustment) adjustmentFlags[key] = true;
-                }); 
-                combinedExpenses.forEach(record => { 
-                    const key = `${record.year}-${String(record.month).padStart(2, '0')}`; 
-                    if (!monthlyNetIncomes[key]) monthlyNetIncomes[key] = 0; 
-                    monthlyNetIncomes[key] -= record.amount; 
-                    if (record.isReserveAdjustment) adjustmentFlags[key] = true;
-                }); 
-                
-                const sortedMonthKeys = Object.keys(monthlyNetIncomes).sort(); 
-                if (sortedMonthKeys.length === 0) { return []; } 
-                
-                const history = []; 
-                let runningReserve = 0; 
-                
-                for (const monthKey of sortedMonthKeys) { 
-                    const [currentYear, currentMonthIndex] = monthKey.split('-').map(Number); 
-                    const avgBalanceForThisMonth = calculateMovingAverage(currentYear, currentMonthIndex);
-
-                    const previousReserve = runningReserve; 
-                    const currentMonthBalance = monthlyNetIncomes[monthKey] || 0; 
-                    const difference = currentMonthBalance - avgBalanceForThisMonth; 
-                    runningReserve += difference; 
-                    if (runningReserve < 0) { runningReserve = 0; } 
-                    const amountAdded = runningReserve - previousReserve;
-                    const monthName = new Date(currentYear, currentMonthIndex).toLocaleString('pt-BR', { month: 'short' }).replace('.',''); 
-                    
-                    history.push({ 
-                        monthKey: monthKey, 
-                        monthName: monthName, 
-                        amountAdded: amountAdded, 
-                        totalReserve: runningReserve, 
-                        movingAverageUsed: avgBalanceForThisMonth,
-                        hasAdjustment: adjustmentFlags[monthKey] 
-                    }); 
-                } 
-                return history; 
-            }, [combinedIncomes, combinedExpenses, calculateMovingAverage]);
-            
-            const finalStabilityReserve = useMemo(() => { return stabilityReserveHistory.length > 0 ? stabilityReserveHistory[stabilityReserveHistory.length - 1].totalReserve : 0; }, [stabilityReserveHistory]);
-            
-            const monthlySummary = useMemo(() => { 
-                const summary = Array.from({ length: 12 }, (_, i) => ({ month: i, monthName: new Date(filterYear, i).toLocaleString('pt-BR', { month: 'short' }).replace('.', ''), income: 0, expense: 0, balance: 0, transfers: 0 })); 
-                filteredIncomes.forEach(income => { summary[income.month].income += income.amount; }); 
-                reserveTransfers.forEach(t => { summary[t.month].transfers += t.amount; });
-                filteredExpenses.forEach(expense => { summary[expense.month].expense += expense.amount; }); 
-                
-                // CORREÇÃO: Saldo = Income - Expense (ignorando transferências na visualização da tabela para manter consistência matemática)
-                summary.forEach(monthData => { monthData.balance = monthData.income - monthData.expense; }); 
-                return summary; 
-            }, [filteredIncomes, reserveTransfers, filteredExpenses, filterYear]);
-            
-            // Dados para o Card de Receita atual (para passar pro modal)
-            const currentMonthIncomeForModal = useMemo(() => {
-                const now = new Date();
-                return filteredIncomes 
-                    .filter(i => i.month === now.getMonth() && i.year === now.getFullYear())
-                    .reduce((sum, i) => sum + i.amount, 0);
-            }, [filteredIncomes]);
-
-            const currentMonthBalanceForModal = useMemo(() => {
-                const now = new Date();
-                const income = filteredIncomes
-                    .filter(i => i.month === now.getMonth() && i.year === now.getFullYear())
-                    .reduce((sum, i) => sum + i.amount, 0);
-                const transfers = reserveTransfers
-                    .filter(i => i.month === now.getMonth() && i.year === now.getFullYear())
-                    .reduce((sum, i) => sum + i.amount, 0);
-                const expense = filteredExpenses
-                    .filter(e => e.month === now.getMonth() && e.year === now.getFullYear())
-                    .reduce((sum, e) => sum + e.amount, 0);
-                return (income + transfers) - expense;
-            }, [filteredIncomes, reserveTransfers, filteredExpenses]);
-
-            const chartData = useMemo(() => { 
-                const data = [];
-                
-                // Mapeia histórico de reserva para acesso rápido
-                const reserveMap = new Map();
-                const sortedHistory = [...stabilityReserveHistory].sort((a, b) => a.monthKey.localeCompare(b.monthKey));
-                
-                // Loop para os últimos 12 meses (do mais antigo para o atual/simulado) com base no contextDate
-                for (let i = 11; i >= 0; i--) {
-                    const d = new Date(contextDate.getFullYear(), contextDate.getMonth() - i, 1);
-                    const month = d.getMonth();
-                    const year = d.getFullYear();
-                    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
-                    const label = d.toLocaleString('pt-BR', { month: 'short' }).replace('.','') + '/' + year.toString().slice(2);
-
-                    // Calc Values for this specific month
-                    const income = combinedIncomes
-                        .filter(r => r.month === month && r.year === year && !r.isReserveAdjustment && !r.isTransferFromReserve)
-                        .reduce((sum, r) => sum + r.amount, 0);
-                    
-                    const transfers = combinedIncomes
-                        .filter(r => r.month === month && r.year === year && r.isTransferFromReserve)
-                        .reduce((sum, r) => sum + r.amount, 0);
-
-                    const expense = combinedExpenses
-                        .filter(r => r.month === month && r.year === year && !r.isReserveAdjustment)
-                        .reduce((sum, r) => sum + r.amount, 0);
-                    
-                    const displayBalance = income - expense; 
-
-                    // Averages at that point in time
-                    const saldoSugerido = calculateMovingAverage(year, month);
-                    const avgIncome = calculateMovingIncomeAverage(year, month);
-
-                    // Reserve at that point in time
-                    let reserveVal = 0;
-                    const relevantHistoryEntry = sortedHistory.filter(h => h.monthKey <= monthKey).pop();
-                    if (relevantHistoryEntry) {
-                        reserveVal = relevantHistoryEntry.totalReserve;
-                    }
-
-                    data.push({
-                        monthName: label,
-                        balance: displayBalance,
-                        expense,
-                        saldoSugerido,
-                        avgIncome,
-                        stabilityReserve: reserveVal
-                    });
-                }
-                return data;
-            }, [stabilityReserveHistory, combinedIncomes, combinedExpenses, calculateMovingAverage, calculateMovingIncomeAverage, contextDate]); 
-            
-            const monthlyBalanceHistory = useMemo(() => monthlySummary.filter(m => m.income > 0 || m.transfers > 0 || m.expense > 0), [monthlySummary]);
-            
-            const sortedMonthlyBalanceHistory = useSortableData(monthlyBalanceHistory, sortConfigs.summary);
-            const sortedStabilityReserveHistory = useSortableData(stabilityReserveHistory, sortConfigs.reserve);
-            const sortedFilteredIncomes = useSortableData(filteredIncomes, sortConfigs.incomes);
-            const sortedFilteredExpenses = useSortableData(filteredExpenses, sortConfigs.expenses);
-
-            const canUndo = historyIndex >= 0 && !isSimulation;
-            const canRedo = historyIndex < history.length - 1 && !isSimulation;
-            const tourSteps = [
-                { target: '#add-record-form', title: 'Bem-vindo(a)!', content: 'Comece por aqui! Use este formulário para adicionar suas entradas e saídas. Ele estará sempre visível para acesso rápido.' },
-                { target: '#summary-cards', title: 'Seu Painel Principal', content: 'Aqui você vê o mais importante: sua Reserva de Estabilidade e o Saldo Sugerido para o mês.' },
-                { target: '#summary-toggle', title: 'Ver Detalhes do Ano', content: 'Quer ver o total de entradas, saídas, médias mensais e o saldo do ano? Clique aqui para expandir e ver o resumo completo.'},
-                { target: '#financial-chart', title: 'Evolução Financeira', content: 'Este gráfico mostra o seu progresso mês a mês. Clique nas legendas para focar no que é mais importante.' },
-                { target: '#action-buttons', title: 'Ferramentas', content: 'Precisa importar ou exportar dados? Cometeu um erro e quer desfazer? Use as ferramentas neste painel.' }
-            ];
-
-            if (isLoading && !dataLoaded) { return <div className="bg-gray-900 text-gray-300 min-h-screen flex justify-center items-center"><p>Carregando...</p></div>; }
-            if (!user) { return <AuthModal auth={auth} db={db} />; }
-
-            return (
-                <div className="bg-gray-900 text-gray-300 min-h-screen font-sans">
-                    {showOnboarding && <OnboardingModal onSave={handleSaveInitialAverage} onCancel={handleStartFromZero} />}
-                    <LeanTimesCalculatorModal 
-                        isOpen={showLeanCalculator}
-                        onClose={() => setShowLeanCalculator(false)}
-                        currentMonthIncome={currentMonthIncomeForModal}
-                        currentMonthBalance={currentMonthBalanceForModal}
-                        currentReserve={finalStabilityReserve}
-                        onApply={handleLeanCalculatorApply}
-                    />
-                    <AdjustReserveModal
-                        isOpen={showAdjustReserveModal}
-                        onClose={() => setShowAdjustReserveModal(false)}
-                        currentCalculatedReserve={finalStabilityReserve}
-                        onConfirm={handleManualReserveAdjustment}
-                        currentMonthBalance={currentMonthBalanceForModal}
-                        suggestedBalance={currentTwelveMonthAverage}
-                    />
-                    <Tour steps={tourSteps} isOpen={isTourOpen} onClose={handleTourClose} />
-                    {editingRecord && ( <EditModal record={editingRecord} onSave={handleUpdateRecord} onCancel={() => { setEditingRecord(null); setError(''); }} onError={setError} /> )}
-                    
-                    <header className="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-20">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="flex justify-between items-center h-20">
-                                <div className="flex items-center gap-8">
-                                    <h1 className="text-2xl font-bold text-gray-100 hidden sm:block">Controle Financeiro</h1>
-                                     <div className="border-b border-gray-700 flex flex-wrap">
-                                        <button onClick={() => {setView('dashboard'); setSimIncomes([]); setSimExpenses([]);}} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ view === 'dashboard' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Dashboard </button>
-                                        <button onClick={() => setView('simulation')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ view === 'simulation' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Simulação </button>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <p className="text-sm text-gray-400 hidden md:block">
-                                        {user.email || user.displayName || 'Usuário Anônimo'}
-                                    </p>
-                                    <button onClick={() => signOut(auth)} className="flex items-center justify-center p-2 bg-red-600/80 text-white font-semibold rounded-full hover:bg-red-500 transition-colors" title="Sair">
-                                        <LogoutIcon />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </header>
-
-                    <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-                        {isSimulation && (
-                            <div className="bg-cyan-900/50 border border-cyan-700 text-cyan-300 px-4 py-3 rounded-lg relative mb-6 text-center" role="alert">
-                                <strong>Modo Simulação:</strong> As alterações feitas aqui não serão salvas permanentemente.
-                            </div>
-                        )}
-                        {error && <div className="bg-red-900/50 border border-red-500 text-red-400 px-4 py-3 rounded-lg relative mb-6" role="alert">{error}</div>}
-                        {success && <div className="bg-green-900/50 border border-green-500 text-green-400 px-4 py-3 rounded-lg relative mb-6" role="alert">{success}</div>}
-
-                        <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-8">
-                            
-                            {/* Coluna Principal (Esquerda) */}
-                            <div className="lg:col-span-8 space-y-8">
-                                <div id="summary-cards" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                                    <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                                        <h2 className="text-2xl font-semibold text-gray-200">Resumo de {filterYear}</h2>
-                                        <div className="flex items-center gap-2">
-                                            <label htmlFor="filterYear" className="text-sm font-medium text-gray-400">Filtrar por Ano:</label>
-                                            <input id="filterYear" type="number" value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="w-32 px-3 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div id="monthly-salary-card" className={`relative group p-4 rounded-lg border ${currentTwelveMonthAverage >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}>
-                                             <h3 className={`flex items-center gap-2 text-lg font-semibold ${currentTwelveMonthAverage >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>
-                                                <span role="img" aria-label="Sugestão">💡</span>
-                                                Saldo Sugerido ({isSimulation && contextDate > new Date() ? 'Simulado' : 'Hoje'})
-                                             </h3>
-                                              <span className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-600 text-white text-xs rounded py-1 px-2 w-72 text-center z-10">
-                                                  Este é o seu saldo médio dos últimos 12 meses. Use como guia para seus gastos mensais.
-                                              </span>
-                                              <p className={`text-3xl font-bold mt-2 ${currentTwelveMonthAverage >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}>{currentTwelveMonthAverage.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                         </div>
-                                        <div className="bg-purple-900/50 p-4 rounded-lg border border-purple-700">
-                                            <h3 className="text-lg font-semibold text-purple-300 flex items-center justify-between relative group">
-                                                <div className="flex items-center gap-2">
-                                                    <ShieldIcon /> Reserva de Estabilidade
-                                                </div>
-                                                <button onClick={() => setShowAdjustReserveModal(true)} title="Ajustar Saldo Manualmente" className="text-purple-400 hover:text-white transition-colors">
-                                                    <AdjustIcon />
-                                                </button>
-                                                <span className="absolute -top-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-600 text-white text-xs rounded py-1 px-2 w-72 pointer-events-none">
-                                                    Calculada mês a mês: Saldo Anterior + (Saldo do Mês - Média de Saldo dos 12 meses anteriores). A reserva é zerada se ficar negativa.
-                                                </span>
-                                            </h3>
-                                            <p className="text-3xl font-bold text-purple-400 mt-2">{finalStabilityReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                        </div>
-
-                                        {showFullSummary && (
-                                            <>
-                                                <div className="bg-green-900/50 p-4 rounded-lg border border-green-700"> 
-                                                    <h3 className="text-lg font-semibold text-green-300">Total de Entradas (Renda)</h3> 
-                                                    <p className="text-3xl font-bold text-green-400 mt-2">{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
-                                                </div>
-                                                
-                                                <div className="bg-red-900/50 p-4 rounded-lg border border-red-700"> <h3 className="text-lg font-semibold text-red-300">Total de Saídas</h3> <p className="text-3xl font-bold text-red-400 mt-2">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
-                                                
-                                                <div className="bg-green-900/50 p-4 rounded-lg border border-green-700/50">
-                                                    <h3 className="text-base font-semibold text-green-300/80">Média de Entradas (12m)</h3>
-                                                    <p className="text-2xl font-bold text-green-400/90 mt-2">{last12MonthsSummary.avgIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                                </div>
-                                                <div className="bg-red-900/50 p-4 rounded-lg border border-red-700/50">
-                                                    <h3 className="text-base font-semibold text-red-300/80">Média de Saídas (12m)</h3>
-                                                    <p className="text-2xl font-bold text-red-400/90 mt-2">{last12MonthsSummary.avgExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                                </div>
-
-                                                <div className={`md:col-span-2 p-4 rounded-lg border ${balance >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}> 
-                                                    <h3 className={`text-lg font-semibold ${balance >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>Saldo Final do Ano (Disponível)</h3> 
-                                                    <p className={`text-3xl font-bold mt-2 ${balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}>{balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                    
-                                    <div id="summary-toggle" className="text-center mt-6 border-t border-gray-700 pt-4">
-                                        <button onClick={() => setShowFullSummary(!showFullSummary)} className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-3 py-1">
-                                            {showFullSummary ? 'Ocultar Detalhes do Ano' : 'Mostrar Detalhes do Ano'}
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <FinancialEvolutionChart data={chartData} />
-
-                                <div id="detailed-reports" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                                    <h2 className="text-2xl font-semibold text-gray-200 mb-4">Relatórios Detalhados</h2>
-                                    <div className="border-b border-gray-700 flex flex-wrap">
-                                        <button onClick={() => setActiveTab('summary')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'summary' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Resumo Mensal </button>
-                                        <button onClick={() => setActiveTab('reserve')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'reserve' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Reserva de Estabilidade </button>
-                                        <button onClick={() => setActiveTab('incomes')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'incomes' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Entradas </button>
-                                        <button onClick={() => setActiveTab('expenses')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'expenses' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Saídas </button>
-                                        <button onClick={() => setActiveTab('couple')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'couple' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Visão Casal </button>
-                                    </div>
-                                    <div className="mt-4"> 
-                                        {isLoading && !user ? (<p className="text-gray-500 text-center py-4">Carregando dados...</p>) : ( <> 
-                                            {activeTab === 'summary' && <MonthlyBalanceHistoryTable data={sortedMonthlyBalanceHistory} isLoading={isLoading} sortConfig={sortConfigs.summary} requestSort={(key) => handleRequestSort('summary', key)} />} 
-                                            {activeTab === 'reserve' && <StabilityReserveHistoryTable data={sortedStabilityReserveHistory} sortConfig={sortConfigs.reserve} requestSort={(key) => handleRequestSort('reserve', key)} />} 
-                                            {activeTab === 'incomes' && <RecordsTable title={`Detalhes de Entradas (${filterYear})`} records={sortedFilteredIncomes} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="income" sortConfig={sortConfigs.incomes} requestSort={(key) => handleRequestSort('incomes', key)} isSimulation={isSimulation} />} 
-                                            {activeTab === 'expenses' && <RecordsTable title={`Detalhes de Saídas (${filterYear})`} records={sortedFilteredExpenses} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="expense" sortConfig={sortConfigs.expenses} requestSort={(key) => handleRequestSort('expenses', key)} isSimulation={isSimulation} />} 
-                                            {activeTab === 'couple' && <ContributionAnalysis contributionData={contributionData} individualAverages={individualAverages} />}
-                                        </> )} 
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Coluna de Ações (Direita) */}
-                            <div className="lg:col-span-4 space-y-8 lg:sticky top-24 h-screen">
-                                <div id="add-record-form" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                                    <h3 className="text-xl font-semibold text-gray-200 mb-4">Adicionar Transação</h3>
-                                    <div className="mb-4 border-b border-gray-700 flex"> <button onClick={() => setFormType('income')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'income' ? 'text-green-400 border-b-2 border-green-400' : 'text-gray-400 hover:text-green-400'}`}> Entrada </button> <button onClick={() => setFormType('expense')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'expense' ? 'text-red-400 border-b-2 border-red-400' : 'text-gray-400 hover:text-red-400'}`}> Saída </button> </div>
-                                    <form onSubmit={handleAddRecord} className="space-y-4">
-                                        <div> <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> <input id="description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={formType === 'income' ? 'Ex: Salário, Venda' : 'Ex: Aluguel, Compras'} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
-                                        <div>
-                                            <label htmlFor="responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
-                                            <input 
-                                                id="responsible" 
-                                                list="responsible-options-add"
-                                                value={responsible} 
-                                                onChange={(e) => setResponsible(e.target.value)} 
-                                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="Quem?"
-                                            />
-                                            <datalist id="responsible-options-add">
-                                                <option value="Eu" />
-                                                <option value="Parceiro(a)" />
-                                                <option value="Conjunto" />
-                                                <option value="Filho(a)" />
-                                            </datalist>
-                                        </div>
-                                        <div> <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> <input id="amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1500.00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
-                                        <div className="flex gap-4"> <div className="flex-1"> <label htmlFor="month" className="block text-sm font-medium text-gray-400 mb-1">Mês</label> <select id="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> {Array.from({length: 12}, (_, i) => <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}</option>)} </select> </div> <div className="flex-1"> <label htmlFor="year" className="block text-sm font-medium text-gray-400 mb-1">Ano</label> <input id="year" type="number" value={year} onChange={(e) => setYear(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div> </div>
-                                        <button type="submit" className={`w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${formType === 'income' ? 'bg-green-600 hover:bg-green-500 focus:ring-green-500' : 'bg-red-600 hover:bg-red-500 focus:ring-red-500'}`}> Adicionar {formType === 'income' ? 'Entrada' : 'Saída'} </button>
-                                    </form>
-                                </div>
-                                <div id="action-buttons" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                                    <h3 className="text-xl font-semibold text-gray-200 mb-4">Ferramentas</h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <button 
-                                            onClick={() => setShowLeanCalculator(true)}
-                                            className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-yellow-700/80 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors border border-yellow-600/50">
-                                            <CalculatorIcon />
-                                            Modo Vacas Magras
-                                        </button>
-                                        
-                                        {showRedoButton && (
-                                            <button 
-                                                onClick={handleRedoInitialAverage}
-                                                className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-500 transition-colors">
-                                                <ResetIcon />
-                                                Refazer Média Inicial
-                                            </button>
-                                        )}
-                                        <button onClick={handleImportClick} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <ImportIcon /> Importar </button>
-                                        <button onClick={handleExportData} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <ExportIcon /> Exportar </button>
-                                        <button onClick={handleUndo} disabled={!canUndo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <UndoIcon /> Desfazer </button>
-                                        <button onClick={handleRedo} disabled={!canRedo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <RedoIcon /> Refazer </button>
-                                        <button onClick={() => setIsTourOpen(true)} className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500 transition-colors"> <HelpIcon /> Ajuda & Tour Guiado </button>
-                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                         <footer className="text-center mt-12 py-8 text-sm text-gray-500 border-t border-gray-800">
-                            <div className="flex flex-col items-center justify-center">
-                                <p className="mb-2">Desenvolvido por:</p>
-                                <img src="https://i.postimg.cc/dVgn73g8/Monocromatica-Horizontal.png" alt="Logo do Desenvolvedor" className="h-8 opacity-50" />
-                            </div>
-                        </footer>
-                    </main>
-                </div>
-            );
+            return adminUser ? <Dashboard auth={auth} db={db} adminUser={adminUser} /> : <AdminLogin auth={auth} />;
         }
-
+        
         const container = document.getElementById('root');
         const root = ReactDOM.createRoot(container);
-        root.render(<App />);
+        root.render(<AdminApp />);
 
     </script>
 </body>
