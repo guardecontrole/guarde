@@ -849,14 +849,17 @@
                                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
                                         <span className="font-medium text-gray-200">{item.name}</span>
                                     </div>
-                                    <span className="text-xl font-bold text-green-400">
-                                        {item.avg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                        <span className="text-xs text-gray-500 font-normal ml-1">/mês (ativo)</span>
-                                    </span>
+                                    <div className="text-right">
+                                         <span className="block text-xl font-bold text-green-400">
+                                            {item.avg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            <span className="text-xs text-gray-500 font-normal ml-1">/mês</span>
+                                        </span>
+                                        <span className="text-xs text-gray-400">({item.monthsCount} meses ativos)</span>
+                                    </div>
                                 </div>
                             ))}
                             <p className="text-xs text-gray-500 mt-2">
-                                * Calculado considerando apenas os meses em que cada responsável teve entradas nos últimos 12 meses.
+                                * Média calculada apenas sobre os meses com contribuição.
                             </p>
                         </div>
                     </div>
@@ -1625,7 +1628,12 @@
                         if (!grouping[who]) grouping[who] = 0;
                         grouping[who] += inc.amount;
 
-                        // Registra mês ativo
+                        // Registra mês ativo, MAS APENAS SE O VALOR FOR > 0.
+                        // Se o valor for 0 (lançamento manual para marcar presença sem dinheiro), 
+                        // ele ainda conta como mês ativo, pois o usuário registrou "algo".
+                        // O pedido foi: "se ele quiser continuar no grupo mas não retribuiu, então é só eu digitar uma receita com '0' reais"
+                        // Isso significa que o registro com 0 DEVE contar para o divisor da média.
+                        // Como 'inc' existe, o mês existe. Então a lógica abaixo já está correta.
                         const monthKey = `${inc.year}-${inc.month}`;
                         if (!activeMonthsPerPerson[who]) activeMonthsPerPerson[who] = new Set();
                         activeMonthsPerPerson[who].add(monthKey);
