@@ -104,6 +104,8 @@
         const CalculatorIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg> );
         const AdjustIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> );
         const InfoIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block ml-1 text-yellow-500"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> );
+        const UsersIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> );
+        const SettingsIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 hover:text-white transition-colors"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> );
 
         const SortIndicator = ({ sortConfig, columnKey }) => { if (sortConfig.key === columnKey) { return sortConfig.direction === 'ascending' ? <SortAscIcon /> : <SortDescIcon />; } return <NeutralSortIcon />; };
         
@@ -406,6 +408,80 @@
             );
         };
 
+        const SettingsModal = ({ isOpen, onClose, participants, onSaveParticipants }) => {
+            const [tempParticipants, setTempParticipants] = useState(participants || ['Eu']);
+            const [newParticipant, setNewParticipant] = useState('');
+
+            useEffect(() => {
+                if (isOpen) {
+                    setTempParticipants(participants || ['Eu']);
+                    setNewParticipant('');
+                }
+            }, [isOpen, participants]);
+
+            const handleAdd = () => {
+                if (newParticipant.trim() && !tempParticipants.includes(newParticipant.trim())) {
+                    setTempParticipants([...tempParticipants, newParticipant.trim()]);
+                    setNewParticipant('');
+                }
+            };
+
+            const handleRemove = (index) => {
+                if (tempParticipants.length > 1) {
+                    const newList = tempParticipants.filter((_, i) => i !== index);
+                    setTempParticipants(newList);
+                } else {
+                    alert("É necessário ter pelo menos um participante.");
+                }
+            };
+
+            const handleSave = () => {
+                onSaveParticipants(tempParticipants);
+                onClose();
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-sm">
+                        <h2 className="text-xl font-bold text-gray-100 mb-4">Configurações</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Participantes</label>
+                                <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
+                                    {tempParticipants.map((p, index) => (
+                                        <div key={index} className="flex justify-between items-center bg-gray-700 px-3 py-2 rounded">
+                                            <span>{p}</span>
+                                            <button onClick={() => handleRemove(index)} className="text-red-400 hover:text-red-300">
+                                                <TrashIcon />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        value={newParticipant} 
+                                        onChange={(e) => setNewParticipant(e.target.value)} 
+                                        placeholder="Nome"
+                                        className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-6">
+                                <button onClick={onClose} className="px-4 py-2 text-gray-400 hover:text-white">Cancelar</button>
+                                <button onClick={handleSave} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500 font-bold">Salvar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const LeanTimesCalculatorModal = ({ isOpen, onClose, currentMonthIncome, currentMonthBalance, currentReserve, onApply }) => {
             const [nextMonthIncome, setNextMonthIncome] = useState('');
             const [suggestedLimit, setSuggestedLimit] = useState(null);
@@ -623,7 +699,10 @@
             ); 
         };
 
-        const RecordsTable = ({ title, records, onDelete, onEdit, type, sortConfig, requestSort, isSimulation }) => ( 
+        const RecordsTable = ({ title, records, onDelete, onEdit, type, sortConfig, requestSort, isSimulation, participants }) => {
+            const showResponsible = participants && participants.length > 1;
+
+            return (
             <div className="bg-gray-800/50 p-6 rounded-b-xl rounded-r-xl shadow-inner"> 
                 <h3 className="text-xl font-semibold text-gray-200 mb-4">{title}</h3> 
                 {records.length > 0 ? ( 
@@ -634,12 +713,14 @@
                                     <th className="p-3 text-sm font-semibold text-gray-400 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('month')}> 
                                         <div className="flex items-center justify-start group"> <span>Mês</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="month" /></span> </div> 
                                     </th> 
-                                    <th className="p-3 text-sm font-semibold text-gray-400 w-1/2 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('description')}> 
+                                    <th className={`p-3 text-sm font-semibold text-gray-400 cursor-pointer hover:bg-gray-700/70 ${showResponsible ? 'w-1/3' : 'w-1/2'}`} onClick={() => requestSort('description')}> 
                                         <div className="flex items-center justify-start group"> <span>Descrição</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="description" /></span> </div> 
                                     </th> 
-                                     <th className="p-3 text-sm font-semibold text-gray-400 w-1/6 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('responsible')}>
-                                         <div className="flex items-center justify-start group"><span>Resp.</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="responsible" /></span></div>
-                                     </th>
+                                     {showResponsible && (
+                                         <th className="p-3 text-sm font-semibold text-gray-400 w-1/6 cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('responsible')}>
+                                             <div className="flex items-center justify-start group"><span>Resp.</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="responsible" /></span></div>
+                                         </th>
+                                     )}
                                     <th className="p-3 text-sm font-semibold text-gray-400 text-right cursor-pointer hover:bg-gray-700/70" onClick={() => requestSort('amount')}> 
                                         <div className="flex items-center justify-end group"> <span>Valor</span> <span className="ml-2"><SortIndicator sortConfig={sortConfig} columnKey="amount" /></span> </div> 
                                     </th> 
@@ -651,11 +732,13 @@
                                     <tr key={record.id} className={`border-b border-gray-700 hover:bg-gray-700/70 ${record.isSimulated ? 'italic text-cyan-400' : ''}`}> 
                                         <td className="p-3 text-gray-300 capitalize">{new Date(record.year, record.month).toLocaleString('pt-BR', { month: 'short' }).replace('.','')}</td> 
                                         <td className="p-3">{record.description} {record.isSimulated && <span className="text-xs text-cyan-500">(Simulação)</span>}</td> 
-                                        <td className="p-3 text-gray-300 text-xs">
-                                            <span className={`px-2 py-1 rounded-full ${record.responsible === 'Parceiro(a)' ? 'bg-pink-900/50 text-pink-300' : 'bg-blue-900/50 text-blue-300'}`}>
-                                                {record.responsible || 'Eu'}
-                                            </span>
-                                        </td>
+                                        {showResponsible && (
+                                            <td className="p-3 text-gray-300 text-xs">
+                                                <span className={`px-2 py-1 rounded-full ${record.responsible === 'Eu' ? 'bg-blue-900/50 text-blue-300' : 'bg-gray-700 text-gray-300'}`}>
+                                                    {record.responsible || 'Eu'}
+                                                </span>
+                                            </td>
+                                        )}
                                         <td className={`p-3 font-medium text-right ${type === 'income' ? 'text-green-400' : 'text-red-400'}`}> {record.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} </td> 
                                         <td className="p-3 text-center"> 
                                             <div className="flex justify-center items-center gap-3"> 
@@ -672,14 +755,16 @@
                     <p className="text-gray-500 text-center py-4">Nenhum registro encontrado.</p> 
                 )} 
             </div> 
-        );
+            );
+        };
 
-        const EditModal = ({ record, onSave, onCancel, onError }) => { 
+        const EditModal = ({ record, onSave, onCancel, onError, participants }) => { 
             const [newDescription, setNewDescription] = useState(record.description); 
             const [newAmount, setNewAmount] = useState(record.amount); 
-            const [newResponsible, setNewResponsible] = useState(record.responsible || 'Eu');
+            const [newResponsible, setNewResponsible] = useState(record.responsible || (participants && participants[0]) || 'Eu');
             
             const handleSave = () => { 
+                // CORREÇÃO: Permitir valor 0. A verificação anterior (!newAmount) bloqueava o 0.
                 if (!newDescription.trim() || newAmount === '' || newAmount === null || isNaN(parseFloat(newAmount))) { 
                     onError("Por favor, preencha a descrição e um valor válido."); 
                     return; 
@@ -692,6 +777,8 @@
                 }); 
             }; 
             
+            const showResponsible = participants && participants.length > 1;
+
             return ( 
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"> 
                     <div className="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-md"> 
@@ -701,23 +788,19 @@
                                 <label htmlFor="edit-description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> 
                                 <input id="edit-description" type="text" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> 
                             </div> 
-                            <div>
-                                <label htmlFor="edit-responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
-                                <input 
-                                    id="edit-responsible" 
-                                    list="responsible-options"
-                                    value={newResponsible} 
-                                    onChange={(e) => setNewResponsible(e.target.value)} 
-                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                                    placeholder="Ex: Nome da pessoa"
-                                />
-                                <datalist id="responsible-options">
-                                    <option value="Eu" />
-                                    <option value="Parceiro(a)" />
-                                    <option value="Conjunto" />
-                                    <option value="Filho(a)" />
-                                </datalist>
-                            </div>
+                            {showResponsible && (
+                                <div>
+                                    <label htmlFor="edit-responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
+                                    <select 
+                                        id="edit-responsible" 
+                                        value={newResponsible} 
+                                        onChange={(e) => setNewResponsible(e.target.value)} 
+                                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        {participants.map(p => <option key={p} value={p}>{p}</option>)}
+                                    </select>
+                                </div>
+                            )}
                             <div> 
                                 <label htmlFor="edit-amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> 
                                 <input id="edit-amount" type="number" step="0.01" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> 
@@ -947,6 +1030,7 @@
             const [history, setHistory] = useState([]);
             const [historyIndex, setHistoryIndex] = useState(-1);
             const [isTourOpen, setIsTourOpen] = useState(false);
+            const [showSettingsModal, setShowSettingsModal] = useState(false);
             const [sortConfigs, setSortConfigs] = useState({ summary: { key: 'month', direction: 'descending' }, reserve: { key: 'monthKey', direction: 'descending' }, incomes: { key: 'month', direction: 'descending' }, expenses: { key: 'month', direction: 'descending' } });
             const [showFullSummary, setShowFullSummary] = useState(false);
             const [showOnboarding, setShowOnboarding] = useState(false);
@@ -958,6 +1042,7 @@
             const [showAdjustReserveModal, setShowAdjustReserveModal] = useState(false);
 
             const isSimulation = view === 'simulation';
+            const participants = useMemo(() => userProfile?.participants || ['Eu'], [userProfile]);
 
             useEffect(() => {
                 const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -983,6 +1068,12 @@
                 const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
                 const unsubProfile = onSnapshot(profileRef, (docSnap) => {
                     profileData = docSnap.exists() ? docSnap.data() : { tourCompleted: false };
+                    
+                    // Garantir que participants exista
+                    if (!profileData.participants) {
+                        profileData.participants = ['Eu'];
+                    }
+
                     setUserProfile(profileData);
 
                     if (dataLoaded) {
@@ -1023,6 +1114,24 @@
                     }
                 }
             };
+
+            const handleSaveParticipants = async (newParticipants) => {
+                if (user) {
+                    try {
+                        const profileRef = doc(db, `/artifacts/${appId}/users/${user.uid}/profile/settings`);
+                        await setDoc(profileRef, { participants: newParticipants }, { merge: true });
+                        setSuccess("Participantes atualizados com sucesso!");
+                        
+                        // Reset responsible if it was removed
+                        if (!newParticipants.includes(responsible)) {
+                            setResponsible(newParticipants[0] || 'Eu');
+                        }
+                    } catch (error) {
+                        console.error("Error saving participants:", error);
+                        setError("Erro ao salvar participantes.");
+                    }
+                }
+            };
             
             useEffect(() => {
                 if (userProfile && dataLoaded) {
@@ -1047,14 +1156,19 @@
 
             const handleAddRecord = async (e) => { 
                 e.preventDefault(); 
+                // Verifica se amount é string vazia ou não é número. Se for 0, passa.
                 if (!description.trim() || amount === '' || amount === null || isNaN(parseFloat(amount))) { 
                     setError("Por favor, preencha a descrição e um valor válido."); return; 
                 } 
                 setError(''); 
+                
+                // If only 1 participant, force set responsible to that person
+                const currentResponsible = participants.length > 1 ? responsible : participants[0];
+
                 const newRecord = { 
                     description, 
                     amount: parseFloat(amount), 
-                    responsible,
+                    responsible: currentResponsible,
                     month: parseInt(month), 
                     year: parseInt(year), 
                     createdAt: new Date() 
@@ -1854,8 +1968,14 @@
                         currentMonthBalance={currentMonthBalanceForModal}
                         suggestedBalance={currentTwelveMonthAverage}
                     />
+                    <SettingsModal
+                        isOpen={showSettingsModal}
+                        onClose={() => setShowSettingsModal(false)}
+                        participants={participants}
+                        onSaveParticipants={handleSaveParticipants}
+                    />
                     <Tour steps={tourSteps} isOpen={isTourOpen} onClose={handleTourClose} />
-                    {editingRecord && ( <EditModal record={editingRecord} onSave={handleUpdateRecord} onCancel={() => { setEditingRecord(null); setError(''); }} onError={setError} /> )}
+                    {editingRecord && ( <EditModal record={editingRecord} onSave={handleUpdateRecord} onCancel={() => { setEditingRecord(null); setError(''); }} onError={setError} participants={participants} /> )}
                     
                     <header className="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-20">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1871,6 +1991,9 @@
                                     <p className="text-sm text-gray-400 hidden md:block">
                                         {user.email || user.displayName || 'Usuário Anônimo'}
                                     </p>
+                                    <button onClick={() => setShowSettingsModal(true)} className="flex items-center justify-center p-2 bg-gray-700 text-white font-semibold rounded-full hover:bg-gray-600 transition-colors" title="Configurações">
+                                        <SettingsIcon />
+                                    </button>
                                     <button onClick={() => signOut(auth)} className="flex items-center justify-center p-2 bg-red-600/80 text-white font-semibold rounded-full hover:bg-red-500 transition-colors" title="Sair">
                                         <LogoutIcon />
                                     </button>
@@ -2026,10 +2149,7 @@
                                                 placeholder="Quem?"
                                             />
                                             <datalist id="responsible-options-add">
-                                                <option value="Eu" />
-                                                <option value="Parceiro(a)" />
-                                                <option value="Conjunto" />
-                                                <option value="Filho(a)" />
+                                                {participants.map(p => <option key={p} value={p}>{p}</option>)}
                                             </datalist>
                                         </div>
                                         <div> <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> <input id="amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1500.00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
