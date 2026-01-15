@@ -104,7 +104,6 @@
         const CalculatorIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg> );
         const AdjustIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> );
         const InfoIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block ml-1 text-yellow-500"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> );
-        const UsersIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> );
 
         const SortIndicator = ({ sortConfig, columnKey }) => { if (sortConfig.key === columnKey) { return sortConfig.direction === 'ascending' ? <SortAscIcon /> : <SortDescIcon />; } return <NeutralSortIcon />; };
         
@@ -681,7 +680,6 @@
             const [newResponsible, setNewResponsible] = useState(record.responsible || 'Eu');
             
             const handleSave = () => { 
-                // CORREÇÃO: Permitir valor 0. A verificação anterior (!newAmount) bloqueava o 0.
                 if (!newDescription.trim() || newAmount === '' || newAmount === null || isNaN(parseFloat(newAmount))) { 
                     onError("Por favor, preencha a descrição e um valor válido."); 
                     return; 
@@ -735,7 +733,7 @@
         };
 
         const FinancialEvolutionChart = ({ data }) => { 
-            const [visibility, setVisibility] = useState({ balance: true, saldoSugerido: true, expense: true, stabilityReserve: true, avgIncome: false }); // avgIncome default hidden or visible? Let's make it visible.
+            const [visibility, setVisibility] = useState({ balance: true, saldoSugerido: true, expense: true, stabilityReserve: true, avgIncome: false }); 
             const handleLegendClick = (e) => { const { dataKey } = e; setVisibility(prev => ({ ...prev, [dataKey]: !prev[dataKey] })); }; 
             const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value); 
             const formatCompactCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(value); 
@@ -811,7 +809,6 @@
             return (
                 <div className="bg-gray-800/50 p-6 rounded-b-xl rounded-r-xl shadow-inner space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Gráfico de Pizza - Contribuição no Ano */}
                         <div className="bg-gray-700/30 p-4 rounded-xl flex flex-col items-center">
                             <h3 className="text-lg font-semibold text-gray-300 mb-4">Contribuição de Renda (Este Ano)</h3>
                             {chartData.length > 0 ? (
@@ -840,7 +837,6 @@
                             )}
                         </div>
 
-                        {/* Médias Individuais */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-gray-300 mb-2">Médias de Entradas (Últimos 12 Meses)</h3>
                             {individualAverages.map((item, index) => (
@@ -933,12 +929,11 @@
             const [expenses, setExpenses] = useState([]);
             const [simIncomes, setSimIncomes] = useState([]);
             const [simExpenses, setSimExpenses] = useState([]);
-            const [view, setView] = useState('dashboard'); // 'dashboard' ou 'simulation'
+            const [view, setView] = useState('dashboard'); 
             
             const [formType, setFormType] = useState('income');
             const [description, setDescription] = useState('');
             const [amount, setAmount] = useState('');
-            // REMOVED category state
             const [responsible, setResponsible] = useState('Eu');
             const [month, setMonth] = useState(new Date().getMonth());
             const [year, setYear] = useState(new Date().getFullYear());
@@ -1052,8 +1047,6 @@
 
             const handleAddRecord = async (e) => { 
                 e.preventDefault(); 
-                // CORREÇÃO: Permitir valor 0 (zero) como entrada válida.
-                // Verifica se amount é string vazia ou não é número. Se for 0, passa.
                 if (!description.trim() || amount === '' || amount === null || isNaN(parseFloat(amount))) { 
                     setError("Por favor, preencha a descrição e um valor válido."); return; 
                 } 
@@ -1087,7 +1080,6 @@
                 } 
                 setDescription(''); 
                 setAmount(''); 
-                // Keep responsible same for quick entry
             };
 
             const handleDeleteRecord = async (id, type) => { 
@@ -1628,12 +1620,7 @@
                         if (!grouping[who]) grouping[who] = 0;
                         grouping[who] += inc.amount;
 
-                        // Registra mês ativo, MAS APENAS SE O VALOR FOR > 0.
-                        // Se o valor for 0 (lançamento manual para marcar presença sem dinheiro), 
-                        // ele ainda conta como mês ativo, pois o usuário registrou "algo".
-                        // O pedido foi: "se ele quiser continuar no grupo mas não retribuiu, então é só eu digitar uma receita com '0' reais"
-                        // Isso significa que o registro com 0 DEVE contar para o divisor da média.
-                        // Como 'inc' existe, o mês existe. Então a lógica abaixo já está correta.
+                        // Registra mês ativo
                         const monthKey = `${inc.year}-${inc.month}`;
                         if (!activeMonthsPerPerson[who]) activeMonthsPerPerson[who] = new Set();
                         activeMonthsPerPerson[who].add(monthKey);
@@ -1697,6 +1684,51 @@
             
             const finalStabilityReserve = useMemo(() => { return stabilityReserveHistory.length > 0 ? stabilityReserveHistory[stabilityReserveHistory.length - 1].totalReserve : 0; }, [stabilityReserveHistory]);
             
+            // NOVO: Análise de Liquidez para o Card de Saldo Sugerido
+            const liquidityAnalysis = useMemo(() => {
+                const now = isSimulation ? contextDate : new Date();
+                
+                // 1. Reserva do Mês Anterior (Dinheiro que já estava em caixa antes deste mês começar)
+                // Precisamos achar o registro histórico do mês anterior.
+                // A lista stabilityReserveHistory pode não estar ordenada por data na busca, então convertemos datas.
+                const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const prevKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth()).padStart(2, '0')}`;
+                
+                // Busca no histórico (que contém o total acumulado mês a mês)
+                const prevReserveEntry = stabilityReserveHistory.find(h => h.monthKey === prevKey);
+                const prevReserve = prevReserveEntry ? prevReserveEntry.totalReserve : 0;
+
+                // 2. Saldo Líquido do Mês Atual (Renda Real - Despesas)
+                // Calculamos direto dos arrays combinados para não depender do filtro de ano da tabela
+                const currentMonthIncomes = combinedIncomes
+                    .filter(i => i.month === now.getMonth() && i.year === now.getFullYear() && !i.isReserveAdjustment && !i.isTransferFromReserve)
+                    .reduce((sum, i) => sum + i.amount, 0);
+                
+                const currentMonthExpenses = combinedExpenses
+                    .filter(e => e.month === now.getMonth() && e.year === now.getFullYear() && !e.isReserveAdjustment)
+                    .reduce((sum, e) => sum + e.amount, 0);
+
+                const currentNetBalance = currentMonthIncomes - currentMonthExpenses;
+
+                // 3. Liquidez Total Disponível = O que sobrou deste mês + O que eu já tinha guardado
+                const totalLiquidity = currentNetBalance + prevReserve;
+
+                // 4. Comparação
+                const suggestion = currentTwelveMonthAverage;
+                
+                // Se a liquidez for menor que a sugestão, o usuário fisicamente não tem como atingir a sugestão sem ficar negativo/divida.
+                // Então limitamos a exibição.
+                // Nota: Se totalLiquidity for negativo, mostra negativo mesmo.
+                const isLimited = totalLiquidity < suggestion;
+
+                return {
+                    isLimited,
+                    displayValue: isLimited ? totalLiquidity : suggestion,
+                    originalSuggestion: suggestion,
+                    totalLiquidity
+                };
+            }, [stabilityReserveHistory, combinedIncomes, combinedExpenses, currentTwelveMonthAverage, contextDate, isSimulation]);
+
             const monthlySummary = useMemo(() => { 
                 const summary = Array.from({ length: 12 }, (_, i) => ({ month: i, monthName: new Date(filterYear, i).toLocaleString('pt-BR', { month: 'short' }).replace('.', ''), income: 0, expense: 0, balance: 0, transfers: 0 })); 
                 filteredIncomes.forEach(income => { summary[income.month].income += income.amount; }); 
@@ -1870,15 +1902,40 @@
                                     </div>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div id="monthly-salary-card" className={`relative group p-4 rounded-lg border ${currentTwelveMonthAverage >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}>
-                                             <h3 className={`flex items-center gap-2 text-lg font-semibold ${currentTwelveMonthAverage >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>
-                                                <span role="img" aria-label="Sugestão">💡</span>
+                                        <div 
+                                            id="monthly-salary-card" 
+                                            className={`relative group p-4 rounded-lg border transition-colors duration-300 ${
+                                                liquidityAnalysis.isLimited 
+                                                    ? 'bg-orange-900/40 border-orange-600/50' // Estilo de Alerta/Limitado
+                                                    : (currentTwelveMonthAverage >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700')
+                                            }`}
+                                        >
+                                             <h3 className={`flex items-center gap-2 text-lg font-semibold ${liquidityAnalysis.isLimited ? 'text-orange-300' : (currentTwelveMonthAverage >= 0 ? 'text-blue-300' : 'text-yellow-300')}`}>
+                                                <span role="img" aria-label="Sugestão">{liquidityAnalysis.isLimited ? '⚠️' : '💡'}</span>
                                                 Saldo Sugerido ({isSimulation && contextDate > new Date() ? 'Simulado' : 'Hoje'})
                                              </h3>
-                                              <span className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-600 text-white text-xs rounded py-1 px-2 w-72 text-center z-10">
-                                                  Este é o seu saldo médio dos últimos 12 meses. Use como guia para seus gastos mensais.
+                                              
+                                              {/* Tooltip Explicativo */}
+                                              <span className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-gray-200 text-xs rounded p-2 w-80 text-center z-20 shadow-xl border border-gray-600 pointer-events-none">
+                                                  {liquidityAnalysis.isLimited ? (
+                                                      <>
+                                                        <span className="block font-bold text-orange-400 mb-1">Valor Ajustado à Realidade</span>
+                                                        A média sugerida seria <strong>{liquidityAnalysis.originalSuggestion.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>, mas seu saldo atual somado à reserva não atinge esse valor. Exibindo o máximo disponível em caixa.
+                                                      </>
+                                                  ) : (
+                                                      "Este é o seu saldo médio dos últimos 12 meses. Use como guia para seus gastos mensais."
+                                                  )}
                                               </span>
-                                              <p className={`text-3xl font-bold mt-2 ${currentTwelveMonthAverage >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}>{currentTwelveMonthAverage.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+
+                                              <p className={`text-3xl font-bold mt-2 ${liquidityAnalysis.isLimited ? 'text-orange-400' : (currentTwelveMonthAverage >= 0 ? 'text-blue-400' : 'text-yellow-400')}`}>
+                                                  {liquidityAnalysis.displayValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                              </p>
+                                              
+                                              {liquidityAnalysis.isLimited && (
+                                                  <p className="text-xs text-orange-300/80 mt-1 flex items-center gap-1">
+                                                      Limitado por: Renda + Reserva
+                                                  </p>
+                                              )}
                                          </div>
                                         <div className="bg-purple-900/50 p-4 rounded-lg border border-purple-700">
                                             <h3 className="text-lg font-semibold text-purple-300 flex items-center justify-between relative group">
