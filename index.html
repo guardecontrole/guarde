@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle Financeiro Moderno</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-900 text-gray-300">
+    <div id="root"></div>
+
+    <!-- Carrega Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { 
+            getAuth, onAuthStateChanged, signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut
+        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { 
+            getFirestore, collection, doc, onSnapshot, 
+            addDoc, deleteDoc, updateDoc, setDoc, getDoc, serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        // Torna o Firebase disponível globalmente
+        window.firebase = {
+            initializeApp,
+            getAuth, onAuthStateChanged, signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut,
+            getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, 
+            setDoc, getDoc, serverTimestamp
+        };
+    </script>
+
+    <!-- Carrega os arquivos na ORDEM CORRETA -->
+    <script src="firebase-config.js" type="text/babel"></script>
+    <script src="utils/icons.js" type="text/babel"></script>
+    <script src="components/AuthModal.js" type="text/babel"></script>
+    <script src="components/OnboardingModal.js" type="text/babel"></script>
+    <script src="components/SettingsModal.js" type="text/babel"></script>
+    <script src="components/AdjustReserveModal.js" type="text/babel"></script>
+    <script src="components/LeanTimesCalculatorModal.js" type="text/babel"></script>
+    <script src="components/Tour.js" type="text/babel"></script>
+    <script src="components/RecordsTable.js" type="text/babel"></script>
+    <script src="components/EditModal.js" type="text/babel"></script>
+    <script src="components/FinancialEvolutionChart.js" type="text/babel"></script>
+    <script src="components/MonthlyBalanceHistoryTable.js" type="text/babel"></script>
+    <script src="components/ContributionAnalysis.js" type="text/babel"></script>
+    <script src="components/StabilityReserveHistoryTable.js" type="text/babel"></script>
+    <script src="components/SortIndicator.js" type="text/babel"></script>
+    <script src="app.js" type="text/babel"></script>
+</body>
+</html>
