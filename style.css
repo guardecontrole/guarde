@@ -1,0 +1,22 @@
+body {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.tour-highlight {
+    position: relative;
+    z-index: 50;
+    border-radius: 8px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.7);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
