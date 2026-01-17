@@ -6,17 +6,52 @@ const AuthModal = ({ auth, db }) => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // FUNÇÃO ATUALIZADA: Traduz códigos de erro do Firebase para português
+    const getFriendlyAuthError = (error) => {
+        // Extrai o código do objeto de erro recebido
+        const errorCode = error.code;
+
+        switch (errorCode) {
+            // Erros comuns de e-mail/senha
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+            case 'auth/invalid-credential': // Código unificado com "Email Enumeration Protection" ativo
+                return 'E-mail ou senha incorretos.';
+            case 'auth/email-already-in-use':
+                return 'Este e-mail já está em uso.';
+            case 'auth/weak-password':
+                return 'A senha deve ter pelo menos 6 caracteres.';
+            case 'auth/invalid-email':
+                return 'O formato do e-mail é inválido.';
+            case 'auth/too-many-requests':
+                return 'Muitas tentativas de login. Por favor, tente novamente mais tarde.';
+            case 'auth/user-disabled':
+                return 'Esta conta foi desativada por um administrador.';
+
+            // Erro crítico que precisa de diagnóstico
+            case 'auth/internal-error':
+            case 'auth/network-request-failed':
+                console.error('Erro técnico do Firebase durante login:', error.message, error);
+                return `Erro de conexão ou interno. Verifique o console do navegador (F12 > Console) para mais detalhes. Código: ${errorCode}`;
+
+            // Captura qualquer outro erro inesperado
+            default:
+                console.error('Código de erro do Firebase não tratado:', errorCode, error.message, error);
+                return `Ocorreu um erro inesperado (${errorCode}). Verifique o console do navegador.`;
+        }
+    };
+
     const handleAuthSuccess = async (userCredential) => {
         const user = userCredential.user;
-        const userRef = doc(db, "users", user.uid);
+        const userRef = window.firebase.doc(db, "users", user.uid);
         const userData = {
             uid: user.uid,
             email: user.email,
             displayName: user.displayName,
             photoURL: user.photoURL,
-            lastLoginAt: serverTimestamp(),
+            lastLoginAt: window.firebase.serverTimestamp(),
         };
-        await setDoc(userRef, userData, { merge: true });
+        await window.firebase.setDoc(userRef, userData, { merge: true });
     };
 
     const handleAuthAction = async (e) => {
@@ -26,15 +61,17 @@ const AuthModal = ({ auth, db }) => {
         try {
             let userCredential;
             if (isLoginView) {
-                userCredential = await signInWithEmailAndPassword(auth, email, password);
+                userCredential = await window.firebase.signInWithEmailAndPassword(auth, email, password);
             } else {
-                userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const userRef = doc(db, "users", userCredential.user.uid);
-                await setDoc(userRef, { plan: 'free', createdAt: serverTimestamp() }, { merge: true });
+                userCredential = await window.firebase.createUserWithEmailAndPassword(auth, email, password);
+                const userRef = window.firebase.doc(db, "users", userCredential.user.uid);
+                await window.firebase.setDoc(userRef, { plan: 'free', createdAt: window.firebase.serverTimestamp() }, { merge: true });
             }
             await handleAuthSuccess(userCredential);
         } catch (err) {
-            setError(window.helpers.getFriendlyAuthError(err.code));
+            // PASSO CRÍTICO: Envia o ERRO COMPLETO para a função de tradução
+            const friendlyError = getFriendlyAuthError(err);
+            setError(friendlyError);
         }
         setLoading(false);
     };
@@ -43,16 +80,17 @@ const AuthModal = ({ auth, db }) => {
         setLoading(true);
         setError('');
         try {
-            const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            const userRef = doc(db, "users", result.user.uid);
-            const docSnap = await getDoc(userRef);
+            const provider = new window.firebase.GoogleAuthProvider();
+            const result = await window.firebase.signInWithPopup(auth, provider);
+            const userRef = window.firebase.doc(db, "users", result.user.uid);
+            const docSnap = await window.firebase.getDoc(userRef);
             if (!docSnap.exists()) {
-                await setDoc(userRef, { plan: 'free', createdAt: serverTimestamp() }, { merge: true });
+                await window.firebase.setDoc(userRef, { plan: 'free', createdAt: window.firebase.serverTimestamp() }, { merge: true });
             }
             await handleAuthSuccess(result);
         } catch (err) {
-            setError(window.helpers.getFriendlyAuthError(err.code));
+            const friendlyError = getFriendlyAuthError(err);
+            setError(friendlyError);
         }
         setLoading(false);
     };
@@ -74,7 +112,7 @@ const AuthModal = ({ auth, db }) => {
                 </form>
                 <div className="relative my-6"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-600"></div></div><div className="relative flex justify-center text-sm"><span className="px-2 bg-gray-800 text-gray-500">OU</span></div></div>
                 <button onClick={handleGoogleSignIn} disabled={loading} className="w-full flex justify-center items-center py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors border border-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed">
-                    <GoogleIcon />
+                    <window.icons.GoogleIcon />
                     {isLoginView ? 'Entrar com o Google' : 'Cadastrar com o Google'}
                 </button>
                 <p className="mt-6 text-center text-sm text-gray-400">
@@ -88,5 +126,5 @@ const AuthModal = ({ auth, db }) => {
     );
 };
 
-// Torna disponível globalmente
+// Exporta globalmente
 window.AuthModal = AuthModal;
