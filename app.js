@@ -1008,91 +1008,196 @@ function App() {
                     <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-8">
                         
                         {/* Coluna Principal (Esquerda) */}
-                        <div className="lg:col-span-8 space-y-8">
-                            <div id="summary-cards" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                                    <h2 className="text-2xl font-semibold text-gray-200">Resumo de {filterYear}</h2>
-                                    <div className="flex items-center gap-2">
-                                        <label htmlFor="filterYear" className="text-sm font-medium text-gray-400">Filtrar por Ano:</label>
-                                        <input id="filterYear" type="number" value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="w-32 px-3 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                                    </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div 
-                                        id="monthly-salary-card" 
-                                        className={`relative group p-4 rounded-lg border transition-colors duration-300 ${
-                                            liquidityAnalysis.isLimited 
-                                                ? 'bg-orange-900/40 border-orange-600/50'
-                                                : (currentTwelveMonthAverage >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700')
-                                        }`}
-                                    >
-                                         <h3 className={`flex items-center gap-2 text-lg font-semibold ${liquidityAnalysis.isLimited ? 'text-orange-300' : (currentTwelveMonthAverage >= 0 ? 'text-blue-300' : 'text-yellow-300')}`}>
-                                            <span role="img" aria-label="Sugestão">{liquidityAnalysis.isLimited ? '⚠️' : '💡'}</span>
-                                            Saldo Sugerido ({isSimulation && contextDate > new Date() ? 'Simulado' : 'Hoje'})
-                                         </h3>
-                                         
-                                         <span className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-gray-200 text-xs rounded p-2 w-80 text-center z-20 shadow-xl border border-gray-600 pointer-events-none">
-                                             {liquidityAnalysis.isLimited ? (
-                                                 <>
-                                                    <span className="block font-bold text-orange-400 mb-1">Valor Ajustado à Realidade</span>
-                                                    A média sugerida seria <strong>{liquidityAnalysis.originalSuggestion.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>, mas seu saldo atual somado à reserva não atinge esse valor. Exibindo o máximo disponível em caixa.
-                                                 </>
-                                             ) : (
-                                                 "Este é o seu saldo médio dos últimos 12 meses. Use como guia para seus gastos mensais."
-                                             )}
-                                         </span>
+<div className="lg:col-span-8 space-y-8">
+    {/* SEÇÃO DE CARDS DO DASHBOARD - BLOCO A SUBSTITUIR */}
+    <div id="summary-cards" className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 className="text-2xl font-bold text-gray-100">Visão Geral de {filterYear}</h2>
+                <p className="text-gray-400 text-sm mt-1">Seu panorama financeiro anual</p>
+            </div>
+            <div className="flex items-center gap-3">
+                <div className="hidden sm:flex items-center gap-2 text-sm">
+                    <div className="flex items-center">
+                        <div className="w-3 h-3 rounded-full bg-cyan-500/20 border border-cyan-400/50 mr-2"></div>
+                        <span className="text-gray-400">Saldo</span>
+                    </div>
+                    <div className="flex items-center ml-3">
+                        <div className="w-3 h-3 rounded-full bg-violet-500/20 border border-violet-400/50 border-dashed mr-2"></div>
+                        <span className="text-gray-400">Meta</span>
+                    </div>
+                </div>
+                <div className="flex items-center">
+                    <label htmlFor="filterYear" className="text-sm font-medium text-gray-400 mr-2">Ano:</label>
+                    <div className="relative">
+                        <input
+                            id="filterYear"
+                            type="number"
+                            value={filterYear}
+                            onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                            className="w-28 px-3 py-1.5 bg-gray-800/70 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 text-sm appearance-none"
+                        />
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                                         <p className={`text-3xl font-bold mt-2 ${liquidityAnalysis.isLimited ? 'text-orange-400' : (currentTwelveMonthAverage >= 0 ? 'text-blue-400' : 'text-yellow-400')}`}>
-                                             {liquidityAnalysis.displayValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                         </p>
-                                         
-                                         {liquidityAnalysis.isLimited && (
-                                             <p className="text-xs text-orange-300/80 mt-1 flex items-center gap-1">
-                                                 Limitado por: Renda + Reserva
-                                             </p>
-                                         )}
-                                     </div>
-                                    <div className="bg-purple-900/50 p-4 rounded-lg border border-purple-700">
-                                        <h3 className="text-lg font-semibold text-purple-300 flex items-center justify-between relative group">
-                                            <div className="flex items-center gap-2">
-                                                <icons.ShieldIcon /> Reserva de Estabilidade
-                                            </div>
-                                            <button onClick={() => setShowAdjustReserveModal(true)} title="Ajustar Saldo Manualmente" className="text-purple-400 hover:text-white transition-colors">
-                                                <icons.AdjustIcon />
-                                            </button>
-                                            <span className="absolute -top-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-600 text-white text-xs rounded py-1 px-2 w-72 pointer-events-none">
-                                                Calculada mês a mês: Saldo Anterior + (Saldo do Mês - Média de Saldo dos 12 meses anteriores). A reserva é zerada se ficar negativa.
-                                            </span>
-                                        </h3>
-                                        <p className="text-3xl font-bold text-purple-400 mt-2">{finalStabilityReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                    </div>
+        {/* GRID DE CARDS PRINCIPAIS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* CARD 1: SALDO SUGERIDO */}
+            <div className={`card-glass p-5 ${liquidityAnalysis.isLimited ? 'border-l-4 border-l-orange-500' : 'border-l-4 border-l-cyan-500'}`}>
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <div className="flex items-center">
+                            <div className={`p-2 rounded-lg ${liquidityAnalysis.isLimited ? 'bg-orange-500/10' : 'bg-cyan-500/10'}`}>
+                                <span className={`text-lg ${liquidityAnalysis.isLimited ? 'text-orange-400' : 'text-cyan-400'}`}>
+                                    {liquidityAnalysis.isLimited ? '⚠️' : '💡'}
+                                </span>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-200 ml-3">
+                                Saldo Sugerido
+                            </h3>
+                        </div>
+                        <p className="text-gray-400 text-sm mt-2">
+                            {isSimulation && contextDate > new Date() ? 'Projeção para o mês' : 'Meta mensal baseada na sua média'}
+                        </p>
+                    </div>
+                    {liquidityAnalysis.isLimited && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                            Ajustado
+                        </span>
+                    )}
+                </div>
+                <p className={`text-3xl font-bold ${liquidityAnalysis.isLimited ? 'text-orange-400' : 'text-cyan-400'}`}>
+                    {liquidityAnalysis.displayValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </p>
+                {liquidityAnalysis.isLimited && (
+                    <p className="text-xs text-orange-300/80 mt-2 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        Valor limitado pela sua liquidez atual
+                    </p>
+                )}
+            </div>
 
-                                    {showFullSummary && (
-                                        <>
-                                            <div className="bg-green-900/50 p-4 rounded-lg border border-green-700"> 
-                                                <h3 className="text-lg font-semibold text-green-300">Total de Entradas (Renda)</h3> 
-                                                <p className="text-3xl font-bold text-green-400 mt-2">{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
-                                            </div>
-                                            
-                                            <div className="bg-red-900/50 p-4 rounded-lg border border-red-700"> <h3 className="text-lg font-semibold text-red-300">Total de Saídas</h3> <p className="text-3xl font-bold text-red-400 mt-2">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
-                                            
-                                            <div className="bg-green-900/50 p-4 rounded-lg border border-green-700/50">
-                                                <h3 className="text-base font-semibold text-green-300/80">Média de Entradas (12m)</h3>
-                                                <p className="text-2xl font-bold text-green-400/90 mt-2">{last12MonthsSummary.avgIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                            </div>
-                                            <div className="bg-red-900/50 p-4 rounded-lg border border-red-700/50">
-                                                <h3 className="text-base font-semibold text-red-300/80">Média de Saídas (12m)</h3>
-                                                <p className="text-2xl font-bold text-red-400/90 mt-2">{last12MonthsSummary.avgExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                            </div>
+            {/* CARD 2: RESERVA DE ESTABILIDADE */}
+            <div className="card-glass p-5 border-l-4 border-l-violet-500">
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <div className="flex items-center">
+                            <div className="p-2 rounded-lg bg-violet-500/10">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-200 ml-3">
+                                Reserva de Estabilidade
+                            </h3>
+                        </div>
+                        <p className="text-gray-400 text-sm mt-2">
+                            Seu colchão financeiro para imprevistos
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setShowAdjustReserveModal(true)}
+                        className="p-1.5 rounded-lg bg-gray-800/50 hover:bg-gray-700/70 transition-colors border border-gray-700"
+                        title="Ajustar Reserva"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    </button>
+                </div>
+                <p className="text-3xl font-bold text-violet-400">
+                    {finalStabilityReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </p>
+                <div className="mt-3 pt-3 border-t border-gray-800/50">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Status:</span>
+                        <span className={`font-medium ${finalStabilityReserve > 0 ? 'text-emerald-400' : 'text-gray-500'}`}>
+                            {finalStabilityReserve > 0 ? '✅ Ativa' : '⏸️ Aguardando'}
+                        </span>
+                    </div>
+                </div>
+            </div>
 
-                                            <div className={`md:col-span-2 p-4 rounded-lg border ${balance >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}> 
-                                                <h3 className={`text-lg font-semibold ${balance >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>Saldo Final do Ano (Disponível)</h3> 
-                                                <p className={`text-3xl font-bold mt-2 ${balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}>{balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
+            {/* CARD 3: SALDO DO ANO */}
+            <div className={`card-glass p-5 ${balance >= 0 ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-amber-500'}`}>
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <div className="flex items-center">
+                            <div className={`p-2 rounded-lg ${balance >= 0 ? 'bg-emerald-500/10' : 'bg-amber-500/10'}`}>
+                                <span className={`text-lg ${balance >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                    {balance >= 0 ? '📈' : '📉'}
+                                </span>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-200 ml-3">
+                                Resultado do Ano
+                            </h3>
+                        </div>
+                        <p className="text-gray-400 text-sm mt-2">
+                            Saldo disponível em {filterYear}
+                        </p>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${balance >= 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                        {balance >= 0 ? 'Positivo' : 'Atenção'}
+                    </div>
+                </div>
+                <p className={`text-3xl font-bold ${balance >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </p>
+                <div className="mt-3 flex items-center justify-between text-sm">
+                    <div className="text-gray-400">
+                        <span className="text-emerald-400">+{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}</span>
+                        <span className="mx-1">•</span>
+                        <span className="text-red-400">-{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* BOTÃO DE EXPANDIR DETALHES */}
+        <div className="text-center pt-2">
+            <button
+                onClick={() => setShowFullSummary(!showFullSummary)}
+                className="inline-flex items-center text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors focus:outline-none"
+            >
+                {showFullSummary ? (
+                    <>
+                        Ocultar detalhes do ano
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    </>
+                ) : (
+                    <>
+                        Mostrar todas as métricas de {filterYear}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </>
+                )}
+            </button>
+        </div>
+
+        {/* CARDS ADICIONAIS (QUANDO EXPANDIDOS) */}
+        {showFullSummary && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6 animate-fade-in">
+                <div className="card-glass p-5">
+                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Entradas (Renda)</h4>
+                    <p className="text-2xl font-bold text-emerald-400">{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                    <p className="text-xs text-gray-500 mt-2">Total bruto recebido no ano</p>
+                </div>
+                <div className="card-glass p-5">
+                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Saídas (Despesas)</h4>
+                    <p className="text-2xl font-bold text-red-400">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                    <p className="text-xs text-gray-500 mt-2">Total gasto no ano</p>
+                </div>
+                <div className="card-glass p-5">
+                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Média Mensal</h4>
+                    <p className="text-xl font-bold text-cyan-400">{last12MonthsSummary.avgIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                    <p className="text-xs text-gray-500 mt-2">Baseada nos últimos 12 meses</p>
+                </div>
+            </div>
+        )}
+    </div>
+    {/* FIM DA SEÇÃO DE CARDS DO DASHBOARD */}
+
+
                                 
                                 <div id="summary-toggle" className="text-center mt-6 border-t border-gray-700 pt-4">
                                     <button onClick={() => setShowFullSummary(!showFullSummary)} className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-3 py-1">
