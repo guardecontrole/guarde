@@ -1009,249 +1009,309 @@ function App() {
                         
                         {/* Coluna Principal (Esquerda) */}
                         <div className="lg:col-span-8 space-y-8">
-    {/* SEÇÃO DE CARDS DO DASHBOARD */}
-    <div id="summary-cards" className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-                <h2 className="text-2xl font-bold text-gray-100">Visão Geral de {filterYear}</h2>
-                <p className="text-gray-400 text-sm mt-1">Seu panorama financeiro anual</p>
-            </div>
-            <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-2 text-sm">
-                    <div className="flex items-center">
-                        <div className="w-3 h-3 rounded-full bg-cyan-500/20 border border-cyan-400/50 mr-2"></div>
-                        <span className="text-gray-400">Saldo</span>
-                    </div>
-                    <div className="flex items-center ml-3">
-                        <div className="w-3 h-3 rounded-full bg-violet-500/20 border border-violet-400/50 border-dashed mr-2"></div>
-                        <span className="text-gray-400">Meta</span>
-                    </div>
-                </div>
-                <div className="flex items-center">
-                    <label htmlFor="filterYear" className="text-sm font-medium text-gray-400 mr-2">Ano:</label>
-                    <div className="relative">
-                        <input
-                            id="filterYear"
-                            type="number"
-                            value={filterYear}
-                            onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                            className="w-28 px-3 py-1.5 bg-gray-800/70 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 text-sm appearance-none"
-                        />
-                    </div>
-                </div>
-            </div>
-        </div>
+                            {/* SEÇÃO DE CARDS DO DASHBOARD */}
+                            <div id="summary-cards" className="space-y-6">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-gray-100">Visão Geral de {filterYear}</h2>
+                                        <p className="text-gray-400 text-sm mt-1">Seu panorama financeiro anual</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="hidden sm:flex items-center gap-2 text-sm">
+                                            <div className="flex items-center">
+                                                <div className="w-3 h-3 rounded-full bg-cyan-500/20 border border-cyan-400/50 mr-2"></div>
+                                                <span className="text-gray-400">Saldo</span>
+                                            </div>
+                                            <div className="flex items-center ml-3">
+                                                <div className="w-3 h-3 rounded-full bg-violet-500/20 border border-violet-400/50 border-dashed mr-2"></div>
+                                                <span className="text-gray-400">Meta</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <label htmlFor="filterYear" className="text-sm font-medium text-gray-400 mr-2">Ano:</label>
+                                            <div className="relative">
+                                                <input
+                                                    id="filterYear"
+                                                    type="number"
+                                                    value={filterYear}
+                                                    onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                                                    className="w-28 px-3 py-1.5 bg-gray-800/70 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 text-sm appearance-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-        {/* GRID DE CARDS PRINCIPAIS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {/* CARD 1: SALDO SUGERIDO */}
-            <div className={`card-glass p-5 ${liquidityAnalysis.isLimited ? 'border-l-4 border-l-orange-500' : 'border-l-4 border-l-cyan-500'}`}>
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <div className="flex items-center">
-                            <div className={`p-2 rounded-lg ${liquidityAnalysis.isLimited ? 'bg-orange-500/10' : 'bg-cyan-500/10'}`}>
-                                <span className={`text-lg ${liquidityAnalysis.isLimited ? 'text-orange-400' : 'text-cyan-400'}`}>
-                                    {liquidityAnalysis.isLimited ? '⚠️' : '💡'}
-                                </span>
+                                {/* GRID DE CARDS PRINCIPAIS */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                    {/* CARD 1: SALDO SUGERIDO */}
+                                    <div className={`card-glass p-5 ${liquidityAnalysis.isLimited ? 'border-l-4 border-l-orange-500' : 'border-l-4 border-l-cyan-500'}`}>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <div className="flex items-center">
+                                                    <div className={`p-2 rounded-lg ${liquidityAnalysis.isLimited ? 'bg-orange-500/10' : 'bg-cyan-500/10'}`}>
+                                                        <span className={`text-lg ${liquidityAnalysis.isLimited ? 'text-orange-400' : 'text-cyan-400'}`}>
+                                                            {liquidityAnalysis.isLimited ? '⚠️' : '💡'}
+                                                        </span>
+                                                    </div>
+                                                    <h3 className="text-lg font-semibold text-gray-200 ml-3">Saldo Sugerido</h3>
+                                                </div>
+                                                <p className="text-gray-400 text-sm mt-2">
+                                                    {isSimulation && contextDate > new Date() ? 'Projeção para o mês' : 'Meta mensal baseada na sua média'}
+                                                </p>
+                                            </div>
+                                            {liquidityAnalysis.isLimited && (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                                                    Ajustado
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className={`text-3xl font-bold ${liquidityAnalysis.isLimited ? 'text-orange-400' : 'text-cyan-400'}`}>
+                                            {liquidityAnalysis.displayValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                        </p>
+                                        {liquidityAnalysis.isLimited && (
+                                            <p className="text-xs text-orange-300/80 mt-2 flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                                Valor limitado pela sua liquidez atual
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* CARD 2: RESERVA DE ESTABILIDADE */}
+                                    <div className="card-glass p-5 border-l-4 border-l-violet-500">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <div className="flex items-center">
+                                                    <div className="p-2 rounded-lg bg-violet-500/10">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                                    </div>
+                                                    <h3 className="text-lg font-semibold text-gray-200 ml-3">Reserva de Estabilidade</h3>
+                                                </div>
+                                                <p className="text-gray-400 text-sm mt-2">Seu colchão financeiro para imprevistos</p>
+                                            </div>
+                                            <button
+                                                onClick={() => setShowAdjustReserveModal(true)}
+                                                className="p-1.5 rounded-lg bg-gray-800/50 hover:bg-gray-700/70 transition-colors border border-gray-700"
+                                                title="Ajustar Reserva"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                            </button>
+                                        </div>
+                                        <p className="text-3xl font-bold text-violet-400">
+                                            {finalStabilityReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                        </p>
+                                        <div className="mt-3 pt-3 border-t border-gray-800/50">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-400">Status:</span>
+                                                <span className={`font-medium ${finalStabilityReserve > 0 ? 'text-emerald-400' : 'text-gray-500'}`}>
+                                                    {finalStabilityReserve > 0 ? '✅ Ativa' : '⏸️ Aguardando'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* CARD 3: SALDO DO ANO */}
+                                    <div className={`card-glass p-5 ${balance >= 0 ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-amber-500'}`}>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <div className="flex items-center">
+                                                    <div className={`p-2 rounded-lg ${balance >= 0 ? 'bg-emerald-500/10' : 'bg-amber-500/10'}`}>
+                                                        <span className={`text-lg ${balance >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                                            {balance >= 0 ? '📈' : '📉'}
+                                                        </span>
+                                                    </div>
+                                                    <h3 className="text-lg font-semibold text-gray-200 ml-3">Resultado do Ano</h3>
+                                                </div>
+                                                <p className="text-gray-400 text-sm mt-2">Saldo disponível em {filterYear}</p>
+                                            </div>
+                                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${balance >= 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                                                {balance >= 0 ? 'Positivo' : 'Atenção'}
+                                            </div>
+                                        </div>
+                                        <p className={`text-3xl font-bold ${balance >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                            {balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                        </p>
+                                        <div className="mt-3 flex items-center justify-between text-sm">
+                                            <div className="text-gray-400">
+                                                <span className="text-emerald-400">+{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}</span>
+                                                <span className="mx-1">•</span>
+                                                <span className="text-red-400">-{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* BOTÃO DE EXPANDIR DETALHES */}
+                                <div className="text-center pt-2">
+                                    <button
+                                        onClick={() => setShowFullSummary(!showFullSummary)}
+                                        className="inline-flex items-center text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors focus:outline-none"
+                                    >
+                                        {showFullSummary ? (
+                                            <>
+                                                Ocultar detalhes do ano
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                                            </>
+                                        ) : (
+                                            <>
+                                                Mostrar todas as métricas de {filterYear}
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* CARDS ADICIONAIS (QUANDO EXPANDIDOS) */}
+                                {showFullSummary && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6 animate-fade-in">
+                                        <div className="card-glass p-5">
+                                            <h4 className="text-sm font-semibold text-gray-300 mb-2">Entradas (Renda)</h4>
+                                            <p className="text-2xl font-bold text-emerald-400">{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                            <p className="text-xs text-gray-500 mt-2">Total bruto recebido no ano</p>
+                                        </div>
+                                        <div className="card-glass p-5">
+                                            <h4 className="text-sm font-semibold text-gray-300 mb-2">Saídas (Despesas)</h4>
+                                            <p className="text-2xl font-bold text-red-400">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                            <p className="text-xs text-gray-500 mt-2">Total gasto no ano</p>
+                                        </div>
+                                        <div className="card-glass p-5">
+                                            <h4 className="text-sm font-semibold text-gray-300 mb-2">Média Mensal</h4>
+                                            <p className="text-xl font-bold text-cyan-400">{last12MonthsSummary.avgIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                            <p className="text-xs text-gray-500 mt-2">Baseada nos últimos 12 meses</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-200 ml-3">Saldo Sugerido</h3>
-                        </div>
-                        <p className="text-gray-400 text-sm mt-2">
-                            {isSimulation && contextDate > new Date() ? 'Projeção para o mês' : 'Meta mensal baseada na sua média'}
-                        </p>
-                    </div>
-                    {liquidityAnalysis.isLimited && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-300 border border-orange-500/30">
-                            Ajustado
-                        </span>
-                    )}
-                </div>
-                <p className={`text-3xl font-bold ${liquidityAnalysis.isLimited ? 'text-orange-400' : 'text-cyan-400'}`}>
-                    {liquidityAnalysis.displayValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </p>
-                {liquidityAnalysis.isLimited && (
-                    <p className="text-xs text-orange-300/80 mt-2 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        Valor limitado pela sua liquidez atual
-                    </p>
-                )}
-            </div>
+                            {/* FIM DA SEÇÃO DE CARDS DO DASHBOARD */}
 
-            {/* CARD 2: RESERVA DE ESTABILIDADE */}
-            <div className="card-glass p-5 border-l-4 border-l-violet-500">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <div className="flex items-center">
-                            <div className="p-2 rounded-lg bg-violet-500/10">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <FinancialEvolutionChart data={chartData} />
+
+                            {/* RELATÓRIOS DETALHADOS */}
+                            <div id="detailed-reports" className="card-glass">
+                                <div className="p-6 pb-4">
+                                    <h2 className="text-2xl font-bold text-gray-100 mb-2">Relatórios Detalhados</h2>
+                                    <p className="text-gray-400 text-sm">Analise seus dados por categoria e período</p>
+                                </div>
+
+                                {/* Abas de Navegação */}
+                                <div className="border-b border-gray-800/50 px-6">
+                                    <nav className="flex flex-wrap -mb-px gap-1">
+                                        <button
+                                            onClick={() => setActiveTab('summary')}
+                                            className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'summary' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
+                                        >
+                                            Resumo Mensal
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('reserve')}
+                                            className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'reserve' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
+                                        >
+                                            Histórico da Reserva
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('incomes')}
+                                            className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'incomes' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
+                                        >
+                                            Todas as Entradas
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('expenses')}
+                                            className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'expenses' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
+                                        >
+                                            Todas as Saídas
+                                        </button>
+                                        {participants.length > 1 && (
+                                            <button
+                                                onClick={() => setActiveTab('couple')}
+                                                className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'couple' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
+                                            >
+                                                Visão Conjunta
+                                            </button>
+                                        )}
+                                    </nav>
+                                </div>
+
+                                {/* Conteúdo das Abas */}
+                                <div className="p-6 pt-4">
+                                    {isLoading && !user ? (
+                                        <p className="text-gray-500 text-center py-4">Carregando dados...</p>
+                                    ) : (
+                                        <>
+                                            {activeTab === 'summary' && <MonthlyBalanceHistoryTable data={sortedMonthlyBalanceHistory} isLoading={isLoading} sortConfig={sortConfigs.summary} requestSort={(key) => handleRequestSort('summary', key)} />}
+                                            {activeTab === 'reserve' && <StabilityReserveHistoryTable data={sortedStabilityReserveHistory} sortConfig={sortConfigs.reserve} requestSort={(key) => handleRequestSort('reserve', key)} />}
+                                            {activeTab === 'incomes' && <RecordsTable title={`Detalhes de Entradas (${filterYear})`} records={sortedFilteredIncomes} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="income" sortConfig={sortConfigs.incomes} requestSort={(key) => handleRequestSort('incomes', key)} isSimulation={isSimulation} participants={participants} />}
+                                            {activeTab === 'expenses' && <RecordsTable title={`Detalhes de Saídas (${filterYear})`} records={sortedFilteredExpenses} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="expense" sortConfig={sortConfigs.expenses} requestSort={(key) => handleRequestSort('expenses', key)} isSimulation={isSimulation} />}
+                                            {activeTab === 'couple' && participants.length > 1 && <ContributionAnalysis contributionData={contributionData} individualAverages={individualAverages} />}
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Nota Informativa */}
+                                <div className="px-6 pb-6 pt-2 border-t border-gray-800/50">
+                                    <p className="text-xs text-gray-500 text-center">
+                                        💡 Clique nos cabeçalhos das tabelas para ordenar os dados.
+                                    </p>
+                                </div>
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-200 ml-3">Reserva de Estabilidade</h3>
+                            {/* FIM DOS RELATÓRIOS DETALHADOS */}
                         </div>
-                        <p className="text-gray-400 text-sm mt-2">Seu colchão financeiro para imprevistos</p>
-                    </div>
-                    <button
-                        onClick={() => setShowAdjustReserveModal(true)}
-                        className="p-1.5 rounded-lg bg-gray-800/50 hover:bg-gray-700/70 transition-colors border border-gray-700"
-                        title="Ajustar Reserva"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                    </button>
-                </div>
-                <p className="text-3xl font-bold text-violet-400">
-                    {finalStabilityReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </p>
-                <div className="mt-3 pt-3 border-t border-gray-800/50">
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Status:</span>
-                        <span className={`font-medium ${finalStabilityReserve > 0 ? 'text-emerald-400' : 'text-gray-500'}`}>
-                            {finalStabilityReserve > 0 ? '✅ Ativa' : '⏸️ Aguardando'}
-                        </span>
-                    </div>
-                </div>
-            </div>
 
-            {/* CARD 3: SALDO DO ANO */}
-            <div className={`card-glass p-5 ${balance >= 0 ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-amber-500'}`}>
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <div className="flex items-center">
-                            <div className={`p-2 rounded-lg ${balance >= 0 ? 'bg-emerald-500/10' : 'bg-amber-500/10'}`}>
-                                <span className={`text-lg ${balance >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                    {balance >= 0 ? '📈' : '📉'}
-                                </span>
+                        {/* Coluna de Ações (Direita) */}
+                        <div className="lg:col-span-4 space-y-8 lg:sticky top-24 h-screen">
+                            <div id="add-record-form" className="bg-gray-800 p-6 rounded-xl shadow-md">
+                                <h3 className="text-xl font-semibold text-gray-200 mb-4">Adicionar Transação</h3>
+                                <div className="mb-4 border-b border-gray-700 flex"> <button onClick={() => setFormType('income')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'income' ? 'text-green-400 border-b-2 border-green-400' : 'text-gray-400 hover:text-green-400'}`}> Entrada </button> <button onClick={() => setFormType('expense')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'expense' ? 'text-red-400 border-b-2 border-red-400' : 'text-gray-400 hover:text-red-400'}`}> Saída </button> </div>
+                                <form onSubmit={handleAddRecord} className="space-y-4">
+                                    <div> <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> <input id="description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={formType === 'income' ? 'Ex: Salário, Venda' : 'Ex: Aluguel, Compras'} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
+                                    {participants.length > 1 && (
+                                        <div>
+                                            <label htmlFor="responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
+                                            <input 
+                                                id="responsible" 
+                                                list="responsible-options-add"
+                                                value={responsible} 
+                                                onChange={(e) => setResponsible(e.target.value)} 
+                                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Quem?"
+                                            />
+                                            <datalist id="responsible-options-add">
+                                                {participants.map(p => <option key={p} value={p}>{p}</option>)}
+                                            </datalist>
+                                        </div>
+                                    )}
+                                    <div> <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> <input id="amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1500.00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
+                                    <div className="flex gap-4"> <div className="flex-1"> <label htmlFor="month" className="block text-sm font-medium text-gray-400 mb-1">Mês</label> <select id="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> {Array.from({length: 12}, (_, i) => <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}</option>)} </select> </div> <div className="flex-1"> <label htmlFor="year" className="block text-sm font-medium text-gray-400 mb-1">Ano</label> <input id="year" type="number" value={year} onChange={(e) => setYear(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div> </div>
+                                    <button type="submit" className={`w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${formType === 'income' ? 'bg-green-600 hover:bg-green-500 focus:ring-green-500' : 'bg-red-600 hover:bg-red-500 focus:ring-red-500'}`}> Adicionar {formType === 'income' ? 'Entrada' : 'Saída'} </button>
+                                </form>
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-200 ml-3">Resultado do Ano</h3>
+                            <div id="action-buttons" className="bg-gray-800 p-6 rounded-xl shadow-md">
+                                <h3 className="text-xl font-semibold text-gray-200 mb-4">Ferramentas</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button 
+                                        onClick={() => setShowLeanCalculator(true)}
+                                        className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-yellow-700/80 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors border border-yellow-600/50">
+                                        <icons.CalculatorIcon />
+                                        Modo Vacas Magras
+                                    </button>
+                                    
+                                    {showRedoButton && (
+                                        <button 
+                                            onClick={handleRedoInitialAverage}
+                                            className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-500 transition-colors">
+                                            <icons.ResetIcon />
+                                            Refazer Média Inicial
+                                        </button>
+                                    )}
+                                    <button onClick={handleImportClick} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.ImportIcon /> Importar </button>
+                                    <button onClick={handleExportData} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.ExportIcon /> Exportar </button>
+                                    <button onClick={handleUndo} disabled={!canUndo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.UndoIcon /> Desfazer </button>
+                                    <button onClick={handleRedo} disabled={!canRedo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.RedoIcon /> Refazer </button>
+                                    <button onClick={() => setIsTourOpen(true)} className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500 transition-colors"> <icons.HelpIcon /> Ajuda & Tour Guiado </button>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json" />
+                                </div>
+                            </div>
                         </div>
-                        <p className="text-gray-400 text-sm mt-2">Saldo disponível em {filterYear}</p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${balance >= 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}`}>
-                        {balance >= 0 ? 'Positivo' : 'Atenção'}
-                    </div>
-                </div>
-                <p className={`text-3xl font-bold ${balance >= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </p>
-                <div className="mt-3 flex items-center justify-between text-sm">
-                    <div className="text-gray-400">
-                        <span className="text-emerald-400">+{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}</span>
-                        <span className="mx-1">•</span>
-                        <span className="text-red-400">-{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {/* BOTÃO DE EXPANDIR DETALHES */}
-        <div className="text-center pt-2">
-            <button
-                onClick={() => setShowFullSummary(!showFullSummary)}
-                className="inline-flex items-center text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors focus:outline-none"
-            >
-                {showFullSummary ? (
-                    <>
-                        Ocultar detalhes do ano
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    </>
-                ) : (
-                    <>
-                        Mostrar todas as métricas de {filterYear}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </>
-                )}
-            </button>
-        </div>
-
-        {/* CARDS ADICIONAIS (QUANDO EXPANDIDOS) */}
-        {showFullSummary && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6 animate-fade-in">
-                <div className="card-glass p-5">
-                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Entradas (Renda)</h4>
-                    <p className="text-2xl font-bold text-emerald-400">{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                    <p className="text-xs text-gray-500 mt-2">Total bruto recebido no ano</p>
-                </div>
-                <div className="card-glass p-5">
-                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Saídas (Despesas)</h4>
-                    <p className="text-2xl font-bold text-red-400">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                    <p className="text-xs text-gray-500 mt-2">Total gasto no ano</p>
-                </div>
-                <div className="card-glass p-5">
-                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Média Mensal</h4>
-                    <p className="text-xl font-bold text-cyan-400">{last12MonthsSummary.avgIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                    <p className="text-xs text-gray-500 mt-2">Baseada nos últimos 12 meses</p>
-                </div>
-            </div>
-        )}
-    </div>
-    {/* FIM DA SEÇÃO DE CARDS DO DASHBOARD */}
-
-    <FinancialEvolutionChart data={chartData} />
-        <div id="detailed-reports" className="card-glass">
-    <div className="p-6 pb-4">
-        <h2 className="text-2xl font-bold text-gray-100 mb-2">Relatórios Detalhados</h2>
-        <p className="text-gray-400 text-sm">Analise seus dados por categoria e período</p>
-    </div>
-
-    {/* Abas de Navegação */}
-    <div className="border-b border-gray-800/50 px-6">
-        <nav className="flex flex-wrap -mb-px gap-1">
-            <button
-                onClick={() => setActiveTab('summary')}
-                className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'summary' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
-            >
-                Resumo Mensal
-            </button>
-            <button
-                onClick={() => setActiveTab('reserve')}
-                className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'reserve' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
-            >
-                Histórico da Reserva
-            </button>
-            <button
-                onClick={() => setActiveTab('incomes')}
-                className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'incomes' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
-            >
-                Todas as Entradas
-            </button>
-            <button
-                onClick={() => setActiveTab('expenses')}
-                className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'expenses' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
-            >
-                Todas as Saídas
-            </button>
-            {participants.length > 1 && (
-                <button
-                    onClick={() => setActiveTab('couple')}
-                    className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'couple' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
-                >
-                    Visão Conjunta
-                </button>
-            )}
-        </nav>
-    </div>
-
-    {/* Conteúdo das Abas */}
-    <div className="p-6 pt-4">
-        {isLoading && !user ? (
-            <p className="text-gray-500 text-center py-4">Carregando dados...</p>
-        ) : (
-            <>
-                {activeTab === 'summary' && <MonthlyBalanceHistoryTable data={sortedMonthlyBalanceHistory} isLoading={isLoading} sortConfig={sortConfigs.summary} requestSort={(key) => handleRequestSort('summary', key)} />}
-                {activeTab === 'reserve' && <StabilityReserveHistoryTable data={sortedStabilityReserveHistory} sortConfig={sortConfigs.reserve} requestSort={(key) => handleRequestSort('reserve', key)} />}
-                {activeTab === 'incomes' && <RecordsTable title={`Detalhes de Entradas (${filterYear})`} records={sortedFilteredIncomes} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="income" sortConfig={sortConfigs.incomes} requestSort={(key) => handleRequestSort('incomes', key)} isSimulation={isSimulation} participants={participants} />}
-                {activeTab === 'expenses' && <RecordsTable title={`Detalhes de Saídas (${filterYear})`} records={sortedFilteredExpenses} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="expense" sortConfig={sortConfigs.expenses} requestSort={(key) => handleRequestSort('expenses', key)} isSimulation={isSimulation} />}
-                {activeTab === 'couple' && participants.length > 1 && <ContributionAnalysis contributionData={contributionData} individualAverages={individualAverages} />}
-            </>
-        )}
-    </div>
-
-    {/* Nota Informativa */}
-    <div className="px-6 pb-6 pt-2 border-t border-gray-800/50">
-        <p className="text-xs text-gray-500 text-center">
-            💡 Clique nos cabeçalhos das tabelas para ordenar os dados.
-        </p>
-    </div>
-</div>
-   
                 )}
 
                  <footer className="text-center mt-12 py-8 text-sm text-gray-500 border-t border-gray-800">
