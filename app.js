@@ -1185,86 +1185,73 @@ function App() {
     {/* FIM DA SEÇÃO DE CARDS DO DASHBOARD */}
 
     <FinancialEvolutionChart data={chartData} />
+        <div id="detailed-reports" className="card-glass">
+    <div className="p-6 pb-4">
+        <h2 className="text-2xl font-bold text-gray-100 mb-2">Relatórios Detalhados</h2>
+        <p className="text-gray-400 text-sm">Analise seus dados por categoria e período</p>
+    </div>
 
-    <div id="detailed-reports" className="bg-gray-800 p-6 rounded-xl shadow-md">
-        <h2 className="text-2xl font-semibold text-gray-200 mb-4">Relatórios Detalhados</h2>
-        <div className="border-b border-gray-700 flex flex-wrap">
-            <button onClick={() => setActiveTab('summary')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'summary' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Resumo Mensal </button>
-            <button onClick={() => setActiveTab('reserve')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'reserve' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Reserva de Estabilidade </button>
-            <button onClick={() => setActiveTab('incomes')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'incomes' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Entradas </button>
-            <button onClick={() => setActiveTab('expenses')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'expenses' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Saídas </button>
+    {/* Abas de Navegação */}
+    <div className="border-b border-gray-800/50 px-6">
+        <nav className="flex flex-wrap -mb-px gap-1">
+            <button
+                onClick={() => setActiveTab('summary')}
+                className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'summary' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
+            >
+                Resumo Mensal
+            </button>
+            <button
+                onClick={() => setActiveTab('reserve')}
+                className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'reserve' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
+            >
+                Histórico da Reserva
+            </button>
+            <button
+                onClick={() => setActiveTab('incomes')}
+                className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'incomes' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
+            >
+                Todas as Entradas
+            </button>
+            <button
+                onClick={() => setActiveTab('expenses')}
+                className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'expenses' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
+            >
+                Todas as Saídas
+            </button>
             {participants.length > 1 && (
-                <button onClick={() => setActiveTab('couple')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'couple' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Visão Casal </button>
+                <button
+                    onClick={() => setActiveTab('couple')}
+                    className={`py-3 px-4 text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'couple' ? 'text-cyan-400 border-cyan-400' : 'text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600'}`}
+                >
+                    Visão Conjunta
+                </button>
             )}
-        </div>
-        <div className="mt-4">
-            {isLoading && !user ? (<p className="text-gray-500 text-center py-4">Carregando dados...</p>) : ( <>
+        </nav>
+    </div>
+
+    {/* Conteúdo das Abas */}
+    <div className="p-6 pt-4">
+        {isLoading && !user ? (
+            <p className="text-gray-500 text-center py-4">Carregando dados...</p>
+        ) : (
+            <>
                 {activeTab === 'summary' && <MonthlyBalanceHistoryTable data={sortedMonthlyBalanceHistory} isLoading={isLoading} sortConfig={sortConfigs.summary} requestSort={(key) => handleRequestSort('summary', key)} />}
                 {activeTab === 'reserve' && <StabilityReserveHistoryTable data={sortedStabilityReserveHistory} sortConfig={sortConfigs.reserve} requestSort={(key) => handleRequestSort('reserve', key)} />}
                 {activeTab === 'incomes' && <RecordsTable title={`Detalhes de Entradas (${filterYear})`} records={sortedFilteredIncomes} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="income" sortConfig={sortConfigs.incomes} requestSort={(key) => handleRequestSort('incomes', key)} isSimulation={isSimulation} participants={participants} />}
                 {activeTab === 'expenses' && <RecordsTable title={`Detalhes de Saídas (${filterYear})`} records={sortedFilteredExpenses} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="expense" sortConfig={sortConfigs.expenses} requestSort={(key) => handleRequestSort('expenses', key)} isSimulation={isSimulation} />}
                 {activeTab === 'couple' && participants.length > 1 && <ContributionAnalysis contributionData={contributionData} individualAverages={individualAverages} />}
-            </> )}
-        </div>
+            </>
+        )}
+    </div>
+
+    {/* Nota Informativa */}
+    <div className="px-6 pb-6 pt-2 border-t border-gray-800/50">
+        <p className="text-xs text-gray-500 text-center">
+            💡 Clique nos cabeçalhos das tabelas para ordenar os dados.
+        </p>
     </div>
 </div>
-
-                        {/* Coluna de Ações (Direita) */}
-                        <div className="lg:col-span-4 space-y-8 lg:sticky top-24 h-screen">
-                            <div id="add-record-form" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                                <h3 className="text-xl font-semibold text-gray-200 mb-4">Adicionar Transação</h3>
-                                <div className="mb-4 border-b border-gray-700 flex"> <button onClick={() => setFormType('income')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'income' ? 'text-green-400 border-b-2 border-green-400' : 'text-gray-400 hover:text-green-400'}`}> Entrada </button> <button onClick={() => setFormType('expense')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'expense' ? 'text-red-400 border-b-2 border-red-400' : 'text-gray-400 hover:text-red-400'}`}> Saída </button> </div>
-                                <form onSubmit={handleAddRecord} className="space-y-4">
-                                    <div> <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> <input id="description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={formType === 'income' ? 'Ex: Salário, Venda' : 'Ex: Aluguel, Compras'} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
-                                    {participants.length > 1 && (
-                                        <div>
-                                            <label htmlFor="responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
-                                            <input 
-                                                id="responsible" 
-                                                list="responsible-options-add"
-                                                value={responsible} 
-                                                onChange={(e) => setResponsible(e.target.value)} 
-                                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="Quem?"
-                                            />
-                                            <datalist id="responsible-options-add">
-                                                {participants.map(p => <option key={p} value={p}>{p}</option>)}
-                                            </datalist>
-                                        </div>
-                                    )}
-                                    <div> <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> <input id="amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1500.00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
-                                    <div className="flex gap-4"> <div className="flex-1"> <label htmlFor="month" className="block text-sm font-medium text-gray-400 mb-1">Mês</label> <select id="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> {Array.from({length: 12}, (_, i) => <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}</option>)} </select> </div> <div className="flex-1"> <label htmlFor="year" className="block text-sm font-medium text-gray-400 mb-1">Ano</label> <input id="year" type="number" value={year} onChange={(e) => setYear(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div> </div>
-                                    <button type="submit" className={`w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${formType === 'income' ? 'bg-green-600 hover:bg-green-500 focus:ring-green-500' : 'bg-red-600 hover:bg-red-500 focus:ring-red-500'}`}> Adicionar {formType === 'income' ? 'Entrada' : 'Saída'} </button>
-                                </form>
-                            </div>
-                            <div id="action-buttons" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                                <h3 className="text-xl font-semibold text-gray-200 mb-4">Ferramentas</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button 
-                                        onClick={() => setShowLeanCalculator(true)}
-                                        className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-yellow-700/80 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors border border-yellow-600/50">
-                                        <icons.CalculatorIcon />
-                                        Modo Vacas Magras
-                                    </button>
-                                    
-                                    {showRedoButton && (
-                                        <button 
-                                            onClick={handleRedoInitialAverage}
-                                            className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-500 transition-colors">
-                                            <icons.ResetIcon />
-                                            Refazer Média Inicial
-                                        </button>
-                                    )}
-                                    <button onClick={handleImportClick} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.ImportIcon /> Importar </button>
-                                    <button onClick={handleExportData} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.ExportIcon /> Exportar </button>
-                                    <button onClick={handleUndo} disabled={!canUndo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.UndoIcon /> Desfazer </button>
-                                    <button onClick={handleRedo} disabled={!canRedo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.RedoIcon /> Refazer </button>
-                                    <button onClick={() => setIsTourOpen(true)} className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500 transition-colors"> <icons.HelpIcon /> Ajuda & Tour Guiado </button>
-                                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+   
                 )}
 
                  <footer className="text-center mt-12 py-8 text-sm text-gray-500 border-t border-gray-800">
