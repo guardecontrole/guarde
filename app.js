@@ -1033,7 +1033,7 @@ function App() {
     </div>
 </div>
 {/* Até aqui */}
-                                    /*<h2 className="text-2xl font-semibold text-gray-200">Resumo de {filterYear}</h2> */
+                                    
                                     <div className="flex items-center gap-2">
                                         <label htmlFor="filterYear" className="text-sm font-medium text-gray-400">Filtrar por Ano:</label>
                                         <input id="filterYear" type="number" value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="w-32 px-3 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
