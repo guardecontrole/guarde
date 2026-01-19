@@ -1011,29 +1011,7 @@ function App() {
                         <div className="lg:col-span-8 space-y-8">
                             <div id="summary-cards" className="bg-gray-800 p-6 rounded-xl shadow-md">
                                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                                    {/* Substitua a partir daqui */}
-<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-    <div>
-        <h2 className="text-2xl font-bold text-gray-100">Visão Geral de {filterYear}</h2>
-        <p className="text-gray-400 text-sm mt-1">Seu panorama financeiro anual</p>
-    </div>
-    <div className="flex items-center gap-3">
-        <div className="flex items-center">
-            <label htmlFor="filterYear" className="text-sm font-medium text-gray-400 mr-2">Ano:</label>
-            <div className="relative">
-                <input
-                    id="filterYear"
-                    type="number"
-                    value={filterYear}
-                    onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                    className="w-28 px-3 py-1.5 bg-gray-800/70 border border-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 text-sm"
-                />
-            </div>
-        </div>
-    </div>
-</div>
-{/* Até aqui */}
-                                    
+                                    <h2 className="text-2xl font-semibold text-gray-200">Resumo de {filterYear}</h2>
                                     <div className="flex items-center gap-2">
                                         <label htmlFor="filterYear" className="text-sm font-medium text-gray-400">Filtrar por Ano:</label>
                                         <input id="filterYear" type="number" value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="w-32 px-3 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
