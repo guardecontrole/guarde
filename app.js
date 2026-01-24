@@ -15,6 +15,8 @@ const MonthlyBalanceHistoryTable = window.MonthlyBalanceHistoryTable;
 const ContributionAnalysis = window.ContributionAnalysis;
 const StabilityReserveHistoryTable = window.StabilityReserveHistoryTable;
 const SortIndicator = window.SortIndicator;
+// Importa a nova página de Orçamento
+const OrcamentoPage = window.OrcamentoPage;
 
 // Importa ícones
 const icons = window.icons;
@@ -998,10 +1000,7 @@ function App() {
                 {success && <div className="bg-green-900/50 border border-green-500 text-green-400 px-4 py-3 rounded-lg relative mb-6" role="alert">{success}</div>}
 
                 {isBudget && (
-                    <div className="bg-gray-800 p-6 rounded-xl shadow-md mb-8 animate-fade-in">
-                        <h2 className="text-2xl font-semibold text-gray-200 mb-4">Plano de Orçamento</h2>
-                        <p className="text-gray-400">Espaço destinado à configuração do seu orçamento mensal.</p>
-                    </div>
+                    <OrcamentoPage data={chartData} />
                 )}
 
                 {!isBudget && (
@@ -1054,18 +1053,18 @@ function App() {
                                          )}
                                      </div>
                                     <div className="bg-purple-900/50 p-4 rounded-lg border border-purple-700">
-                                        <h3 className="text-lg font-semibold text-purple-300 flex items-center justify-between relative group">
-                                            <div className="flex items-center gap-2">
-                                                <icons.ShieldIcon /> Reserva de Estabilidade
-                                            </div>
-                                            <button onClick={() => setShowAdjustReserveModal(true)} title="Ajustar Saldo Manualmente" className="text-purple-400 hover:text-white transition-colors">
-                                                <icons.AdjustIcon />
-                                            </button>
-                                            <span className="absolute -top-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-600 text-white text-xs rounded py-1 px-2 w-72 pointer-events-none">
-                                                Calculada mês a mês: Saldo Anterior + (Saldo do Mês - Média de Saldo dos 12 meses anteriores). A reserva é zerada se ficar negativa.
-                                            </span>
-                                        </h3>
-                                        <p className="text-3xl font-bold text-purple-400 mt-2">{finalStabilityReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                            <h3 className="text-lg font-semibold text-purple-300 flex items-center justify-between relative group">
+                                                <div className="flex items-center gap-2">
+                                                    <icons.ShieldIcon /> Reserva de Estabilidade
+                                                </div>
+                                                <button onClick={() => setShowAdjustReserveModal(true)} title="Ajustar Saldo Manualmente" className="text-purple-400 hover:text-white transition-colors">
+                                                    <icons.AdjustIcon />
+                                                </button>
+                                                <span className="absolute -top-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-600 text-white text-xs rounded py-1 px-2 w-72 pointer-events-none">
+                                                    Calculada mês a mês: Saldo Anterior + (Saldo do Mês - Média de Saldo dos 12 meses anteriores). A reserva é zerada se ficar negativa.
+                                                </span>
+                                            </h3>
+                                            <p className="text-3xl font-bold text-purple-400 mt-2">{finalStabilityReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                                     </div>
 
                                     {showFullSummary && (
