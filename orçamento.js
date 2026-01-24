@@ -1208,7 +1208,7 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
 };
 
 // Componente Principal da Aplicação. Gerencia todo o estado e a lógica de negócios.
-const OrcamentoPage = () => {
+const OrcamentoPage = ({ initialIncome = 0 }) => {
     // Estado principal que armazena todos os dados do usuário, com histórico.
     const { 
         state: data, 
@@ -1696,7 +1696,14 @@ const OrcamentoPage = () => {
     const totalBudgeted = categoriesForDisplay.reduce((sum, cat) => sum + (cat.budgetedValue || 0), 0);
     const totalPercentage = data.income > 0 ? (totalBudgeted / data.income) * 100 : 0;
     const isBudgetUnbalanced = Math.abs(100 - totalPercentage) >= 0.1 && categoriesForDisplay.length > 0;
-
+    
+    // --- AUTOMAÇÃO: Sincroniza Saldo Sugerido com a Receita ---
+    useEffect(() => {
+        if (initialIncome > 0 && Math.abs(initialIncome - data.income) > 0.01) {
+            handleUpdateIncome(initialIncome);
+        }
+    }, [initialIncome]);
+    //  ^^^  FIM DO CÓDIGO DA AUTOMAÇÃO  ^^^
     return (
         <div className="bg-gray-900 min-h-screen font-sans text-gray-200 pb-40">
             <style>{`
