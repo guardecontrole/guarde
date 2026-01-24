@@ -1,40 +1,378 @@
-// Adaptação para rodar no navegador sem build system
+// orçamento.js
 const { useState, useEffect, useRef } = React;
+const { 
+    DollarSign, Edit, Undo2, Redo2, Upload, Download, Plus, Eye, Folder, 
+    Star, Layers, ChevronDown, Trash2 
+} = window.BudgetIcons;
 
-// --- ÍCONES EMBUTIDOS (Solução Definitiva) ---
-// Removemos a dependência externa para garantir que os ícones sempre apareçam.
-const IconBase = ({ children, size = 24, className = "" }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        {children}
-    </svg>
-);
+const { 
+    CategoryItem, ExpenseList, CategoryForm, PaymentAmountModal, ConfirmationModal, 
+    PresetModal, EditGroupModal, PresetConfirmationBar, BudgetAdjustmentBar, budgetPresets
+} = window.BudgetComponents;
 
-const ChevronRight = (props) => <IconBase {...props}><path d="m9 18 6-6-6-6"/></IconBase>;
-const Folder = (props) => <IconBase {...props}><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></IconBase>;
-const Plus = (props) => <IconBase {...props}><path d="M5 12h14"/><path d="M12 5v14"/></IconBase>;
-const Edit = (props) => <IconBase {...props}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></IconBase>;
-const Trash2 = (props) => <IconBase {...props}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></IconBase>;
-const ArrowLeft = (props) => <IconBase {...props}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></IconBase>;
-const DollarSign = (props) => <IconBase {...props}><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></IconBase>;
-const Percent = (props) => <IconBase {...props}><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></IconBase>;
-const X = (props) => <IconBase {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>;
-const AlertTriangle = (props) => <IconBase {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></IconBase>;
-const BookOpen = (props) => <IconBase {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconBase>;
-const Star = (props) => <IconBase {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></IconBase>;
-const Upload = (props) => <IconBase {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></IconBase>;
-const Download = (props) => <IconBase {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></IconBase>;
-const Check = (props) => <IconBase {...props}><path d="M20 6 9 17l-5-5"/></IconBase>;
-const RefreshCw = (props) => <IconBase {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></IconBase>;
-const Eye = (props) => <IconBase {...props}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></IconBase>;
-const Layers = (props) => <IconBase {...props}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0l-9.17-4.16"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0l-9.17-4.16"/></IconBase>;
-const ChevronDown = (props) => <IconBase {...props}><path d="m6 9 6 6 6-6"/></IconBase>;
-const Lock = (props) => <IconBase {...props}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>;
-const Unlock = (props) => <IconBase {...props}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></IconBase>;
-const MessageSquare = (props) => <IconBase {...props}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></IconBase>;
-const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></IconBase>;
-const Undo2 = (props) => <IconBase {...props}><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></IconBase>;
-const Redo2 = (props) => <IconBase {...props}><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"/></IconBase>;
-const Pause = (props) => <IconBase {...props}><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></IconBase>;
+const formatCurrency = (value) => {
+  if (typeof value !== 'number' || isNaN(value)) value = 0;
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
+
+const initialData = { income: 0, categories: [] };
+
+const useHistoryState = (initialState) => {
+    const [state, setState] = useState({ past: [], present: initialState, future: [] });
+    const canUndo = state.past.length > 0;
+    const canRedo = state.future.length > 0;
+    const undo = () => { if (!canUndo) return; const newFuture = [state.present, ...state.future]; const newPresent = state.past[state.past.length - 1]; const newPast = state.past.slice(0, state.past.length - 1); setState({ past: newPast, present: newPresent, future: newFuture }); };
+    const redo = () => { if (!canRedo) return; const newPast = [...state.past, state.present]; const newPresent = state.future[0]; const newFuture = state.future.slice(1); setState({ past: newPast, present: newPresent, future: newFuture }); };
+    const set = (newPresent) => { if (JSON.stringify(newPresent) === JSON.stringify(state.present)) return; setState({ past: [...state.past, state.present], present: newPresent, future: [] }); };
+    const setInitial = (newPresent) => { setState({ past: [], present: newPresent, future: [] }); }
+    return { state: state.present, set, undo, redo, canUndo, canRedo, setInitial };
+};
+
+const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, onUpdateCategoryBudget, onOpenCategoryModal, onDeleteCategoryRequest, onDeleteGroupRequest, onOpenPresetModal, onExport, onImport, tempPresetCategories, onConfirmPreset, onCancelPreset, onToggleLock, onMoveItem, onOpenEditGroupModal, undo, redo, canUndo, canRedo }) => {
+    const isPreviewing = tempPresetCategories !== null;
+    const displayCategories = isPreviewing ? tempPresetCategories : categories;
+    const totalExpenses = displayCategories.reduce((total, category) => total + (category.expenses || []).filter(exp => !exp.isPaused).reduce((sum, exp) => sum + exp.installmentValue, 0), 0);
+    const balance = income - totalExpenses;
+    const isIncomeSet = income > 0;
+    const [newIncome, setNewIncome] = useState(String(income));
+    const [isEditingIncome, setIsEditingIncome] = useState(false);
+    const incomeInputRef = useRef(null);
+    const [collapsedGroups, setCollapsedGroups] = useState({});
+    const [draggedItem, setDraggedItem] = useState(null);
+    const [dragOverItem, setDragOverItem] = useState(null);
+
+    const dragProps = { draggedItem, dragOverItem, onDragStart: (item) => setDraggedItem(item), onDrop: (targetItem) => { if (draggedItem) onMoveItem(draggedItem, targetItem); setDraggedItem(null); setDragOverItem(null); }, onDragEnter: (item) => { if (draggedItem && draggedItem.id !== item.id) setDragOverItem(item); }, onDragLeave: () => setDragOverItem(null), onDragEnd: () => { setDraggedItem(null); setDragOverItem(null); } };
+    const toggleGroupCollapse = (groupName) => { setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] })); };
+    useEffect(() => { setNewIncome(String(income).replace('.', ',')); }, [income]);
+    useEffect(() => { if (isEditingIncome) { incomeInputRef.current?.focus(); incomeInputRef.current?.select(); } }, [isEditingIncome]);
+    const handleIncomeBlur = () => { const value = parseFloat(String(newIncome).replace(',', '.')); if(!isNaN(value) && value >= 0) onUpdateIncome(value); else setNewIncome(String(income).replace('.', ',')); setIsEditingIncome(false); };
+    const handleIncomeKeyDown = (e) => { if (e.key === 'Enter') handleIncomeBlur(); else if (e.key === 'Escape') { setNewIncome(String(income).replace('.', ',')); setIsEditingIncome(false); } };
+
+    const categoriesWithGroup = displayCategories.filter(c => c.group && c.group.trim() !== '');
+    const categoriesWithoutGroup = displayCategories.filter(c => !c.group || c.group.trim() === '');
+    const groupedCategories = categoriesWithGroup.reduce((acc, category) => { const groupName = category.group.trim(); if (!acc[groupName]) acc[groupName] = []; acc[groupName].push(category); return acc; }, {});
+
+    return (
+        <div className="space-y-8 animate-fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className={`bg-gray-800 p-6 rounded-2xl shadow-lg flex items-center space-x-4 transition-all ${!isIncomeSet && !isPreviewing ? 'animate-pulse-border' : 'border-2 border-transparent'}`}><div className="p-3 bg-green-500/20 rounded-xl"><DollarSign className="text-green-400" size={28}/></div><div><p className="text-gray-400 text-sm">Sua Receita</p>{isEditingIncome ? (<input ref={incomeInputRef} type="text" inputMode="decimal" value={newIncome} onChange={(e) => setNewIncome(e.target.value)} onBlur={handleIncomeBlur} onKeyDown={handleIncomeKeyDown} className="text-2xl font-bold text-white bg-transparent w-full focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-md px-1 -mx-1"/>) : (<div onClick={() => !isPreviewing && setIsEditingIncome(true)} className={`text-2xl font-bold text-white flex items-center group ${!isPreviewing ? 'cursor-pointer' : 'cursor-default'}`}><span>{formatCurrency(income)}</span>{!isPreviewing && <Edit size={16} className="ml-2 text-gray-500 group-hover:text-white transition-colors opacity-0 group-hover:opacity-100" />}</div>)}</div></div>
+                <div className="bg-gray-800 p-6 rounded-2xl shadow-lg flex items-center space-x-4"><div className="p-3 bg-red-500/20 rounded-xl"><DollarSign className="text-red-400" size={28}/></div><div><p className="text-gray-400 text-sm">Total de Despesas</p><p className="text-2xl font-bold text-white">{formatCurrency(totalExpenses)}</p></div></div>
+                <div className="bg-gray-800 p-6 rounded-2xl shadow-lg flex items-center space-x-4"><div className={`p-3 rounded-xl ${balance >= 0 ? 'bg-blue-500/20' : 'bg-yellow-500/20'}`}><DollarSign className={`${balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`} size={28}/></div><div><p className="text-gray-400 text-sm">Saldo Restante</p><p className={`text-2xl font-bold ${balance >= 0 ? 'text-white' : 'text-yellow-400'}`}>{formatCurrency(balance)}</p></div></div>
+            </div>
+            <div className="bg-gray-800 p-6 rounded-2xl shadow-lg">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 className="text-xl font-bold text-white">Orçamento por Categoria</h2>
+                    <div className="flex items-center gap-3 flex-wrap">
+                         <button onClick={undo} disabled={!canUndo || isPreviewing} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition disabled:opacity-50 disabled:cursor-not-allowed"><Undo2 size={20} />Desfazer</button>
+                         <button onClick={redo} disabled={!canRedo || isPreviewing} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition disabled:opacity-50 disabled:cursor-not-allowed"><Redo2 size={20} />Refazer</button>
+                         <button onClick={onImport} disabled={isPreviewing} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-transform transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"><Upload size={20} />Importar</button>
+                         <button onClick={onExport} disabled={isPreviewing} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-transform transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"><Download size={20} />Exportar</button>
+                        <button onClick={() => isIncomeSet && onOpenCategoryModal()} disabled={!isIncomeSet || isPreviewing} title={!isIncomeSet ? "Adicione sua receita primeiro." : isPreviewing ? "Confirme ou cancele a sugestão atual." : "Nova Categoria"} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-all transform shadow-lg ${isIncomeSet && !isPreviewing ? 'bg-blue-600 hover:bg-blue-500 hover:scale-105' : 'bg-gray-600 opacity-50 cursor-not-allowed'}`}><Plus size={20} />Nova</button>
+                    </div>
+                </div>
+                {isPreviewing && (<div className="bg-blue-900/50 border-2 border-dashed border-blue-700 text-blue-200 px-4 py-3 rounded-xl mb-6 text-center animate-fade-in flex items-center justify-center gap-3"><Eye size={20} /><p className="font-bold">Veja essa sugestão de orçamento.</p></div>)}
+                <div className="space-y-6">
+                    {Object.keys(groupedCategories).length === 0 && categoriesWithoutGroup.length === 0 ? (
+                        <div className="text-center py-10 px-4 border-2 border-dashed border-gray-700 rounded-xl">
+                            <Folder size={40} className="mx-auto text-gray-500" />
+                            <p className="mt-4 text-gray-300 font-semibold">Seu orçamento está vazio.</p>
+                            <p className="text-sm text-gray-400 mt-2">Comece definindo sua receita e depois crie categorias ou use um modelo.</p>
+                             <button onClick={() => isIncomeSet && onOpenPresetModal()} disabled={!isIncomeSet || isPreviewing} title={!isIncomeSet ? "Adicione sua receita primeiro." : isPreviewing ? "Confirme ou cancele a sugestão atual." : "Usar Modelo"} className={`mt-6 flex items-center gap-2 mx-auto px-5 py-2.5 rounded-lg text-white transition-all transform shadow-lg ${isIncomeSet && !isPreviewing ? 'bg-blue-600 hover:bg-blue-500 hover:scale-105' : 'bg-gray-600 opacity-50 cursor-not-allowed'}`}><Star size={20} />Usar Modelo de Orçamento</button>
+                        </div>
+                    ) : (
+                        <>
+                            {Object.entries(groupedCategories).map(([groupName, categoriesInGroup]) => {
+                                const groupBudgetedValue = categoriesInGroup.reduce((sum, cat) => sum + (cat.budgetedValue || 0), 0);
+                                const groupExpenses = categoriesInGroup.reduce((sum, cat) => sum + (cat.expenses || []).filter(exp => !exp.isPaused).reduce((expSum, exp) => expSum + exp.installmentValue, 0), 0);
+                                const groupPercentage = income > 0 ? (groupBudgetedValue / income) * 100 : 0;
+                                const isCollapsed = collapsedGroups[groupName];
+                                const isGroupBeingDragged = dragProps.draggedItem?.id === groupName;
+                                const isGroupDragTarget = dragProps.dragOverItem?.id === groupName;
+                                const dragItemType = dragProps.draggedItem?.type;
+                                return (
+                                    <div key={groupName} className="relative">
+                                        {isGroupDragTarget && !isGroupBeingDragged && dragItemType === 'group' && <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 rounded-full animate-pulse"></div>}
+                                        <div draggable={!isPreviewing} onDragStart={() => dragProps.onDragStart({ id: groupName, type: 'group' })} onDragEnd={() => dragProps.onDragEnd()} onDrop={(e) => { e.preventDefault(); dragProps.onDrop({ id: groupName, type: 'group' }); }} onDragOver={(e) => { e.preventDefault(); dragProps.onDragEnter({ id: groupName, type: 'group' }); }} onDragLeave={(e) => { e.preventDefault(); dragProps.onDragLeave(); }} className={`w-full flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 p-3 bg-gray-800/50 rounded-lg gap-2 text-left hover:bg-gray-700/70 transition-colors ${!isPreviewing ? 'cursor-grab' : ''} ${isGroupBeingDragged ? 'opacity-50' : ''}`}>
+                                            <div className="flex items-center flex-grow cursor-pointer" onClick={() => toggleGroupCollapse(groupName)}><Layers size={18} className="text-gray-400 mr-3" /><h3 className="text-lg font-semibold text-white uppercase tracking-wider">{groupName}</h3><ChevronDown size={20} className={`ml-3 text-gray-500 transition-transform transform ${isCollapsed ? '-rotate-90' : 'rotate-0'}`} /></div>
+                                            <div className="flex items-center gap-2 text-sm w-full sm:w-auto justify-end"><div><span className="text-gray-400">Gasto: </span><span className="font-semibold text-white">{formatCurrency(groupExpenses)}</span></div><div className="text-right"><span className="font-bold text-white">{formatCurrency(groupBudgetedValue)}</span><span className="ml-2 text-gray-400 font-mono">({groupPercentage.toFixed(1)}%)</span></div><button onClick={(e) => { e.stopPropagation(); onOpenEditGroupModal(groupName); }} disabled={isPreviewing} className="p-1 text-gray-500 hover:text-blue-400 transition disabled:opacity-50" title={`Editar o nome do grupo "${groupName}"`}><Edit size={18} /></button><button onClick={(e) => { e.stopPropagation(); onDeleteGroupRequest(groupName); }} disabled={isPreviewing} className="p-1 text-gray-500 hover:text-red-400 transition disabled:opacity-50" title={`Excluir o grupo "${groupName}"`}><Trash2 size={18} /></button></div>
+                                        </div>
+                                        {!isCollapsed && (<div className="space-y-4 pl-4 border-l-2 border-gray-700/50 ml-3 animate-fade-in-down">{categoriesInGroup.map(category => (<CategoryItem key={category.id} category={category} income={income} onUpdateBudget={onUpdateCategoryBudget} onSelectCategory={onSelectCategory} onEdit={onOpenCategoryModal} onDelete={onDeleteCategoryRequest} isPreviewing={isPreviewing} onToggleLock={onToggleLock} dragProps={dragProps}/>))}</div>)}
+                                        {isGroupDragTarget && !isGroupBeingDragged && dragItemType === 'group' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-full animate-pulse"></div>}
+                                    </div>
+                                );
+                            })}
+                            {categoriesWithoutGroup.length > 0 && (<div className="space-y-4 pt-6">{categoriesWithoutGroup.map(category => (<CategoryItem key={category.id} category={category} income={income} onUpdateBudget={onUpdateCategoryBudget} onSelectCategory={onSelectCategory} onEdit={onOpenCategoryModal} onDelete={onDeleteCategoryRequest} isPreviewing={isPreviewing} onToggleLock={onToggleLock} dragProps={dragProps}/>))}</div>)}
+                        </>
+                    )}
+                </div>
+            </div>
+            {isPreviewing && <PresetConfirmationBar onConfirm={onConfirmPreset} onCancel={onCancelPreset} />}
+        </div>
+    );
+};
+
+const OrcamentoPage = () => {
+    const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState(null);
+    const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [categoryToDelete, setCategoryToDelete] = useState(null);
+    const [isDeleteGroupConfirmOpen, setDeleteGroupConfirmOpen] = useState(false);
+    const [groupToDelete, setGroupToDelete] = useState(null);
+    const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
+    const [isImportConfirmOpen, setImportConfirmOpen] = useState(false);
+    const [fileToImport, setFileToImport] = useState(null);
+    const fileInputRef = useRef(null);
+    const [tempPresetCategories, setTempPresetCategories] = useState(null);
+    const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [expenseToPay, setExpenseToPay] = useState(null);
+    const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
+    const [editingGroup, setEditingGroup] = useState(null);
+
+    const existingGroups = [...new Set(data.categories.map(c => c.group).filter(g => g && g.trim() !== ''))];
+
+    const handleCategorySubmit = (categoryData) => {
+        let newCategories;
+        if (categoryData.id) newCategories = data.categories.map(cat => cat.id === categoryData.id ? { ...cat, ...categoryData } : cat);
+        else newCategories = [...data.categories, { ...categoryData, id: Date.now(), budgetedValue: 0, expenses: [], isLocked: false }];
+        setData({ ...data, categories: newCategories }); setIsCategoryModalOpen(false); setEditingCategory(null);
+    };
+
+    const confirmDeleteCategory = () => { if (categoryToDelete) setData({ ...data, categories: data.categories.filter(cat => cat.id !== categoryToDelete) }); setDeleteConfirmOpen(false); setCategoryToDelete(null); };
+    const confirmDeleteGroup = () => { if (groupToDelete) setData({ ...data, categories: data.categories.map(cat => cat.group === groupToDelete ? { ...cat, group: '' } : cat) }); setDeleteGroupConfirmOpen(false); setGroupToDelete(null); };
+    const handleUpdateGroupName = (oldName, newName) => { setData({ ...data, categories: data.categories.map(cat => cat.group === oldName ? { ...cat, group: newName } : cat) }); setEditGroupModalOpen(false); setEditingGroup(null); };
+    const handleUpdateIncome = (newIncome) => {
+        if (data.income === newIncome) return;
+        const newCategories = data.categories.map(cat => { if (cat.isLocked || data.income <= 0) return cat; const percentage = (cat.budgetedValue || 0) / data.income; return { ...cat, budgetedValue: newIncome * percentage }; });
+        setData({ income: newIncome, categories: newCategories });
+    };
+    const handleToggleCategoryLock = (categoryId) => { const updater = (categories) => categories.map(cat => cat.id === categoryId ? { ...cat, isLocked: !cat.isLocked } : cat); if (tempPresetCategories) setTempPresetCategories(updater); else setData({ ...data, categories: updater(data.categories) }); };
+    const handleMoveItem = (draggedItem, targetItem) => {
+        if (draggedItem.id === targetItem.id) return;
+        let newCategories = Array.from(tempPresetCategories ? tempPresetCategories : data.categories);
+        if (draggedItem.type === 'category') {
+            const draggedIndex = newCategories.findIndex(c => c.id === draggedItem.id); if (draggedIndex === -1) return; const [draggedCategory] = newCategories.splice(draggedIndex, 1);
+            if (targetItem.type === 'category') { draggedCategory.group = targetItem.group; newCategories.splice(newCategories.findIndex(c => c.id === targetItem.id), 0, draggedCategory); }
+            else if (targetItem.type === 'group') { draggedCategory.group = targetItem.id; const targetIndex = newCategories.findIndex(c => c.group === targetItem.id); if (targetIndex !== -1) newCategories.splice(targetIndex, 0, draggedCategory); else newCategories.push(draggedCategory); }
+        } else if (draggedItem.type === 'group' && targetItem.type === 'group') {
+            const draggedGroupCategories = newCategories.filter(c => c.group === draggedItem.id); const otherCategories = newCategories.filter(c => c.group !== draggedItem.id);
+            const targetIndex = otherCategories.findIndex(c => c.group === targetItem.id); if (targetIndex === -1) return; otherCategories.splice(targetIndex, 0, ...draggedGroupCategories); newCategories = otherCategories;
+        }
+        if (tempPresetCategories) setTempPresetCategories(newCategories); else setData({ ...data, categories: newCategories });
+    };
+    const handleUpdateCategoryBu// orçamento.js
+const { useState, useEffect, useRef } = React;
+const { 
+    DollarSign, Edit, Undo2, Redo2, Upload, Download, Plus, Eye, Folder, 
+    Star, Layers, ChevronDown, Trash2 
+} = window.BudgetIcons;
+
+const { 
+    CategoryItem, ExpenseList, CategoryForm, PaymentAmountModal, ConfirmationModal, 
+    PresetModal, EditGroupModal, PresetConfirmationBar, BudgetAdjustmentBar, budgetPresets
+} = window.BudgetComponents;
+
+const formatCurrency = (value) => {
+  if (typeof value !== 'number' || isNaN(value)) value = 0;
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
+
+const initialData = { income: 0, categories: [] };
+
+const useHistoryState = (initialState) => {
+    const [state, setState] = useState({ past: [], present: initialState, future: [] });
+    const canUndo = state.past.length > 0;
+    const canRedo = state.future.length > 0;
+    const undo = () => { if (!canUndo) return; const newFuture = [state.present, ...state.future]; const newPresent = state.past[state.past.length - 1]; const newPast = state.past.slice(0, state.past.length - 1); setState({ past: newPast, present: newPresent, future: newFuture }); };
+    const redo = () => { if (!canRedo) return; const newPast = [...state.past, state.present]; const newPresent = state.future[0]; const newFuture = state.future.slice(1); setState({ past: newPast, present: newPresent, future: newFuture }); };
+    const set = (newPresent) => { if (JSON.stringify(newPresent) === JSON.stringify(state.present)) return; setState({ past: [...state.past, state.present], present: newPresent, future: [] }); };
+    const setInitial = (newPresent) => { setState({ past: [], present: newPresent, future: [] }); }
+    return { state: state.present, set, undo, redo, canUndo, canRedo, setInitial };
+};
+
+const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, onUpdateCategoryBudget, onOpenCategoryModal, onDeleteCategoryRequest, onDeleteGroupRequest, onOpenPresetModal, onExport, onImport, tempPresetCategories, onConfirmPreset, onCancelPreset, onToggleLock, onMoveItem, onOpenEditGroupModal, undo, redo, canUndo, canRedo }) => {
+    const isPreviewing = tempPresetCategories !== null;
+    const displayCategories = isPreviewing ? tempPresetCategories : categories;
+    const totalExpenses = displayCategories.reduce((total, category) => total + (category.expenses || []).filter(exp => !exp.isPaused).reduce((sum, exp) => sum + exp.installmentValue, 0), 0);
+    const balance = income - totalExpenses;
+    const isIncomeSet = income > 0;
+    const [newIncome, setNewIncome] = useState(String(income));
+    const [isEditingIncome, setIsEditingIncome] = useState(false);
+    const incomeInputRef = useRef(null);
+    const [collapsedGroups, setCollapsedGroups] = useState({});
+    const [draggedItem, setDraggedItem] = useState(null);
+    const [dragOverItem, setDragOverItem] = useState(null);
+
+    const dragProps = { draggedItem, dragOverItem, onDragStart: (item) => setDraggedItem(item), onDrop: (targetItem) => { if (draggedItem) onMoveItem(draggedItem, targetItem); setDraggedItem(null); setDragOverItem(null); }, onDragEnter: (item) => { if (draggedItem && draggedItem.id !== item.id) setDragOverItem(item); }, onDragLeave: () => setDragOverItem(null), onDragEnd: () => { setDraggedItem(null); setDragOverItem(null); } };
+    const toggleGroupCollapse = (groupName) => { setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] })); };
+    useEffect(() => { setNewIncome(String(income).replace('.', ',')); }, [income]);
+    useEffect(() => { if (isEditingIncome) { incomeInputRef.current?.focus(); incomeInputRef.current?.select(); } }, [isEditingIncome]);
+    const handleIncomeBlur = () => { const value = parseFloat(String(newIncome).replace(',', '.')); if(!isNaN(value) && value >= 0) onUpdateIncome(value); else setNewIncome(String(income).replace('.', ',')); setIsEditingIncome(false); };
+    const handleIncomeKeyDown = (e) => { if (e.key === 'Enter') handleIncomeBlur(); else if (e.key === 'Escape') { setNewIncome(String(income).replace('.', ',')); setIsEditingIncome(false); } };
+
+    const categoriesWithGroup = displayCategories.filter(c => c.group && c.group.trim() !== '');
+    const categoriesWithoutGroup = displayCategories.filter(c => !c.group || c.group.trim() === '');
+    const groupedCategories = categoriesWithGroup.reduce((acc, category) => { const groupName = category.group.trim(); if (!acc[groupName]) acc[groupName] = []; acc[groupName].push(category); return acc; }, {});
+
+    return (
+        <div className="space-y-8 animate-fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className={`bg-gray-800 p-6 rounded-2xl shadow-lg flex items-center space-x-4 transition-all ${!isIncomeSet && !isPreviewing ? 'animate-pulse-border' : 'border-2 border-transparent'}`}><div className="p-3 bg-green-500/20 rounded-xl"><DollarSign className="text-green-400" size={28}/></div><div><p className="text-gray-400 text-sm">Sua Receita</p>{isEditingIncome ? (<input ref={incomeInputRef} type="text" inputMode="decimal" value={newIncome} onChange={(e) => setNewIncome(e.target.value)} onBlur={handleIncomeBlur} onKeyDown={handleIncomeKeyDown} className="text-2xl font-bold text-white bg-transparent w-full focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-md px-1 -mx-1"/>) : (<div onClick={() => !isPreviewing && setIsEditingIncome(true)} className={`text-2xl font-bold text-white flex items-center group ${!isPreviewing ? 'cursor-pointer' : 'cursor-default'}`}><span>{formatCurrency(income)}</span>{!isPreviewing && <Edit size={16} className="ml-2 text-gray-500 group-hover:text-white transition-colors opacity-0 group-hover:opacity-100" />}</div>)}</div></div>
+                <div className="bg-gray-800 p-6 rounded-2xl shadow-lg flex items-center space-x-4"><div className="p-3 bg-red-500/20 rounded-xl"><DollarSign className="text-red-400" size={28}/></div><div><p className="text-gray-400 text-sm">Total de Despesas</p><p className="text-2xl font-bold text-white">{formatCurrency(totalExpenses)}</p></div></div>
+                <div className="bg-gray-800 p-6 rounded-2xl shadow-lg flex items-center space-x-4"><div className={`p-3 rounded-xl ${balance >= 0 ? 'bg-blue-500/20' : 'bg-yellow-500/20'}`}><DollarSign className={`${balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`} size={28}/></div><div><p className="text-gray-400 text-sm">Saldo Restante</p><p className={`text-2xl font-bold ${balance >= 0 ? 'text-white' : 'text-yellow-400'}`}>{formatCurrency(balance)}</p></div></div>
+            </div>
+            <div className="bg-gray-800 p-6 rounded-2xl shadow-lg">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 className="text-xl font-bold text-white">Orçamento por Categoria</h2>
+                    <div className="flex items-center gap-3 flex-wrap">
+                         <button onClick={undo} disabled={!canUndo || isPreviewing} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition disabled:opacity-50 disabled:cursor-not-allowed"><Undo2 size={20} />Desfazer</button>
+                         <button onClick={redo} disabled={!canRedo || isPreviewing} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition disabled:opacity-50 disabled:cursor-not-allowed"><Redo2 size={20} />Refazer</button>
+                         <button onClick={onImport} disabled={isPreviewing} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-transform transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"><Upload size={20} />Importar</button>
+                         <button onClick={onExport} disabled={isPreviewing} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-transform transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"><Download size={20} />Exportar</button>
+                        <button onClick={() => isIncomeSet && onOpenCategoryModal()} disabled={!isIncomeSet || isPreviewing} title={!isIncomeSet ? "Adicione sua receita primeiro." : isPreviewing ? "Confirme ou cancele a sugestão atual." : "Nova Categoria"} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-all transform shadow-lg ${isIncomeSet && !isPreviewing ? 'bg-blue-600 hover:bg-blue-500 hover:scale-105' : 'bg-gray-600 opacity-50 cursor-not-allowed'}`}><Plus size={20} />Nova</button>
+                    </div>
+                </div>
+                {isPreviewing && (<div className="bg-blue-900/50 border-2 border-dashed border-blue-700 text-blue-200 px-4 py-3 rounded-xl mb-6 text-center animate-fade-in flex items-center justify-center gap-3"><Eye size={20} /><p className="font-bold">Veja essa sugestão de orçamento.</p></div>)}
+                <div className="space-y-6">
+                    {Object.keys(groupedCategories).length === 0 && categoriesWithoutGroup.length === 0 ? (
+                        <div className="text-center py-10 px-4 border-2 border-dashed border-gray-700 rounded-xl">
+                            <Folder size={40} className="mx-auto text-gray-500" />
+                            <p className="mt-4 text-gray-300 font-semibold">Seu orçamento está vazio.</p>
+                            <p className="text-sm text-gray-400 mt-2">Comece definindo sua receita e depois crie categorias ou use um modelo.</p>
+                             <button onClick={() => isIncomeSet && onOpenPresetModal()} disabled={!isIncomeSet || isPreviewing} title={!isIncomeSet ? "Adicione sua receita primeiro." : isPreviewing ? "Confirme ou cancele a sugestão atual." : "Usar Modelo"} className={`mt-6 flex items-center gap-2 mx-auto px-5 py-2.5 rounded-lg text-white transition-all transform shadow-lg ${isIncomeSet && !isPreviewing ? 'bg-blue-600 hover:bg-blue-500 hover:scale-105' : 'bg-gray-600 opacity-50 cursor-not-allowed'}`}><Star size={20} />Usar Modelo de Orçamento</button>
+                        </div>
+                    ) : (
+                        <>
+                            {Object.entries(groupedCategories).map(([groupName, categoriesInGroup]) => {
+                                const groupBudgetedValue = categoriesInGroup.reduce((sum, cat) => sum + (cat.budgetedValue || 0), 0);
+                                const groupExpenses = categoriesInGroup.reduce((sum, cat) => sum + (cat.expenses || []).filter(exp => !exp.isPaused).reduce((expSum, exp) => expSum + exp.installmentValue, 0), 0);
+                                const groupPercentage = income > 0 ? (groupBudgetedValue / income) * 100 : 0;
+                                const isCollapsed = collapsedGroups[groupName];
+                                const isGroupBeingDragged = dragProps.draggedItem?.id === groupName;
+                                const isGroupDragTarget = dragProps.dragOverItem?.id === groupName;
+                                const dragItemType = dragProps.draggedItem?.type;
+                                return (
+                                    <div key={groupName} className="relative">
+                                        {isGroupDragTarget && !isGroupBeingDragged && dragItemType === 'group' && <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 rounded-full animate-pulse"></div>}
+                                        <div draggable={!isPreviewing} onDragStart={() => dragProps.onDragStart({ id: groupName, type: 'group' })} onDragEnd={() => dragProps.onDragEnd()} onDrop={(e) => { e.preventDefault(); dragProps.onDrop({ id: groupName, type: 'group' }); }} onDragOver={(e) => { e.preventDefault(); dragProps.onDragEnter({ id: groupName, type: 'group' }); }} onDragLeave={(e) => { e.preventDefault(); dragProps.onDragLeave(); }} className={`w-full flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 p-3 bg-gray-800/50 rounded-lg gap-2 text-left hover:bg-gray-700/70 transition-colors ${!isPreviewing ? 'cursor-grab' : ''} ${isGroupBeingDragged ? 'opacity-50' : ''}`}>
+                                            <div className="flex items-center flex-grow cursor-pointer" onClick={() => toggleGroupCollapse(groupName)}><Layers size={18} className="text-gray-400 mr-3" /><h3 className="text-lg font-semibold text-white uppercase tracking-wider">{groupName}</h3><ChevronDown size={20} className={`ml-3 text-gray-500 transition-transform transform ${isCollapsed ? '-rotate-90' : 'rotate-0'}`} /></div>
+                                            <div className="flex items-center gap-2 text-sm w-full sm:w-auto justify-end"><div><span className="text-gray-400">Gasto: </span><span className="font-semibold text-white">{formatCurrency(groupExpenses)}</span></div><div className="text-right"><span className="font-bold text-white">{formatCurrency(groupBudgetedValue)}</span><span className="ml-2 text-gray-400 font-mono">({groupPercentage.toFixed(1)}%)</span></div><button onClick={(e) => { e.stopPropagation(); onOpenEditGroupModal(groupName); }} disabled={isPreviewing} className="p-1 text-gray-500 hover:text-blue-400 transition disabled:opacity-50" title={`Editar o nome do grupo "${groupName}"`}><Edit size={18} /></button><button onClick={(e) => { e.stopPropagation(); onDeleteGroupRequest(groupName); }} disabled={isPreviewing} className="p-1 text-gray-500 hover:text-red-400 transition disabled:opacity-50" title={`Excluir o grupo "${groupName}"`}><Trash2 size={18} /></button></div>
+                                        </div>
+                                        {!isCollapsed && (<div className="space-y-4 pl-4 border-l-2 border-gray-700/50 ml-3 animate-fade-in-down">{categoriesInGroup.map(category => (<CategoryItem key={category.id} category={category} income={income} onUpdateBudget={onUpdateCategoryBudget} onSelectCategory={onSelectCategory} onEdit={onOpenCategoryModal} onDelete={onDeleteCategoryRequest} isPreviewing={isPreviewing} onToggleLock={onToggleLock} dragProps={dragProps}/>))}</div>)}
+                                        {isGroupDragTarget && !isGroupBeingDragged && dragItemType === 'group' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-full animate-pulse"></div>}
+                                    </div>
+                                );
+                            })}
+                            {categoriesWithoutGroup.length > 0 && (<div className="space-y-4 pt-6">{categoriesWithoutGroup.map(category => (<CategoryItem key={category.id} category={category} income={income} onUpdateBudget={onUpdateCategoryBudget} onSelectCategory={onSelectCategory} onEdit={onOpenCategoryModal} onDelete={onDeleteCategoryRequest} isPreviewing={isPreviewing} onToggleLock={onToggleLock} dragProps={dragProps}/>))}</div>)}
+                        </>
+                    )}
+                </div>
+            </div>
+            {isPreviewing && <PresetConfirmationBar onConfirm={onConfirmPreset} onCancel={onCancelPreset} />}
+        </div>
+    );
+};
+
+const OrcamentoPage = () => {
+    const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState(null);
+    const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [categoryToDelete, setCategoryToDelete] = useState(null);
+    const [isDeleteGroupConfirmOpen, setDeleteGroupConfirmOpen] = useState(false);
+    const [groupToDelete, setGroupToDelete] = useState(null);
+    const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
+    const [isImportConfirmOpen, setImportConfirmOpen] = useState(false);
+    const [fileToImport, setFileToImport] = useState(null);
+    const fileInputRef = useRef(null);
+    const [tempPresetCategories, setTempPresetCategories] = useState(null);
+    const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [expenseToPay, setExpenseToPay] = useState(null);
+    const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
+    const [editingGroup, setEditingGroup] = useState(null);
+
+    const existingGroups = [...new Set(data.categories.map(c => c.group).filter(g => g && g.trim() !== ''))];
+
+    const handleCategorySubmit = (categoryData) => {
+        let newCategories;
+        if (categoryData.id) newCategories = data.categories.map(cat => cat.id === categoryData.id ? { ...cat, ...categoryData } : cat);
+        else newCategories = [...data.categories, { ...categoryData, id: Date.now(), budgetedValue: 0, expenses: [], isLocked: false }];
+        setData({ ...data, categories: newCategories }); setIsCategoryModalOpen(false); setEditingCategory(null);
+    };
+
+    const confirmDeleteCategory = () => { if (categoryToDelete) setData({ ...data, categories: data.categories.filter(cat => cat.id !== categoryToDelete) }); setDeleteConfirmOpen(false); setCategoryToDelete(null); };
+    const confirmDeleteGroup = () => { if (groupToDelete) setData({ ...data, categories: data.categories.map(cat => cat.group === groupToDelete ? { ...cat, group: '' } : cat) }); setDeleteGroupConfirmOpen(false); setGroupToDelete(null); };
+    const handleUpdateGroupName = (oldName, newName) => { setData({ ...data, categories: data.categories.map(cat => cat.group === oldName ? { ...cat, group: newName } : cat) }); setEditGroupModalOpen(false); setEditingGroup(null); };
+    const handleUpdateIncome = (newIncome) => {
+        if (data.income === newIncome) return;
+        const newCategories = data.categories.map(cat => { if (cat.isLocked || data.income <= 0) return cat; const percentage = (cat.budgetedValue || 0) / data.income; return { ...cat, budgetedValue: newIncome * percentage }; });
+        setData({ income: newIncome, categories: newCategories });
+    };
+    const handleToggleCategoryLock = (categoryId) => { const updater = (categories) => categories.map(cat => cat.id === categoryId ? { ...cat, isLocked: !cat.isLocked } : cat); if (tempPresetCategories) setTempPresetCategories(updater); else setData({ ...data, categories: updater(data.categories) }); };
+    const handleMoveItem = (draggedItem, targetItem) => {
+        if (draggedItem.id === targetItem.id) return;
+        let newCategories = Array.from(tempPresetCategories ? tempPresetCategories : data.categories);
+        if (draggedItem.type === 'category') {
+            const draggedIndex = newCategories.findIndex(c => c.id === draggedItem.id); if (draggedIndex === -1) return; const [draggedCategory] = newCategories.splice(draggedIndex, 1);
+            if (targetItem.type === 'category') { draggedCategory.group = targetItem.group; newCategories.splice(newCategories.findIndex(c => c.id === targetItem.id), 0, draggedCategory); }
+            else if (targetItem.type === 'group') { draggedCategory.group = targetItem.id; const targetIndex = newCategories.findIndex(c => c.group === targetItem.id); if (targetIndex !== -1) newCategories.splice(targetIndex, 0, draggedCategory); else newCategories.push(draggedCategory); }
+        } else if (draggedItem.type === 'group' && targetItem.type === 'group') {
+            const draggedGroupCategories = newCategories.filter(c => c.group === draggedItem.id); const otherCategories = newCategories.filter(c => c.group !== draggedItem.id);
+            const targetIndex = otherCategories.findIndex(c => c.group === targetItem.id); if (targetIndex === -1) return; otherCategories.splice(targetIndex, 0, ...draggedGroupCategories); newCategories = otherCategories;
+        }
+        if (tempPresetCategories) setTempPresetCategories(newCategories); else setData({ ...data, categories: newCategories });
+    };
+    const handleUpdateCategoryBudget = (editedCategoryId, value, source) => {
+        const targetCategories = tempPresetCategories || data.categories; const sanitizedValue = String(value).replace(',', '.'); let newBudgetValue;
+        if (source === 'percent') newBudgetValue = data.income > 0 ? (data.income * parseFloat(sanitizedValue)) / 100 : 0; else newBudgetValue = parseFloat(sanitizedValue) || 0;
+        if (isNaN(newBudgetValue)) return;
+        const newCategories = targetCategories.map(cat => cat.id === editedCategoryId ? { ...cat, budgetedValue: Math.max(0, newBudgetValue) } : cat);
+        if (tempPresetCategories) setTempPresetCategories(newCategories); else setData({ ...data, categories: newCategories });
+    };
+    const handleAutoAdjustBudget = () => {
+        const targetCategories = tempPresetCategories || data.categories; const unlockedCategories = targetCategories.filter(cat => !cat.isLocked); if (unlockedCategories.length === 0) return;
+        const lockedBudget = targetCategories.filter(cat => cat.isLocked).reduce((sum, cat) => sum + (cat.budgetedValue || 0), 0); if (lockedBudget > data.income) return;
+        const budgetToDistribute = data.income - lockedBudget; const totalBudgetOfUnlockable = unlockedCategories.reduce((sum, cat) => sum + (cat.budgetedValue || 0), 0);
+        let adjustedCategories; if (totalBudgetOfUnlockable > 0) adjustedCategories = targetCategories.map(cat => { if (cat.isLocked) return cat; const proportion = (cat.budgetedValue || 0) / totalBudgetOfUnlockable; return { ...cat, budgetedValue: Math.max(0, budgetToDistribute * proportion) }; });
+        else { const adjustmentPerCategory = budgetToDistribute / unlockedCategories.length; adjustedCategories = targetCategories.map(cat => { if (cat.isLocked) return cat; return { ...cat, budgetedValue: Math.max(0, adjustmentPerCategory) }; }); }
+        const finalTotal = adjustedCategories.reduce((sum, cat) => sum + (cat.budgetedValue || 0), 0); const roundingDifference = data.income - finalTotal; const firstUnlockableIndex = adjustedCategories.findIndex(c => !c.isLocked); if (firstUnlockableIndex !== -1 && Math.abs(roundingDifference) > 0.001) adjustedCategories[firstUnlockableIndex].budgetedValue += roundingDifference;
+        if (tempPresetCategories) setTempPresetCategories(adjustedCategories); else setData({ ...data, categories: adjustedCategories });
+    };
+    const updateCategoryAndSelection = (categoryId, expenseUpdater) => { const newCategories = data.categories.map(cat => cat.id === categoryId ? { ...cat, expenses: expenseUpdater(cat.expenses || []) } : cat); const updatedSelectedCategory = newCategories.find(cat => cat.id === categoryId); if (updatedSelectedCategory) setSelectedCategory(updatedSelectedCategory); setData({ ...data, categories: newCategories }); };
+    const handleConfirmPayment = (paidAmount) => { if (!expenseToPay) return; updateCategoryAndSelection(selectedCategory.id, (expenses) => expenses.map(exp => exp.id === expenseToPay.id ? { ...exp, paidInstallments: (exp.paidInstallments || 0) + 1, installmentValue: paidAmount, paymentHistory: [...(exp.paymentHistory || []), { date: new Date().toISOString(), amount: paidAmount }] } : exp)); setPaymentModalOpen(false); setExpenseToPay(null); };
+    const handleSelectPreset = (preset) => { if (data.income <= 0) return; setTempPresetCategories(preset.categories.map(cat => ({ id: Date.now() + Math.random(), name: cat.name, color: cat.color, group: cat.group || '', budgetedValue: (data.income * cat.percentage) / 100, expenses: [], isLocked: false }))); setIsPresetModalOpen(false); };
+    const handleExportData = () => { const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`; const link = document.createElement("a"); link.href = jsonString; link.download = `orcamento_${new Date().toISOString().slice(0,10)}.json`; link.click(); };
+    const handleFileSelect = (event) => { const file = event.target.files[0]; if (file && file.type === "application/json") { const reader = new FileReader(); reader.onload = (e) => { const text = e.target.result; if (data.income === 0 && data.categories.length === 0) setInitialData(JSON.parse(text)); else { setFileToImport(text); setImportConfirmOpen(true); } }; reader.readAsText(file); } event.target.value = null; };
+
+    const categoriesForDisplay = tempPresetCategories || data.categories;
+    const totalBudgeted = categoriesForDisplay.reduce((sum, cat) => sum + (cat.budgetedValue || 0), 0);
+    const totalPercentage = data.income > 0 ? (totalBudgeted / data.income) * 100 : 0;
+    const isBudgetUnbalanced = Math.abs(100 - totalPercentage) >= 0.1 && categoriesForDisplay.length > 0;
+
+    return (
+        <div className="bg-gray-900 min-h-screen font-sans text-gray-200 pb-40">
+            <style>{`@keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } .animate-fade-in { animation: fade-in 0.5s ease-out forwards; } @keyframes pulse-border { 0%, 100% { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { border-color: rgba(59, 130, 246, 1); box-shadow: 0 0 10px 2px rgba(59, 130, 246, 0.2); } } .animate-pulse-border { animation: pulse-border 2s infinite; border: 2px solid; } @keyframes fade-in-down { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } } .animate-fade-in-down { animation: fade-in-down 0.2s ease-out forwards; }`}</style>
+            <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
+                <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileSelect} />
+                <header className="mb-8"><h1 className="text-3xl sm:text-4xl font-bold text-white text-center">Controle de Orçamento Pessoal</h1><p className="text-center text-gray-400 mt-2">Controle suas finanças de forma simples e visual.</p></header>
+                <main>{selectedCategory ? (<ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(catId, exp) => updateCategoryAndSelection(catId, (exps) => exps.map(e => e.id === exp.id ? exp : e))} onDeleteExpense={(catId, expId) => updateCategoryAndSelection(catId, (exps) => exps.filter(e => e.id !== expId))} onAddExpense={(catId, exp) => updateCategoryAndSelection(catId, (exps) => [...exps, exp])} onMarkAsPaid={(catId, expId) => updateCategoryAndSelection(catId, (exps) => exps.map(e => e.id === expId ? { ...e, paidInstallments: (e.paidInstallments || 0) + 1 } : e))} onUndoPayment={(catId, expId) => updateCategoryAndSelection(catId, (exps) => exps.map(e => { if (e.id === expId) { const hist = [...(e.paymentHistory || [])]; hist.pop(); return { ...e, paidInstallments: (e.paidInstallments || 0) - 1, paymentHistory: hist, installmentValue: hist.length > 0 ? hist[hist.length - 1].amount : e.totalValue }; } return e; }))} onOpenPaymentModal={(exp) => { setExpenseToPay(exp); setPaymentModalOpen(true); }} onTogglePause={(catId, expId) => updateCategoryAndSelection(catId, (exps) => exps.map(e => e.id === expId ? { ...e, isPaused: !e.isPaused } : e))} onDuplicateExpense={(catId, expId) => updateCategoryAndSelection(catId, (exps) => { const e = exps.find(x => x.id === expId); return e ? [...exps, { ...e, id: Date.now(), description: e.description + ' (Cópia)', paidInstallments: 0, paymentHistory: e.status === 'Fixa-Variável' ? [] : undefined }] : exps; })} />) : (<CategoryList categories={data.categories} income={data.income} onSelectCategory={setSelectedCategory} onUpdateIncome={handleUpdateIncome} onUpdateCategoryBudget={handleUpdateCategoryBudget} onOpenCategoryModal={() => { setEditingCategory(null); setIsCategoryModalOpen(true); }} onOpenCategoryModalWithData={(cat) => { setEditingCategory(cat); setIsCategoryModalOpen(true); }} onDeleteCategoryRequest={(id) => { setCategoryToDelete(id); setDeleteConfirmOpen(true); }} onDeleteGroupRequest={(group) => { setGroupToDelete(group); setDeleteGroupConfirmOpen(true); }} onOpenPresetModal={() => setIsPresetModalOpen(true)} onExport={handleExportData} onImport={() => fileInputRef.current?.click()} tempPresetCategories={tempPresetCategories} onConfirmPreset={() => { setData({ ...data, categories: tempPresetCategories }); setTempPresetCategories(null); }} onCancelPreset={() => { setTempPresetCategories(null); setIsPresetModalOpen(true); }} onToggleLock={handleToggleCategoryLock} onMoveItem={handleMoveItem} onOpenEditGroupModal={(group) => { setEditingGroup(group); setEditGroupModalOpen(true); }} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />)}</main>
+                <footer className="text-center mt-12 text-gray-500 text-sm"><p>Desenvolvido para facilitar sua vida financeira.</p></footer>
+                <Modal isOpen={isCategoryModalOpen} onClose={() => { setEditingCategory(null); setIsCategoryModalOpen(false); }}><CategoryForm onSubmit={handleCategorySubmit} onCancel={() => { setEditingCategory(null); setIsCategoryModalOpen(false); }} categoryData={editingCategory} existingGroups={existingGroups} /></Modal>
+                <PaymentAmountModal isOpen={isPaymentModalOpen} onClose={() => setPaymentModalOpen(false)} onSubmit={handleConfirmPayment} expense={expenseToPay} />
+                <ConfirmationModal isOpen={isDeleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} onConfirm={confirmDeleteCategory} title="Excluir Categoria" message="Tem certeza que deseja excluir esta categoria?" />
+                <ConfirmationModal isOpen={isDeleteGroupConfirmOpen} onClose={() => setDeleteGroupConfirmOpen(false)} onConfirm={confirmDeleteGroup} title="Excluir Grupo" message={`Excluir o grupo "${groupToDelete}"? As categorias não serão excluídas.`} />
+                <ConfirmationModal isOpen={isImportConfirmOpen} onClose={() => setImportConfirmOpen(false)} onConfirm={() => { setInitialData(JSON.parse(fileToImport)); setImportConfirmOpen(false); setFileToImport(null); }} title="Importar Dados" message="Isto irá substituir todos os dados atuais." />
+                <PresetModal isOpen={isPresetModalOpen} onClose={() => setIsPresetModalOpen(false)} onSelectPreset={handleSelectPreset} />
+                <EditGroupModal isOpen={isEditGroupModalOpen} onClose={() => { setEditGroupModalOpen(false); setEditingGroup(null); }} onSubmit={handleUpdateGroupName} groupName={editingGroup} />
+            </div>
+            {isBudgetUnbalanced && !tempPresetCategories && <BudgetAdjustmentBar totalPercentage={totalPercentage} onAdjust={handleAutoAdjustBudget} />}
+        </div>
+    );
+};
+
+window.OrcamentoPage = OrcamentoPage;const Pause = (props) => <IconBase {...props}><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></IconBase>;
 const Play = (props) => <IconBase {...props}><polygon points="5 3 19 12 5 21 5 3"/></IconBase>;
 const Copy = (props) => <IconBase {...props}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></IconBase>;
 const MoreVertical = (props) => <IconBase {...props}><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></IconBase>;
