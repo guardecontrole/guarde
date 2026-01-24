@@ -1,92 +1,22 @@
-/* ===== VARIÁVEIS DE DESIGN (NOVO TEMA) ===== */
-:root {
-    /* Cores Principais - Tema Profissional Azul/Verde */
-    --color-primary: 14, 165, 233;    /* Cyan-500 - Cor de ação e confiança */
-    --color-primary-dark: 8, 145, 178; /* Cyan-600 */
-    --color-secondary: 139, 92, 246;  /* Violet-500 - Para destaques e reserva */
-    --color-success: 34, 197, 94;     /* Green-500 - Para entradas/positivo */
-    --color-warning: 245, 158, 11;    /* Yellow-500 - Para alertas */
-    --color-danger: 239, 68, 68;      /* Red-500 - Para saídas/negativo */
-
-    /* Cores de Fundo */
-    --color-bg-primary: 3, 7, 18;     /* Gray-950 - Fundo principal mais escuro */
-    --color-bg-card: 17, 24, 39;      /* Gray-900 - Fundo de cards */
-    --color-bg-card-hover: 31, 41, 55;/* Gray-800 - Para hovers */
-    --color-bg-sidebar: 15, 23, 42;   /* Gray-900 com tom azulado */
-
-    /* Cores de Texto e Borda */
-    --color-text-primary: 243, 244, 246; /* Gray-100 */
-    --color-text-secondary: 156, 163, 175; /* Gray-400 */
-    --color-border: 55, 65, 81;       /* Gray-700 */
-}
-
-/* ===== ESTILOS GLOBAIS ===== */
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: rgb(var(--color-bg-primary));
-    color: rgb(var(--color-text-primary));
 }
 
-/* ===== UTILITÁRIOS PERSONALIZADOS ===== */
-/* Melhora a legibilidade e o "feel" dos cards */
-.card-glass {
-    background: rgba(var(--color-bg-card), 0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(var(--color-border), 0.3);
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    transition: all 0.2s ease-in-out;
-}
-.card-glass:hover {
-    border-color: rgba(var(--color-primary), 0.4);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-}
-
-/* Botões com gradiente moderno */
-.btn-primary {
-    background: linear-gradient(135deg, rgb(var(--color-primary)) 0%, rgb(var(--color-primary-dark)) 100%);
-    color: white;
-    font-weight: 600;
-    border: none;
-    border-radius: 0.75rem;
-    padding: 0.75rem 1.5rem;
-    transition: all 0.2s;
-    box-shadow: 0 2px 5px rgba(var(--color-primary), 0.3);
-}
-.btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(var(--color-primary), 0.4);
-}
-
-/* ===== ANIMAÇÕES ===== */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in {
-    animation: fadeIn 0.4s ease-out forwards;
-}
-
-@keyframes shimmer {
-    0% { background-position: -200% center; }
-    100% { background-position: 200% center; }
-}
-.shimmer {
-    background: linear-gradient(90deg,
-        rgba(255,255,255,0) 0%,
-        rgba(255,255,255,0.03) 50%,
-        rgba(255,255,255,0) 100%);
-    background-size: 200% auto;
-    animation: shimmer 2s infinite linear;
-}
-
-/* ===== ESTILOS PARA O TOUR ===== */
 .tour-highlight {
     position: relative;
     z-index: 50;
-    border-radius: 12px;
-    box-shadow: 0 0 0 4px rgba(var(--color-primary), 0.5), 0 0 30px rgba(var(--color-primary), 0.2);
-    transition: all 0.3s ease-in-out;
+    border-radius: 8px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.7);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
