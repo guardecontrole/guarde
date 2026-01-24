@@ -1,10 +1,12 @@
 // components/BudgetComponents.js
 const { useState, useEffect, useRef } = React;
-// Importa ícones do arquivo anterior
+
+// --- IMPORTAÇÃO CORRIGIDA ---
+// Agora inclui ArrowLeft e Plus que estavam faltando
 const { 
     X, AlertTriangle, ChevronRight, Folder, Edit, Trash2, Lock, Unlock, 
     RefreshCw, MessageSquare, CheckCircle, MoreVertical, Play, Pause, 
-    Undo2, Copy, Star, BookOpen, Check 
+    Undo2, Copy, Star, BookOpen, Check, ArrowLeft, Plus 
 } = window.BudgetIcons;
 
 // Helpers e Constantes
