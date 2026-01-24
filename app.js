@@ -1000,7 +1000,7 @@ function App() {
                 {success && <div className="bg-green-900/50 border border-green-500 text-green-400 px-4 py-3 rounded-lg relative mb-6" role="alert">{success}</div>}
 
                 {isBudget && (
-                    <OrcamentoPage data={chartData} />
+                    <OrcamentoPage initialIncome={liquidityAnalysis.displayValue} />
                 )}
 
                 {!isBudget && (
