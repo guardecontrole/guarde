@@ -1,12 +1,46 @@
 // Adaptação para rodar no navegador sem build system
 const { useState, useEffect, useRef } = React;
-// Extrai os ícones da biblioteca Lucide importada globalmente no index.html
-const { 
-    ChevronRight, Folder, Plus, Edit, Trash2, ArrowLeft, DollarSign, Percent, X, 
-    AlertTriangle, BookOpen, Star, Upload, Download, Check, RefreshCw, Eye, Layers, 
-    ChevronDown, Lock, Unlock, MessageSquare, CheckCircle, Undo2, Redo2, Pause, 
-    Play, Copy, MoreVertical 
-} = window.lucideReact;
+
+// --- SISTEMA DE SEGURANÇA DE ÍCONES ---
+// Isso impede que o site fique branco se a biblioteca de ícones falhar
+const LucideLib = window.lucideReact || window.lucide || {};
+const IconFallback = (props) => <span className="text-gray-500 text-xs" title="Ícone">⭕</span>;
+
+// Função que tenta pegar o ícone, se não existir, devolve o Fallback
+const getSafeIcon = (name) => {
+    return LucideLib[name] ? LucideLib[name] : IconFallback;
+};
+
+// Extraindo ícones com segurança
+const ChevronRight = getSafeIcon('ChevronRight');
+const Folder = getSafeIcon('Folder');
+const Plus = getSafeIcon('Plus');
+const Edit = getSafeIcon('Edit');
+const Trash2 = getSafeIcon('Trash2');
+const ArrowLeft = getSafeIcon('ArrowLeft');
+const DollarSign = getSafeIcon('DollarSign');
+const Percent = getSafeIcon('Percent');
+const X = getSafeIcon('X');
+const AlertTriangle = getSafeIcon('AlertTriangle');
+const BookOpen = getSafeIcon('BookOpen');
+const Star = getSafeIcon('Star');
+const Upload = getSafeIcon('Upload');
+const Download = getSafeIcon('Download');
+const Check = getSafeIcon('Check');
+const RefreshCw = getSafeIcon('RefreshCw');
+const Eye = getSafeIcon('Eye');
+const Layers = getSafeIcon('Layers');
+const ChevronDown = getSafeIcon('ChevronDown');
+const Lock = getSafeIcon('Lock');
+const Unlock = getSafeIcon('Unlock');
+const MessageSquare = getSafeIcon('MessageSquare');
+const CheckCircle = getSafeIcon('CheckCircle');
+const Undo2 = getSafeIcon('Undo2');
+const Redo2 = getSafeIcon('Redo2');
+const Pause = getSafeIcon('Pause');
+const Play = getSafeIcon('Play');
+const Copy = getSafeIcon('Copy');
+const MoreVertical = getSafeIcon('MoreVertical');
 
 // Dados iniciais para o estado da aplicação.
 const initialData = {
