@@ -15,7 +15,8 @@ const MonthlyBalanceHistoryTable = window.MonthlyBalanceHistoryTable;
 const ContributionAnalysis = window.ContributionAnalysis;
 const StabilityReserveHistoryTable = window.StabilityReserveHistoryTable;
 const SortIndicator = window.SortIndicator;
-// Importa a nova página de Orçamento
+
+// --- IMPORTAÇÃO CRUCIAL PARA O ORÇAMENTO FUNCIONAR ---
 const OrcamentoPage = window.OrcamentoPage;
 
 // Importa ícones
@@ -999,6 +1000,7 @@ function App() {
                 {error && <div className="bg-red-900/50 border border-red-500 text-red-400 px-4 py-3 rounded-lg relative mb-6" role="alert">{error}</div>}
                 {success && <div className="bg-green-900/50 border border-green-500 text-green-400 px-4 py-3 rounded-lg relative mb-6" role="alert">{success}</div>}
 
+                {/* --- AQUI ESTÁ A INTEGRAÇÃO --- */}
                 {isBudget && (
                     <OrcamentoPage initialIncome={liquidityAnalysis.displayValue} />
                 )}
