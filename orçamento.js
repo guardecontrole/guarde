@@ -1,10 +1,13 @@
-// orcamento.js - Versão Estável com Ícones Embutidos e Automação
+// Adaptação para rodar no navegador sem build system
 const { useState, useEffect, useRef } = React;
 
-// --- ÍCONES (SVG NATIVO PARA EVITAR ERROS) ---
+// --- ÍCONES EMBUTIDOS (Solução Definitiva para não travar) ---
 const IconBase = ({ children, size = 24, className = "" }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        {children}
+    </svg>
 );
+
 const ChevronRight = (p) => <IconBase {...p}><path d="m9 18 6-6-6-6"/></IconBase>;
 const Folder = (p) => <IconBase {...p}><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></IconBase>;
 const Plus = (p) => <IconBase {...p}><path d="M5 12h14"/><path d="M12 5v14"/></IconBase>;
@@ -42,7 +45,9 @@ const budgetPresets = [
     { name: 'Sugestão do App', description: 'Um modelo balanceado.', icon: Star, categories: [ { name: '🏠 Casa', percentage: 27.5, color: 'bg-blue-500', group: 'Custos de Vida' }, { name: '👶 Filhos', percentage: 21.5, color: 'bg-green-500', group: 'Custos de Vida' }, { name: '👤 Pessoal', percentage: 23.5, color: 'bg-purple-500', group: 'Custos de Vida' }, { name: '🚗 Carro', percentage: 17.5, color: 'bg-red-500', group: 'Custos de Vida' }, { name: '👵 Aposentadoria', percentage: 10.0, color: 'bg-yellow-500', group: 'Investimentos' } ] },
     { name: 'Pai Rico, Pai Pobre', description: 'Pague-se primeiro.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
     { name: 'Thiago Nigro (50/30/20)', description: 'O clássico 50-30-20.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Essenciais' }, { name: '🛍️ Não Essenciais', percentage: 30, color: 'bg-pink-500', group: 'Não Essenciais' }, { name: '📈 Investimentos', percentage: 20, color: 'bg-purple-500', group: 'Investimentos' } ] },
-    { name: 'Nathalia Arcuri (70/30)', description: 'Foco no futuro.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 55, color: 'bg-blue-500', group: 'Presente' }, { name: '📚 Educação', percentage: 5, color: 'bg-teal-500', group: 'Presente' }, { name: '💸 Livre', percentage: 10, color: 'bg-pink-500', group: 'Presente' }, { name: '🎯 Metas', percentage: 20, color: 'bg-green-500', group: 'Futuro' }, { name: '👵 Aposentadoria', percentage: 10, color: 'bg-yellow-500', group: 'Futuro' } ] }
+    { name: 'Nathalia Arcuri (70/30)', description: 'Foco no futuro.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 55, color: 'bg-blue-500', group: 'Presente' }, { name: '📚 Educação', percentage: 5, color: 'bg-teal-500', group: 'Presente' }, { name: '💸 Livre', percentage: 10, color: 'bg-pink-500', group: 'Presente' }, { name: '🎯 Metas', percentage: 20, color: 'bg-green-500', group: 'Futuro' }, { name: '👵 Aposentadoria', percentage: 10, color: 'bg-yellow-500', group: 'Futuro' } ] },
+    { name: 'Bruno Perini', description: 'Foco em aportes.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 60, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Fundo', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 Aportes', percentage: 10, color: 'bg-purple-500', group: 'Investimentos' } ] },
+    { name: 'Warren Buffett', description: 'Simplicidade 90/10.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Reserva', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 S&P 500', percentage: 18, color: 'bg-purple-500', group: 'Investimentos' }, { name: '🏦 Renda Fixa', percentage: 2, color: 'bg-teal-500', group: 'Investimentos' } ] }
 ];
 
 const useHistoryState = (initial) => {
@@ -357,38 +362,35 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
     );
 };
 
-// --- COMPONENTE RAIZ ---
+// Componente Principal da Aplicação.
 const OrcamentoPage = ({ initialIncome = 0 }) => {
     const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [catModalOpen, setCatModalOpen] = useState(false);
-    const [editCat, setEditCat] = useState(null);
-    const [delCatId, setDelCatId] = useState(null);
-    const [delGrpName, setDelGrpName] = useState(null);
-    const [presetOpen, setPresetOpen] = useState(false);
-    const [importOpen, setImportOpen] = useState(false);
-    const [importDataStr, setImportDataStr] = useState(null);
-    const [payModalOpen, setPayModalOpen] = useState(false);
-    const [payExpense, setPayExpense] = useState(null);
-    const [grpEditName, setGrpEditName] = useState(null);
-    const [tempPreset, setTempPreset] = useState(null);
-    
-    const fileRef = useRef(null);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState(null);
+    const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [categoryToDelete, setCategoryToDelete] = useState(null);
+    const [isDeleteGroupConfirmOpen, setDeleteGroupConfirmOpen] = useState(false);
+    const [groupToDelete, setGroupToDelete] = useState(null);
+    const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
+    const [isImportConfirmOpen, setImportConfirmOpen] = useState(false);
+    const [fileToImport, setFileToImport] = useState(null);
+    const fileInputRef = useRef(null);
+    const [tempPresetCategories, setTempPresetCategories] = useState(null);
+    const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [expenseToPay, setExpenseToPay] = useState(null);
+    const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
+    const [editingGroup, setEditingGroup] = useState(null);
+
     const existingGroups = [...new Set(data.categories.map(c => c.group).filter(g => g && g.trim()))];
 
-    // AUTOMAÇÃO: Sincroniza Saldo Sugerido
+    // --- AUTOMAÇÃO (ÚNICA PARTE NOVA) ---
     useEffect(() => {
         if (initialIncome > 0 && Math.abs(initialIncome - data.income) > 0.01) {
             handleUpdateIncome(initialIncome);
         }
     }, [initialIncome]);
 
-    // Handlers
-    const handleCategorySubmit = (d) => {
-        const newCats = d.id ? data.categories.map(c => c.id === d.id ? { ...c, ...d } : c) : [...data.categories, { ...d, id: Date.now(), budgetedValue: 0, expenses: [], isLocked: false }];
-        setData({ ...data, categories: newCats }); setCatModalOpen(false);
-    };
-    const updateCats = (fn) => setData({ ...data, categories: fn(data.categories) });
     const handleUpdateIncome = (val) => {
         if (data.income === val) return;
         const newCats = data.categories.map(c => { 
@@ -398,102 +400,85 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
         });
         setData({ income: val, categories: newCats });
     };
+
+    const handleCategorySubmit = (d) => {
+        const newCats = d.id ? data.categories.map(c => c.id === d.id ? { ...c, ...d } : c) : [...data.categories, { ...d, id: Date.now(), budgetedValue: 0, expenses: [], isLocked: false }];
+        setData({ ...data, categories: newCats }); setIsCategoryModalOpen(false); setEditingCategory(null);
+    };
+    const confirmDeleteCategory = () => { if (categoryToDelete) setData({ ...data, categories: data.categories.filter(c => c.id !== categoryToDelete) }); setDeleteConfirmOpen(false); setCategoryToDelete(null); };
+    const confirmDeleteGroup = () => { if (groupToDelete) setData({ ...data, categories: data.categories.map(c => c.group === groupToDelete ? { ...c, group: '' } : c) }); setDeleteGroupConfirmOpen(false); setGroupToDelete(null); };
+    const handleUpdateGroupName = (o, n) => { setData({ ...data, categories: data.categories.map(c => c.group === o ? { ...c, group: n } : c) }); setEditGroupModalOpen(false); setEditingGroup(null); };
+    const handleToggleCategoryLock = (id) => { const fn = list => list.map(c => c.id === id ? { ...c, isLocked: !c.isLocked } : c); tempPresetCategories ? setTempPresetCategories(fn(tempPresetCategories)) : setData({ ...data, categories: fn(data.categories) }); };
+    const handleMoveItem = (drag, target) => {
+        let list = [...(tempPresetCategories || data.categories)];
+        if (drag.type === 'category') {
+            const idx = list.findIndex(c => c.id === drag.id); const item = list.splice(idx, 1)[0];
+            if (target.type === 'group') { item.group = target.id; list.push(item); } else { item.group = target.group; list.splice(list.findIndex(c => c.id === target.id), 0, item); }
+        } else if (drag.type === 'group' && target.type === 'group') {
+            const grp = list.filter(c => c.group === drag.id); const others = list.filter(c => c.group !== drag.id);
+            others.splice(others.findIndex(c => c.group === target.id), 0, ...grp); list = others;
+        }
+        tempPresetCategories ? setTempPresetCategories(list) : setData({ ...data, categories: list });
+    };
+    const handleUpdateCategoryBudget = (id, val, type) => {
+        const v = parseFloat(String(val).replace(',', '.')) || 0;
+        const final = type === 'percent' ? (data.income * v) / 100 : v;
+        const list = tempPresetCategories || data.categories;
+        const updated = list.map(c => c.id === id ? { ...c, budgetedValue: Math.max(0, final) } : c);
+        tempPresetCategories ? setTempPresetCategories(updated) : setData({ ...data, categories: updated });
+    };
     const handleAutoAdjust = () => {
-        const cats = tempPreset || data.categories;
+        const cats = tempPresetCategories || data.categories;
         const unlocked = cats.filter(c => !c.isLocked);
         if (!unlocked.length) return;
-        const lockedSum = cats.reduce((acc, c) => acc + (c.isLocked ? c.budgetedValue : 0), 0);
+        const lockedSum = cats.reduce((a, c) => a + (c.isLocked ? c.budgetedValue : 0), 0);
         const remain = data.income - lockedSum;
-        const unlockedSum = unlocked.reduce((acc, c) => acc + c.budgetedValue, 0);
-        
-        let newCats;
-        if (unlockedSum > 0) {
-            newCats = cats.map(c => c.isLocked ? c : { ...c, budgetedValue: remain * (c.budgetedValue / unlockedSum) });
-        } else {
-            const equal = remain / unlocked.length;
-            newCats = cats.map(c => c.isLocked ? c : { ...c, budgetedValue: equal });
-        }
-        tempPreset ? setTempPreset(newCats) : setData({ ...data, categories: newCats });
+        const unlockedSum = unlocked.reduce((a, c) => a + c.budgetedValue, 0);
+        let updated;
+        if (unlockedSum > 0) updated = cats.map(c => c.isLocked ? c : { ...c, budgetedValue: Math.max(0, remain * (c.budgetedValue / unlockedSum)) });
+        else { const eq = remain / unlocked.length; updated = cats.map(c => c.isLocked ? c : { ...c, budgetedValue: Math.max(0, eq) }); }
+        const diff = data.income - updated.reduce((a,c)=>a+c.budgetedValue,0); const first = updated.findIndex(c=>!c.isLocked); if(first!==-1 && Math.abs(diff)>0.001) updated[first].budgetedValue+=diff;
+        tempPresetCategories ? setTempPresetCategories(updated) : setData({ ...data, categories: updated });
     };
-
-    // Sub-Updates for ExpenseList
-    const updateExp = (cId, fn) => {
-        const newCats = data.categories.map(c => c.id === cId ? { ...c, expenses: fn(c.expenses) } : c);
+    const updateExp = (cid, fn) => {
+        const newCats = data.categories.map(c => c.id === cid ? { ...c, expenses: fn(c.expenses) } : c);
         setData({ ...data, categories: newCats });
-        if (selectedCategory) setSelectedCategory(newCats.find(c => c.id === cId));
+        if (selectedCategory) setSelectedCategory(newCats.find(c => c.id === cid));
     };
+    const handleConfirmPayment = (val) => { updateExp(selectedCategory.id, exps => exps.map(e => e.id === expenseToPay.id ? { ...e, paidInstallments: (e.paidInstallments||0)+1, installmentValue: val, paymentHistory: [...(e.paymentHistory||[]), {date: new Date().toISOString(), amount: val}] } : e)); setPaymentModalOpen(false); setExpenseToPay(null); };
+    const handleImportClick = () => fileInputRef.current?.click();
+    const handleFileSelect = (e) => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ev => { if(data.income === 0) setInitialData(JSON.parse(ev.target.result)); else { setFileToImport(ev.target.result); setImportConfirmOpen(true); } }; r.readAsText(f); e.target.value = null; };
+    const handleExportData = () => { const a = document.createElement('a'); a.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`; a.download = `orcamento.json`; a.click(); };
 
-    const totalBudget = (tempPreset || data.categories).reduce((acc, c) => acc + c.budgetedValue, 0);
+    const catsDisplay = tempPresetCategories || data.categories;
+    const totalBudget = catsDisplay.reduce((a, c) => a + c.budgetedValue, 0);
     const totalPct = data.income > 0 ? (totalBudget / data.income) * 100 : 0;
-    const unbalanced = Math.abs(100 - totalPct) > 0.1 && (tempPreset || data.categories).length > 0;
+    const unbalanced = Math.abs(100 - totalPct) > 0.1 && catsDisplay.length > 0;
 
     return (
-        <>
-            <input type="file" ref={fileRef} className="hidden" accept=".json" onChange={e => {
-                const f = e.target.files[0]; if (!f) return;
-                const r = new FileReader(); r.onload = ev => { if (data.income === 0) setInitialData(JSON.parse(ev.target.result)); else { setImportDataStr(ev.target.result); setImportOpen(true); } }; r.readAsText(f); e.target.value = null;
-            }} />
-            
-            {selectedCategory ? (
-                <ExpenseList 
-                    category={selectedCategory} 
-                    onBack={() => setSelectedCategory(null)}
-                    onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])}
-                    onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))}
-                    onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))}
-                    onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))}
-                    onTogglePause={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, isPaused: !x.isPaused } : x))}
-                    onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: Math.max(0, x.paidInstallments - 1), paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))}
-                    onOpenPaymentModal={e => { setPayExpense(e); setPayModalOpen(true); }}
-                    onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })}
-                />
-            ) : (
-                <CategoryList 
-                    categories={data.categories} income={data.income} tempPresetCategories={tempPreset}
-                    onSelectCategory={setSelectedCategory}
-                    onUpdateIncome={handleUpdateIncome}
-                    onUpdateCategoryBudget={(id, v, t) => {
-                        const val = parseFloat(String(v).replace(',', '.')) || 0;
-                        const final = t === 'percent' ? (data.income * val) / 100 : val;
-                        const target = tempPreset || data.categories;
-                        const updated = target.map(c => c.id === id ? { ...c, budgetedValue: final } : c);
-                        tempPreset ? setTempPreset(updated) : setData({ ...data, categories: updated });
-                    }}
-                    onOpenCategoryModal={(c) => { setEditCat(c || null); setCatModalOpen(true); }}
-                    onDeleteCategoryRequest={setDelCatId}
-                    onDeleteGroupRequest={setDelGrpName}
-                    onOpenPresetModal={() => setPresetOpen(true)}
-                    onExport={() => { const a = document.createElement('a'); a.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`; a.download = `orcamento.json`; a.click(); }}
-                    onImport={() => fileRef.current?.click()}
-                    onConfirmPreset={() => { setData({ ...data, categories: tempPreset }); setTempPreset(null); }}
-                    onCancelPreset={() => { setTempPreset(null); setPresetOpen(true); }}
-                    onToggleLock={(id) => { const fn = l => l.map(c => c.id === id ? { ...c, isLocked: !c.isLocked } : c); tempPreset ? setTempPreset(fn(tempPreset)) : setData({ ...data, categories: fn(data.categories) }); }}
-                    onMoveItem={(drag, target) => {
-                        let list = [...(tempPreset || data.categories)];
-                        if (drag.type === 'category') {
-                            const idx = list.findIndex(c => c.id === drag.id);
-                            const item = list.splice(idx, 1)[0];
-                            if (target.type === 'group') { item.group = target.id; list.push(item); }
-                            else { item.group = target.group; list.splice(list.findIndex(c => c.id === target.id), 0, item); }
-                        } else { /* Group drag logic simplified for brevity */ }
-                        tempPreset ? setTempPreset(list) : setData({ ...data, categories: list });
-                    }}
-                    onOpenEditGroupModal={setGrpEditName}
-                    undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo}
-                />
-            )}
-
-            {/* Modais Globais */}
-            <Modal isOpen={catModalOpen} onClose={() => setCatModalOpen(false)}><CategoryForm categoryData={editCat} onSubmit={handleCategorySubmit} onCancel={() => setCatModalOpen(false)} existingGroups={existingGroups} /></Modal>
-            <PaymentAmountModal isOpen={payModalOpen} onClose={() => setPayModalOpen(false)} expense={payExpense} onSubmit={v => { updateExp(selectedCategory.id, exps => exps.map(x => x.id === payExpense.id ? { ...x, paidInstallments: x.paidInstallments + 1, installmentValue: v, paymentHistory: [...(x.paymentHistory||[]), {date: new Date().toISOString(), amount: v}] } : x)); setPayModalOpen(false); }} />
-            <ConfirmationModal isOpen={!!delCatId} onClose={() => setDelCatId(null)} title="Excluir" message="Confirma?" onConfirm={() => { updateCats(l => l.filter(c => c.id !== delCatId)); setDelCatId(null); }} />
-            <ConfirmationModal isOpen={!!delGrpName} onClose={() => setDelGrpName(null)} title="Excluir Grupo" message="Confirma?" onConfirm={() => { updateCats(l => l.map(c => c.group === delGrpName ? { ...c, group: '' } : c)); setDelGrpName(null); }} />
-            <ConfirmationModal isOpen={importOpen} onClose={() => setImportOpen(false)} title="Importar" message="Substituir dados?" onConfirm={() => { setInitialData(JSON.parse(importDataStr)); setImportOpen(false); }} />
-            <PresetModal isOpen={presetOpen} onClose={() => setPresetOpen(false)} onSelectPreset={p => { setTempPreset(p.categories.map(c => ({ ...c, id: Math.random(), budgetedValue: data.income * c.percentage / 100, expenses: [], isLocked: false }))); setPresetOpen(false); }} />
-            <EditGroupModal isOpen={!!grpEditName} onClose={() => setGrpEditName(null)} groupName={grpEditName} onSubmit={(oldN, newN) => { updateCats(l => l.map(c => c.group === oldN ? { ...c, group: newN } : c)); }} />
-            
-            {unbalanced && !tempPreset && <BudgetAdjustmentBar totalPercentage={totalPct} onAdjust={handleAutoAdjust} />}
-        </>
+        <div className="bg-gray-900 min-h-screen font-sans text-gray-200 pb-40">
+            <style>{`@keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } .animate-fade-in { animation: fade-in 0.5s ease-out forwards; } .animate-pulse-border { animation: pulse-border 2s infinite; border: 2px solid; } @keyframes pulse-border { 0%, 100% { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { border-color: rgba(59, 130, 246, 1); box-shadow: 0 0 10px 2px rgba(59, 130, 246, 0.2); } } @keyframes fade-in-down { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } } .animate-fade-in-down { animation: fade-in-down 0.2s ease-out forwards; }`}</style>
+            <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
+                <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileSelect} />
+                <header className="mb-8"><h1 className="text-3xl sm:text-4xl font-bold text-white text-center">Controle de Orçamento Pessoal</h1><p className="text-center text-gray-400 mt-2">Controle suas finanças de forma simples e visual.</p></header>
+                <main>
+                    {selectedCategory ? (
+                        <ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))} onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))} onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])} onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))} onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: Math.max(0, x.paidInstallments - 1), paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))} onOpenPaymentModal={e => { setExpenseToPay(e); setPaymentModalOpen(true); }} onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })} />
+                    ) : (
+                        <CategoryList categories={data.categories} income={data.income} onSelectCategory={setSelectedCategory} onUpdateIncome={handleUpdateIncome} onUpdateCategoryBudget={handleUpdateCategoryBudget} onOpenCategoryModal={c => { setEditingCategory(c || null); setIsCategoryModalOpen(true); }} onDeleteCategoryRequest={id => { setCategoryToDelete(id); setDeleteConfirmOpen(true); }} onDeleteGroupRequest={grp => { setGroupToDelete(grp); setDeleteGroupConfirmOpen(true); }} onOpenPresetModal={() => setIsPresetModalOpen(true)} onExport={handleExportData} onImport={handleImportClick} tempPresetCategories={tempPresetCategories} onConfirmPreset={() => { setData({ ...data, categories: tempPresetCategories }); setTempPresetCategories(null); }} onCancelPreset={() => { setTempPresetCategories(null); setIsPresetModalOpen(true); }} onToggleLock={handleToggleCategoryLock} onMoveItem={handleMoveItem} onOpenEditGroupModal={n => { setEditingGroup(n); setEditGroupModalOpen(true); }} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
+                    )}
+                </main>
+                <footer className="text-center mt-12 text-gray-500 text-sm"><p>Desenvolvido para facilitar sua vida financeira.</p></footer>
+                <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)}><CategoryForm onSubmit={handleCategorySubmit} onCancel={() => setIsCategoryModalOpen(false)} categoryData={editingCategory} existingGroups={existingGroups} /></Modal>
+                <PaymentAmountModal isOpen={isPaymentModalOpen} onClose={() => setPaymentModalOpen(false)} onSubmit={handleConfirmPayment} expense={expenseToPay} />
+                <ConfirmationModal isOpen={isDeleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} onConfirm={confirmDeleteCategory} title="Excluir Categoria" message="Tem certeza?" />
+                <ConfirmationModal isOpen={isDeleteGroupConfirmOpen} onClose={() => setDeleteGroupConfirmOpen(false)} onConfirm={confirmDeleteGroup} title="Excluir Grupo" message="Confirma?" />
+                <ConfirmationModal isOpen={isImportConfirmOpen} onClose={() => setImportConfirmOpen(false)} onConfirm={() => { setInitialData(JSON.parse(fileToImport)); setImportConfirmOpen(false); setFileToImport(null); }} title="Importar" message="Substituir dados?" />
+                <PresetModal isOpen={isPresetModalOpen} onClose={() => setIsPresetModalOpen(false)} onSelectPreset={p => { setTempPresetCategories(p.categories.map(c => ({ ...c, id: Date.now() + Math.random(), budgetedValue: (data.income * c.percentage) / 100, expenses: [], isLocked: false }))); setIsPresetModalOpen(false); }} />
+                <EditGroupModal isOpen={isEditGroupModalOpen} onClose={() => { setEditGroupModalOpen(false); setEditingGroup(null); }} onSubmit={handleUpdateGroupName} groupName={editingGroup} />
+            </div>
+            {unbalanced && !tempPresetCategories && <BudgetAdjustmentBar totalPercentage={totalPct} onAdjust={handleAutoAdjust} />}
+        </div>
     );
 };
 
