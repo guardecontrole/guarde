@@ -2,7 +2,7 @@
 const { useState, useEffect, useRef } = React;
 
 // ==========================================
-// 1. ÍCONES (SVG NATIVO) - Essencial para não travar
+// 1. ÍCONES (SVG NATIVO)
 // ==========================================
 const IconBase = ({ children, size = 24, className = "" }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
@@ -185,14 +185,13 @@ const ExpenseForm = ({ onSubmit, onCancel, expenseData }) => {
 };
 
 const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAddExpense, onMarkAsPaid, onUndoPayment, onOpenPaymentModal, onTogglePause, onDuplicateExpense }) => {
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [actionExp, setActionExp] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
     
     // SAFETY CHECK: Garante que expenses é um array. Evita tela branca.
-    if (!category) return null;
-    const expenses = category.expenses || [];
+    const expenses = category?.expenses || [];
     
     const total = expenses.filter(e => !e.isPaused).reduce((acc, e) => acc + e.installmentValue, 0);
     const avail = (category.budgetedValue || 0) - total;
@@ -208,7 +207,7 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
                 </div>
             </div>
             <div className="flex justify-end mb-6">
-                <button onClick={() => { setEditing(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 font-semibold"><Plus size={20}/> Adicionar Despesa</button>
+                <button onClick={() => { setEditing(null); setFormOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 font-semibold"><Plus size={20}/> Adicionar Despesa</button>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left table-auto border-collapse">
@@ -275,11 +274,11 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
                 </table>
             </div>
 
-            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdateExpense(category.id, d); else onAddExpense(category.id, d); setIsFormOpen(false); }} onCancel={() => setIsFormOpen(false)} expenseData={editing} /></Modal>
+            <Modal isOpen={formOpen} onClose={() => setFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdateExpense(category.id, d); else onAddExpense(category.id, d); setFormOpen(false); }} onCancel={() => setFormOpen(false)} expenseData={editing} /></Modal>
             <Modal isOpen={!!actionExp} onClose={() => setActionExp(null)}>
                 {actionExp && <div className="text-white space-y-2">
                     <h3 className="text-center font-bold mb-4">{actionExp.description}</h3>
-                    <button onClick={() => { setEditing(actionExp); setIsFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button>
+                    <button onClick={() => { setEditing(actionExp); setFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button>
                     <button onClick={() => { onDuplicateExpense(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Copy size={18}/> Duplicar</button>
                     <button onClick={() => { onTogglePause(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2">{actionExp.isPaused ? <Play size={18}/> : <Pause size={18}/>} {actionExp.isPaused ? 'Reativar' : 'Pausar'}</button>
                     {actionExp.paidInstallments > 0 && <button onClick={() => { onUndoPayment(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-yellow-400 rounded flex gap-2"><Undo2 size={18}/> Desfazer Pagamento</button>}
@@ -350,8 +349,16 @@ const BudgetAdjustmentBar = ({ totalPercentage, onAdjust }) => {
 };
 
 const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, onUpdateCategoryBudget, onOpenCategoryModal, onDeleteCategoryRequest, onDeleteGroupRequest, onOpenPresetModal, onExport, onImport, tempPresetCategories, onConfirmPreset, onCancelPreset, onToggleLock, onMoveItem, onOpenEditGroupModal, undo, redo, canUndo, canRedo }) => {
-    const cats = tempPresetCategories || categories;
-    const totalExp = cats.reduce((acc, c) => acc + (c.expenses || []).filter(e => !e.isPaused).reduce((a, b) => a + b.installmentValue, 0), 0);
+    // BLINDAGEM: Garante array
+    const cats = tempPresetCategories || categories || [];
+    
+    // BLINDAGEM: Verifica se expenses existe antes de filtrar
+    const totalExp = cats.reduce((acc, c) => {
+        const catExpenses = c.expenses || [];
+        const catTotal = catExpenses.filter(e => !e.isPaused).reduce((a, b) => a + b.installmentValue, 0);
+        return acc + catTotal;
+    }, 0);
+
     const balance = income - totalExp;
     const hasIncome = income > 0;
     
@@ -371,8 +378,9 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
         onDrop: (target) => { if (dragItem) onMoveItem(dragItem, target); setDragItem(null); setDragOver(null); }
     };
 
-    const grouped = cats.filter(c => c.group).reduce((acc, c) => { (acc[c.group] = acc[c.group] || []).push(c); return acc; }, {});
-    const orphans = cats.filter(c => !c.group);
+    // BLINDAGEM: Agrupamento seguro
+    const grouped = cats.filter(c => c.group && typeof c.group === 'string' && c.group.trim() !== '').reduce((acc, c) => { (acc[c.group] = acc[c.group] || []).push(c); return acc; }, {});
+    const orphans = cats.filter(c => !c.group || typeof c.group !== 'string' || c.group.trim() === '');
 
     return (
         <div className="space-y-6 pb-24">
@@ -454,12 +462,23 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     // 1. Carregar dados do Firebase ao iniciar
     useEffect(() => {
         const loadBudget = async () => {
-            if (!auth || !auth.currentUser || !db) return;
+            if (!auth || !auth.currentUser || !db) {
+                 setIsLoadingData(false);
+                 return;
+            }
             try {
                 const docRef = window.firebase.doc(db, `artifacts/${appId}/users/${auth.currentUser.uid}/data/budget`);
                 const docSnap = await window.firebase.getDoc(docRef);
                 if (docSnap.exists()) {
-                    setInitialData(docSnap.data());
+                    const loadedData = docSnap.data();
+                    // BLINDAGEM DE DADOS: Garante que categories existe e é array
+                    if (!loadedData.categories) loadedData.categories = [];
+                    // BLINDAGEM: Garante que expenses dentro de cada categoria seja array
+                    loadedData.categories = loadedData.categories.map(c => ({
+                        ...c,
+                        expenses: Array.isArray(c.expenses) ? c.expenses : []
+                    }));
+                    setInitialData(loadedData);
                 }
             } catch (e) {
                 console.error("Erro ao carregar orçamento:", e);
@@ -491,7 +510,6 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
 
     // --- AUTOMAÇÃO DA RECEITA ---
     useEffect(() => {
-        // Só atualiza a receita se os dados já tiverem carregado para não sobrescrever
         if (!isLoadingData && initialIncome > 0 && Math.abs(initialIncome - data.income) > 0.01) {
             handleUpdateIncome(initialIncome);
         }
@@ -499,7 +517,8 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
 
     const handleUpdateIncome = (val) => {
         if (data.income === val) return;
-        const newCats = data.categories.map(c => { 
+        const currentCats = data.categories || [];
+        const newCats = currentCats.map(c => { 
             if (c.isLocked || data.income <= 0) return c; 
             const prevPct = (c.budgetedValue || 0) / (data.income || 1);
             return { ...c, budgetedValue: val * prevPct }; 
@@ -508,15 +527,16 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     };
 
     const handleCategorySubmit = (d) => {
-        const newCats = d.id ? data.categories.map(c => c.id === d.id ? { ...c, ...d } : c) : [...data.categories, { ...d, id: Date.now(), budgetedValue: 0, expenses: [], isLocked: false }];
+        const currentCats = data.categories || [];
+        const newCats = d.id ? currentCats.map(c => c.id === d.id ? { ...c, ...d } : c) : [...currentCats, { ...d, id: Date.now(), budgetedValue: 0, expenses: [], isLocked: false }];
         setData({ ...data, categories: newCats }); setIsCategoryModalOpen(false); setEditingCategory(null);
     };
-    const confirmDeleteCategory = () => { if (categoryToDelete) setData({ ...data, categories: data.categories.filter(c => c.id !== categoryToDelete) }); setDeleteConfirmOpen(false); setCategoryToDelete(null); };
-    const confirmDeleteGroup = () => { if (groupToDelete) setData({ ...data, categories: data.categories.map(c => c.group === groupToDelete ? { ...c, group: '' } : c) }); setDeleteGroupConfirmOpen(false); setGroupToDelete(null); };
-    const handleUpdateGroupName = (o, n) => { setData({ ...data, categories: data.categories.map(c => c.group === o ? { ...c, group: n } : c) }); setEditGroupModalOpen(false); setEditingGroup(null); };
-    const handleToggleCategoryLock = (id) => { const fn = list => list.map(c => c.id === id ? { ...c, isLocked: !c.isLocked } : c); tempPresetCategories ? setTempPresetCategories(fn(tempPresetCategories)) : setData({ ...data, categories: fn(data.categories) }); };
+    const confirmDeleteCategory = () => { if (categoryToDelete) setData({ ...data, categories: (data.categories || []).filter(c => c.id !== categoryToDelete) }); setDeleteConfirmOpen(false); setCategoryToDelete(null); };
+    const confirmDeleteGroup = () => { if (groupToDelete) setData({ ...data, categories: (data.categories || []).map(c => c.group === groupToDelete ? { ...c, group: '' } : c) }); setDeleteGroupConfirmOpen(false); setGroupToDelete(null); };
+    const handleUpdateGroupName = (o, n) => { setData({ ...data, categories: (data.categories || []).map(c => c.group === o ? { ...c, group: n } : c) }); setEditGroupModalOpen(false); setEditingGroup(null); };
+    const handleToggleCategoryLock = (id) => { const fn = list => list.map(c => c.id === id ? { ...c, isLocked: !c.isLocked } : c); tempPresetCategories ? setTempPresetCategories(fn(tempPresetCategories)) : setData({ ...data, categories: fn(data.categories || []) }); };
     const handleMoveItem = (drag, target) => {
-        let list = [...(tempPresetCategories || data.categories)];
+        let list = [...(tempPresetCategories || data.categories || [])];
         if (drag.type === 'category') {
             const idx = list.findIndex(c => c.id === drag.id); const item = list.splice(idx, 1)[0];
             if (target.type === 'group') { item.group = target.id; list.push(item); } else { item.group = target.group; list.splice(list.findIndex(c => c.id === target.id), 0, item); }
@@ -529,12 +549,12 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const handleUpdateCategoryBudget = (id, val, type) => {
         const v = parseFloat(String(val).replace(',', '.')) || 0;
         const final = type === 'percent' ? (data.income * v) / 100 : v;
-        const list = tempPresetCategories || data.categories;
+        const list = tempPresetCategories || data.categories || [];
         const updated = list.map(c => c.id === id ? { ...c, budgetedValue: Math.max(0, final) } : c);
         tempPresetCategories ? setTempPresetCategories(updated) : setData({ ...data, categories: updated });
     };
     const handleAutoAdjust = () => {
-        const cats = tempPresetCategories || data.categories;
+        const cats = tempPresetCategories || data.categories || [];
         const unlocked = cats.filter(c => !c.isLocked);
         if (!unlocked.length) return;
         const lockedSum = cats.reduce((a, c) => a + (c.isLocked ? c.budgetedValue : 0), 0);
@@ -547,23 +567,17 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
         tempPresetCategories ? setTempPresetCategories(updated) : setData({ ...data, categories: updated });
     };
     const updateExp = (cid, fn) => {
-        // CORREÇÃO CRÍTICA: Garante que o array de despesas existe.
-        // Se c.expenses for undefined, usamos [], e o 'fn' vai adicionar a nova despesa a esse array.
-        const newCats = data.categories.map(c => c.id === cid ? { ...c, expenses: fn(c.expenses || []) } : c);
-        
-        // Atualiza os dados globais
+        const currentCats = data.categories || [];
+        const newCats = currentCats.map(c => c.id === cid ? { ...c, expenses: fn(c.expenses || []) } : c);
         setData({ ...data, categories: newCats });
-        
-        // Atualiza a visualização local IMEDIATAMENTE
-        const updatedCat = newCats.find(c => c.id === cid);
-        if (updatedCat) setSelectedCategory(updatedCat);
+        if (selectedCategory) setSelectedCategory(newCats.find(c => c.id === cid));
     };
     const handleConfirmPayment = (val) => { updateExp(selectedCategory.id, exps => exps.map(e => e.id === expenseToPay.id ? { ...e, paidInstallments: (e.paidInstallments||0)+1, installmentValue: val, paymentHistory: [...(e.paymentHistory||[]), {date: new Date().toISOString(), amount: val}] } : e)); setPaymentModalOpen(false); setExpenseToPay(null); };
     const handleImportClick = () => fileInputRef.current?.click();
     const handleFileSelect = (e) => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ev => { if(data.income === 0) setInitialData(JSON.parse(ev.target.result)); else { setFileToImport(ev.target.result); setImportConfirmOpen(true); } }; r.readAsText(f); e.target.value = null; };
     const handleExportData = () => { const a = document.createElement('a'); a.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`; a.download = `orcamento.json`; a.click(); };
 
-    const catsDisplay = tempPresetCategories || data.categories;
+    const catsDisplay = tempPresetCategories || data.categories || [];
     const totalBudget = catsDisplay.reduce((a, c) => a + c.budgetedValue, 0);
     const totalPct = data.income > 0 ? (totalBudget / data.income) * 100 : 0;
     const unbalanced = Math.abs(100 - totalPct) > 0.1 && catsDisplay.length > 0;
