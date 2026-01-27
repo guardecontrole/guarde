@@ -1,15 +1,10 @@
 // Adaptação para rodar no navegador sem build system
 const { useState, useEffect, useRef } = React;
 
-// ==========================================
-// 1. ÍCONES (SVG NATIVO - NÃO REMOVER)
-// ==========================================
+// --- ÍCONES EMBUTIDOS ---
 const IconBase = ({ children, size = 24, className = "" }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        {children}
-    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
 );
-// Ícones usados no sistema
 const ChevronRight = (p) => <IconBase {...p}><path d="m9 18 6-6-6-6"/></IconBase>;
 const Folder = (p) => <IconBase {...p}><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></IconBase>;
 const Plus = (p) => <IconBase {...p}><path d="M5 12h14"/><path d="M12 5v14"/></IconBase>;
@@ -40,12 +35,9 @@ const Play = (p) => <IconBase {...p}><polygon points="5 3 19 12 5 21 5 3"/></Ico
 const Copy = (p) => <IconBase {...p}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></IconBase>;
 const MoreVertical = (p) => <IconBase {...p}><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></IconBase>;
 
-// ==========================================
-// 2. CONFIGURAÇÕES E DADOS
-// ==========================================
+// --- DADOS E HELPERS ---
 const initialData = { income: 0, categories: [] };
 const availableColors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
-
 const budgetPresets = [
     { name: 'Sugestão do App', description: 'Um modelo balanceado.', icon: Star, categories: [ { name: '🏠 Casa', percentage: 27.5, color: 'bg-blue-500', group: 'Custos de Vida' }, { name: '👶 Filhos', percentage: 21.5, color: 'bg-green-500', group: 'Custos de Vida' }, { name: '👤 Pessoal', percentage: 23.5, color: 'bg-purple-500', group: 'Custos de Vida' }, { name: '🚗 Carro', percentage: 17.5, color: 'bg-red-500', group: 'Custos de Vida' }, { name: '👵 Aposentadoria', percentage: 10.0, color: 'bg-yellow-500', group: 'Investimentos' } ] },
     { name: 'Pai Rico, Pai Pobre', description: 'Pague-se primeiro.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
@@ -66,9 +58,7 @@ const useHistoryState = (initial) => {
 
 const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(v) ? 0 : v);
 
-// ==========================================
-// 3. COMPONENTES UI (MODAIS E FORMS)
-// ==========================================
+// --- COMPONENTES UI ---
 const Modal = ({ children, isOpen, onClose }) => !isOpen ? null : (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
         <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md m-4 relative p-6">
@@ -192,7 +182,10 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
     const [editing, setEditing] = useState(null);
     const [actionExp, setActionExp] = useState(null);
     
-    const total = category.expenses.filter(e => !e.isPaused).reduce((acc, e) => acc + e.installmentValue, 0);
+    // SAFETY CHECK: Garante que expenses é um array
+    const expenses = category.expenses || [];
+    
+    const total = expenses.filter(e => !e.isPaused).reduce((acc, e) => acc + e.installmentValue, 0);
     const avail = (category.budgetedValue || 0) - total;
 
     return (
@@ -203,8 +196,8 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
             </div>
             <button onClick={() => { setEditing(null); setIsFormOpen(true); }} className="mb-6 flex items-center gap-2 px-4 py-2 bg-blue-600 rounded hover:bg-blue-500 ml-auto"><Plus /> Nova Despesa</button>
             <div className="space-y-2">
-                {category.expenses.length === 0 && <p className="text-center text-gray-500 py-4">Nenhuma despesa.</p>}
-                {category.expenses.map(exp => {
+                {expenses.length === 0 && <p className="text-center text-gray-500 py-4">Nenhuma despesa.</p>}
+                {expenses.map(exp => {
                     const paid = exp.paidInstallments || 0;
                     const done = paid >= exp.installments;
                     return (
@@ -236,9 +229,6 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
     );
 };
 
-// ==========================================
-// 4. COMPONENTES PRINCIPAIS DA LISTA
-// ==========================================
 const CategoryItem = ({ category, income, onUpdateBudget, onSelectCategory, onEdit, onDelete, isPreviewing, onToggleLock, dragProps }) => {
     const [val, setVal] = useState('0,00');
     const [pct, setPct] = useState('0,0');
@@ -255,37 +245,24 @@ const CategoryItem = ({ category, income, onUpdateBudget, onSelectCategory, onEd
         onUpdateBudget(category.id, type === 'value' ? val : pct, type);
     };
 
-    const spent = category.expenses.filter(e => !e.isPaused).reduce((a, b) => a + b.installmentValue, 0);
+    const spent = (category.expenses || []).filter(e => !e.isPaused).reduce((a, b) => a + b.installmentValue, 0);
     const rest = (category.budgetedValue || 0) - spent;
     const bar = (category.budgetedValue || 0) > 0 ? Math.min((spent / category.budgetedValue) * 100, 100) : 0;
     
     const isDragged = dragProps.draggedItem?.id === category.id;
     const isTarget = dragProps.dragOverItem?.id === category.id;
 
-    // --- CORREÇÃO DO CADEADO VERMELHO AQUI ---
+    // AQUI ESTÁ O CADEADO VERMELHO (red-400 e red-500)
     return (
-        <div 
-            draggable={!isPreviewing} 
-            onDragStart={() => dragProps.onDragStart({ id: category.id, type: 'category', group: category.group })} 
-            onDragEnd={dragProps.onDragEnd} 
-            onDrop={e => { e.preventDefault(); dragProps.onDrop({ id: category.id, type: 'category', group: category.group }); }} 
-            onDragOver={e => { e.preventDefault(); dragProps.onDragEnter({ id: category.id, type: 'category' }); }} 
-            className={`bg-gray-700/50 p-4 rounded-xl relative group ${isDragged ? 'opacity-50' : ''} ${category.isLocked ? 'border-2 border-red-500/50' : 'border-2 border-transparent'}`}
-        >
+        <div draggable={!isPreviewing} onDragStart={() => dragProps.onDragStart({ id: category.id, type: 'category', group: category.group })} onDragEnd={dragProps.onDragEnd} onDrop={e => { e.preventDefault(); dragProps.onDrop({ id: category.id, type: 'category', group: category.group }); }} onDragOver={e => { e.preventDefault(); dragProps.onDragEnter({ id: category.id, type: 'category' }); }} className={`bg-gray-700/50 p-4 rounded-xl relative group ${isDragged ? 'opacity-50' : ''} ${category.isLocked ? 'border-2 border-red-500/50' : 'border-2 border-transparent'}`}>
             {isTarget && !isDragged && <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 rounded-full"/>}
             <div className="flex justify-between items-center mb-2">
                 <div onClick={() => !isPreviewing && onSelectCategory(category)} className="flex items-center gap-3 cursor-pointer flex-grow"><div className={`w-3 h-6 rounded ${category.color}`}/><Folder size={20} className="text-gray-400"/><span className="font-semibold text-white">{category.name}</span></div>
-                <div className="flex gap-1">
-                    <button onClick={() => !isPreviewing && onToggleLock(category.id)} className={`p-2 rounded hover:bg-gray-600 ${category.isLocked ? 'text-red-400' : 'text-gray-400'}`}>
-                        {category.isLocked ? <Lock size={16}/> : <Unlock size={16}/>}
-                    </button>
-                    <button onClick={() => !isPreviewing && onEdit(category)} className="p-2 text-gray-400 hover:text-blue-400 hover:bg-gray-600 rounded"><Edit size={16}/></button>
-                    <button onClick={() => !isPreviewing && onDelete(category.id)} className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-600 rounded"><Trash2 size={16}/></button>
-                </div>
+                <div className="flex gap-1"><button onClick={() => !isPreviewing && onToggleLock(category.id)} className={`p-2 rounded hover:bg-gray-600 ${category.isLocked ? 'text-red-400' : 'text-gray-400'}`}>{category.isLocked ? <Lock size={16}/> : <Unlock size={16}/>}</button><button onClick={() => !isPreviewing && onEdit(category)} disabled={isPreviewing || category.isLocked} className="p-2 text-gray-400 hover:text-blue-400 hover:bg-gray-600 rounded disabled:opacity-50"><Edit size={16}/></button><button onClick={() => !isPreviewing && onDelete(category.id)} disabled={isPreviewing} className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-600 rounded disabled:opacity-50"><Trash2 size={16}/></button></div>
             </div>
             <div className="flex gap-2 items-center text-sm mb-2">
                 {mode === 'value' ? <div className="relative flex-grow"><span className="absolute left-2 top-2 text-gray-400">R$</span><input className="w-full bg-gray-800 text-white rounded p-2 pl-8" value={val} onChange={e => setVal(e.target.value)} onBlur={() => handleBlur('value')} disabled={category.isLocked}/></div> : <div className="relative flex-grow"><input className="w-full bg-gray-800 text-white rounded p-2 pr-8" value={pct} onChange={e => setPct(e.target.value)} onBlur={() => handleBlur('percent')} disabled={category.isLocked}/><span className="absolute right-2 top-2 text-gray-400">%</span></div>}
-                <button onClick={() => setMode(m => m === 'value' ? 'percent' : 'value')} className="p-2 bg-gray-800 rounded hover:text-blue-400"><RefreshCw size={16}/></button>
+                <button onClick={() => setMode(m => m === 'value' ? 'percent' : 'value')} disabled={isPreviewing || category.isLocked} className="p-2 text-gray-400 bg-gray-700 rounded-lg hover:text-blue-400 transition disabled:opacity-50"><RefreshCw size={16} /></button>
             </div>
             <div className="flex justify-between text-xs text-gray-400 mb-1"><span>Gasto: {formatCurrency(spent)}</span><span className={rest < 0 ? 'text-red-400' : 'text-green-400'}>{rest < 0 ? 'Estourado' : 'Sobra'}: {formatCurrency(Math.abs(rest))}</span></div>
             <div className="w-full bg-gray-600 h-2 rounded-full"><div className={`h-2 rounded-full ${rest < 0 ? 'bg-red-500' : category.color}`} style={{ width: `${bar}%` }}/></div>
@@ -338,7 +315,14 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3 border border-gray-700">
                     <div className="p-3 bg-green-500/20 rounded"><DollarSign className="text-green-400"/></div>
-                    <div><p className="text-gray-400 text-xs">Saldo Sugerido</p>{editInc ? <input autoFocus className="bg-transparent text-xl font-bold text-white w-full outline-none" value={incVal} onChange={e => setIncVal(e.target.value)} onBlur={() => { onUpdateIncome(parseFloat(incVal.replace(',', '.')) || 0); setEditInc(false); }} /> : <p onClick={() => !tempPresetCategories && setEditInc(true)} className="text-xl font-bold cursor-pointer hover:text-blue-400">{formatCurrency(income)}</p>}</div>
+                    <div>
+                        <p className="text-gray-400 text-xs">Saldo Sugerido</p>
+                        {editInc ? 
+                            <input autoFocus className="bg-transparent text-xl font-bold text-white w-full outline-none" value={incVal} onChange={e => setIncVal(e.target.value)} onBlur={() => { onUpdateIncome(parseFloat(incVal.replace(',', '.')) || 0); setEditInc(false); }} /> 
+                            : 
+                            <p onClick={() => !tempPresetCategories && setEditInc(true)} className="text-xl font-bold cursor-pointer hover:text-blue-400">{formatCurrency(income)}</p>
+                        }
+                    </div>
                 </div>
                 <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3"><div className="p-3 bg-red-500/20 rounded"><DollarSign className="text-red-400"/></div><div><p className="text-gray-400 text-xs">Despesas</p><p className="text-xl font-bold">{formatCurrency(totalExp)}</p></div></div>
                 <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3"><div className={`p-3 rounded ${balance >= 0 ? 'bg-blue-500/20' : 'bg-yellow-500/20'}`}><DollarSign className={balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}/></div><div><p className="text-gray-400 text-xs">Saldo</p><p className={`text-xl font-bold ${balance >= 0 ? 'text-white' : 'text-yellow-400'}`}>{formatCurrency(balance)}</p></div></div>
@@ -379,7 +363,7 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
     );
 };
 
-// --- SEÇÃO 5: COMPONENTE RAIZ ---
+// Componente Principal
 const OrcamentoPage = ({ initialIncome = 0 }) => {
     const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -405,113 +389,97 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
         }
     }, [initialIncome]);
 
-    // Handlers
+    const handleUpdateIncome = (val) => {
+        if (data.income === val) return;
+        const newCats = data.categories.map(c => { 
+            if (c.isLocked || data.income <= 0) return c; 
+            const prevPct = (c.budgetedValue || 0) / (data.income || 1);
+            return { ...c, budgetedValue: val * prevPct }; 
+        });
+        setData({ income: val, categories: newCats });
+    };
+
     const handleCategorySubmit = (d) => {
         const newCats = d.id ? data.categories.map(c => c.id === d.id ? { ...c, ...d } : c) : [...data.categories, { ...d, id: Date.now(), budgetedValue: 0, expenses: [], isLocked: false }];
         setData({ ...data, categories: newCats }); setCatModalOpen(false); setEditingCategory(null);
     };
-    const updateCats = (fn) => setData({ ...data, categories: fn(data.categories) });
-    const handleUpdateIncome = (val) => {
-        if (data.income === val) return;
-        const newCats = data.categories.map(c => { if (c.isLocked || data.income <= 0) return c; const percentage = (c.budgetedValue || 0) / (data.income || 1); return { ...c, budgetedValue: val * percentage }; });
-        setData({ income: val, categories: newCats });
+    const confirmDeleteCategory = () => { if (categoryToDelete) setData({ ...data, categories: data.categories.filter(c => c.id !== categoryToDelete) }); setDeleteConfirmOpen(false); setCategoryToDelete(null); };
+    const confirmDeleteGroup = () => { if (groupToDelete) setData({ ...data, categories: data.categories.map(c => c.group === groupToDelete ? { ...c, group: '' } : c) }); setDeleteGroupConfirmOpen(false); setGroupToDelete(null); };
+    const handleUpdateGroupName = (o, n) => { setData({ ...data, categories: data.categories.map(c => c.group === o ? { ...c, group: n } : c) }); setEditGroupModalOpen(false); setEditingGroup(null); };
+    const handleToggleCategoryLock = (id) => { const fn = list => list.map(c => c.id === id ? { ...c, isLocked: !c.isLocked } : c); tempPresetCategories ? setTempPresetCategories(fn(tempPresetCategories)) : setData({ ...data, categories: fn(data.categories) }); };
+    const handleMoveItem = (drag, target) => {
+        let list = [...(tempPresetCategories || data.categories)];
+        if (drag.type === 'category') {
+            const idx = list.findIndex(c => c.id === drag.id); const item = list.splice(idx, 1)[0];
+            if (target.type === 'group') { item.group = target.id; list.push(item); } else { item.group = target.group; list.splice(list.findIndex(c => c.id === target.id), 0, item); }
+        } else if (drag.type === 'group' && target.type === 'group') {
+            const grp = list.filter(c => c.group === drag.id); const others = list.filter(c => c.group !== drag.id);
+            others.splice(others.findIndex(c => c.group === target.id), 0, ...grp); list = others;
+        }
+        tempPresetCategories ? setTempPresetCategories(list) : setData({ ...data, categories: list });
+    };
+    const handleUpdateCategoryBudget = (id, val, type) => {
+        const v = parseFloat(String(val).replace(',', '.')) || 0;
+        const final = type === 'percent' ? (data.income * v) / 100 : v;
+        const list = tempPresetCategories || data.categories;
+        const updated = list.map(c => c.id === id ? { ...c, budgetedValue: Math.max(0, final) } : c);
+        tempPresetCategories ? setTempPresetCategories(updated) : setData({ ...data, categories: updated });
     };
     const handleAutoAdjust = () => {
-        const cats = tempPreset || data.categories;
+        const cats = tempPresetCategories || data.categories;
         const unlocked = cats.filter(c => !c.isLocked);
         if (!unlocked.length) return;
-        const lockedSum = cats.reduce((acc, c) => acc + (c.isLocked ? c.budgetedValue : 0), 0);
+        const lockedSum = cats.reduce((a, c) => a + (c.isLocked ? c.budgetedValue : 0), 0);
         const remain = data.income - lockedSum;
-        const unlockedSum = unlocked.reduce((acc, c) => acc + c.budgetedValue, 0);
-        
-        let newCats;
-        if (unlockedSum > 0) {
-            newCats = cats.map(c => c.isLocked ? c : { ...c, budgetedValue: remain * (c.budgetedValue / unlockedSum) });
-        } else {
-            const equal = remain / unlocked.length;
-            newCats = cats.map(c => c.isLocked ? c : { ...c, budgetedValue: equal });
-        }
-        tempPreset ? setTempPreset(newCats) : setData({ ...data, categories: newCats });
+        const unlockedSum = unlocked.reduce((a, c) => a + c.budgetedValue, 0);
+        let updated;
+        if (unlockedSum > 0) updated = cats.map(c => c.isLocked ? c : { ...c, budgetedValue: Math.max(0, remain * (c.budgetedValue / unlockedSum)) });
+        else { const eq = remain / unlocked.length; updated = cats.map(c => c.isLocked ? c : { ...c, budgetedValue: Math.max(0, eq) }); }
+        const diff = data.income - updated.reduce((a,c)=>a+c.budgetedValue,0); const first = updated.findIndex(c=>!c.isLocked); if(first!==-1 && Math.abs(diff)>0.001) updated[first].budgetedValue+=diff;
+        tempPresetCategories ? setTempPresetCategories(updated) : setData({ ...data, categories: updated });
     };
-
-    // Sub-Updates for ExpenseList
-    const updateExp = (cId, fn) => {
-        const newCats = data.categories.map(c => c.id === cId ? { ...c, expenses: fn(c.expenses) } : c);
+    const updateExp = (cid, fn) => {
+        // CORREÇÃO CRÍTICA: Se expenses for undefined, usa []
+        const newCats = data.categories.map(c => c.id === cid ? { ...c, expenses: fn(c.expenses || []) } : c);
         setData({ ...data, categories: newCats });
-        if (selectedCategory) setSelectedCategory(newCats.find(c => c.id === cId));
+        // CORREÇÃO CRÍTICA: Atualiza o selectedCategory para refletir a mudança imediatamente
+        const updatedCat = newCats.find(c => c.id === cid);
+        if (updatedCat) setSelectedCategory(updatedCat);
     };
+    const handleConfirmPayment = (val) => { updateExp(selectedCategory.id, exps => exps.map(e => e.id === expenseToPay.id ? { ...e, paidInstallments: (e.paidInstallments||0)+1, installmentValue: val, paymentHistory: [...(e.paymentHistory||[]), {date: new Date().toISOString(), amount: val}] } : e)); setPaymentModalOpen(false); setExpenseToPay(null); };
+    const handleImportClick = () => fileInputRef.current?.click();
+    const handleFileSelect = (e) => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ev => { if(data.income === 0) setInitialData(JSON.parse(ev.target.result)); else { setFileToImport(ev.target.result); setImportConfirmOpen(true); } }; r.readAsText(f); e.target.value = null; };
+    const handleExportData = () => { const a = document.createElement('a'); a.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`; a.download = `orcamento.json`; a.click(); };
 
-    const totalBudget = (tempPreset || data.categories).reduce((acc, c) => acc + c.budgetedValue, 0);
+    const catsDisplay = tempPresetCategories || data.categories;
+    const totalBudget = catsDisplay.reduce((a, c) => a + c.budgetedValue, 0);
     const totalPct = data.income > 0 ? (totalBudget / data.income) * 100 : 0;
-    const unbalanced = Math.abs(100 - totalPct) > 0.1 && (tempPreset || data.categories).length > 0;
+    const unbalanced = Math.abs(100 - totalPct) > 0.1 && catsDisplay.length > 0;
 
     return (
-        <>
-            <input type="file" ref={fileRef} className="hidden" accept=".json" onChange={e => {
-                const f = e.target.files[0]; if (!f) return;
-                const r = new FileReader(); r.onload = ev => { if (data.income === 0) setInitialData(JSON.parse(ev.target.result)); else { setImportDataStr(ev.target.result); setImportOpen(true); } }; r.readAsText(f); e.target.value = null;
-            }} />
-            
-            {selectedCategory ? (
-                <ExpenseList 
-                    category={selectedCategory} 
-                    onBack={() => setSelectedCategory(null)}
-                    onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])}
-                    onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))}
-                    onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))}
-                    onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))}
-                    onTogglePause={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, isPaused: !x.isPaused } : x))}
-                    onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: Math.max(0, x.paidInstallments - 1), paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))}
-                    onOpenPaymentModal={e => { setPayExpense(e); setPayModalOpen(true); }}
-                    onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })}
-                />
-            ) : (
-                <CategoryList 
-                    categories={data.categories} income={data.income} tempPresetCategories={tempPreset}
-                    onSelectCategory={setSelectedCategory}
-                    onUpdateIncome={handleUpdateIncome}
-                    onUpdateCategoryBudget={(id, v, t) => {
-                        const val = parseFloat(String(v).replace(',', '.')) || 0;
-                        const final = t === 'percent' ? (data.income * val) / 100 : val;
-                        const target = tempPreset || data.categories;
-                        const updated = target.map(c => c.id === id ? { ...c, budgetedValue: final } : c);
-                        tempPreset ? setTempPreset(updated) : setData({ ...data, categories: updated });
-                    }}
-                    onOpenCategoryModal={(c) => { setEditCat(c || null); setCatModalOpen(true); }}
-                    onDeleteCategoryRequest={setDelCatId}
-                    onDeleteGroupRequest={setDelGrpName}
-                    onOpenPresetModal={() => setPresetOpen(true)}
-                    onExport={() => { const a = document.createElement('a'); a.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`; a.download = `orcamento.json`; a.click(); }}
-                    onImport={() => fileRef.current?.click()}
-                    onConfirmPreset={() => { setData({ ...data, categories: tempPreset }); setTempPreset(null); }}
-                    onCancelPreset={() => { setTempPreset(null); setPresetOpen(true); }}
-                    onToggleLock={(id) => { const fn = l => l.map(c => c.id === id ? { ...c, isLocked: !c.isLocked } : c); tempPreset ? setTempPreset(fn(tempPreset)) : setData({ ...data, categories: fn(data.categories) }); }}
-                    onMoveItem={(drag, target) => {
-                        let list = [...(tempPreset || data.categories)];
-                        if (drag.type === 'category') {
-                            const idx = list.findIndex(c => c.id === drag.id);
-                            const item = list.splice(idx, 1)[0];
-                            if (target.type === 'group') { item.group = target.id; list.push(item); }
-                            else { item.group = target.group; list.splice(list.findIndex(c => c.id === target.id), 0, item); }
-                        } else { /* Group drag logic simplified for brevity */ }
-                        tempPreset ? setTempPreset(list) : setData({ ...data, categories: list });
-                    }}
-                    onOpenEditGroupModal={setGrpEditName}
-                    undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo}
-                />
-            )}
-
-            {/* Modais Globais */}
-            <Modal isOpen={catModalOpen} onClose={() => setCatModalOpen(false)}><CategoryForm categoryData={editCat} onSubmit={handleCategorySubmit} onCancel={() => setCatModalOpen(false)} existingGroups={existingGroups} /></Modal>
-            <PaymentAmountModal isOpen={payModalOpen} onClose={() => setPayModalOpen(false)} expense={payExpense} onSubmit={v => { updateExp(selectedCategory.id, exps => exps.map(x => x.id === payExpense.id ? { ...x, paidInstallments: x.paidInstallments + 1, installmentValue: v, paymentHistory: [...(x.paymentHistory||[]), {date: new Date().toISOString(), amount: v}] } : x)); setPayModalOpen(false); }} />
-            <ConfirmationModal isOpen={!!delCatId} onClose={() => setDelCatId(null)} title="Excluir" message="Confirma?" onConfirm={() => { updateCats(l => l.filter(c => c.id !== delCatId)); setDelCatId(null); }} />
-            <ConfirmationModal isOpen={!!delGrpName} onClose={() => setDelGrpName(null)} title="Excluir Grupo" message="Confirma?" onConfirm={() => { updateCats(l => l.map(c => c.group === delGrpName ? { ...c, group: '' } : c)); setDelGrpName(null); }} />
-            <ConfirmationModal isOpen={importOpen} onClose={() => setImportOpen(false)} title="Importar" message="Substituir dados?" onConfirm={() => { setInitialData(JSON.parse(importDataStr)); setImportOpen(false); }} />
-            <PresetModal isOpen={presetOpen} onClose={() => setPresetOpen(false)} onSelectPreset={p => { setTempPreset(p.categories.map(c => ({ ...c, id: Math.random(), budgetedValue: data.income * c.percentage / 100, expenses: [], isLocked: false }))); setPresetOpen(false); }} />
-            <EditGroupModal isOpen={!!grpEditName} onClose={() => setGrpEditName(null)} groupName={grpEditName} onSubmit={(oldN, newN) => { updateCats(l => l.map(c => c.group === oldN ? { ...c, group: newN } : c)); }} />
-            
-            {unbalanced && !tempPreset && <BudgetAdjustmentBar totalPercentage={totalPct} onAdjust={handleAutoAdjust} />}
-        </>
+        <div className="bg-gray-900 min-h-screen font-sans text-gray-200 pb-40">
+            <style>{`@keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } .animate-fade-in { animation: fade-in 0.5s ease-out forwards; } .animate-pulse-border { animation: pulse-border 2s infinite; border: 2px solid; } @keyframes pulse-border { 0%, 100% { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { border-color: rgba(59, 130, 246, 1); box-shadow: 0 0 10px 2px rgba(59, 130, 246, 0.2); } } @keyframes fade-in-down { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } } .animate-fade-in-down { animation: fade-in-down 0.2s ease-out forwards; }`}</style>
+            <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
+                <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileSelect} />
+                <header className="mb-8"><h1 className="text-3xl sm:text-4xl font-bold text-white text-center">Controle de Orçamento Pessoal</h1><p className="text-center text-gray-400 mt-2">Controle suas finanças de forma simples e visual.</p></header>
+                <main>
+                    {selectedCategory ? (
+                        <ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))} onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))} onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])} onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))} onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: x.paidInstallments - 1, paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))} onOpenPaymentModal={e => { setExpenseToPay(e); setPaymentModalOpen(true); }} onTogglePause={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, isPaused: !x.isPaused } : x))} onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })} />
+                    ) : (
+                        <CategoryList categories={data.categories} income={data.income} onSelectCategory={setSelectedCategory} onUpdateIncome={handleUpdateIncome} onUpdateCategoryBudget={handleUpdateCategoryBudget} onOpenCategoryModal={c => { setEditingCategory(c || null); setIsCategoryModalOpen(true); }} onDeleteCategoryRequest={id => { setCategoryToDelete(id); setDeleteConfirmOpen(true); }} onDeleteGroupRequest={grp => { setGroupToDelete(grp); setDeleteGroupConfirmOpen(true); }} onOpenPresetModal={() => setIsPresetModalOpen(true)} onExport={handleExportData} onImport={handleImportClick} tempPresetCategories={tempPresetCategories} onConfirmPreset={() => { setData({ ...data, categories: tempPresetCategories }); setTempPresetCategories(null); }} onCancelPreset={() => { setTempPresetCategories(null); setIsPresetModalOpen(true); }} onToggleLock={handleToggleCategoryLock} onMoveItem={handleMoveItem} onOpenEditGroupModal={n => { setEditingGroup(n); setEditGroupModalOpen(true); }} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
+                    )}
+                </main>
+                <footer className="text-center mt-12 text-gray-500 text-sm"><p>Desenvolvido para facilitar sua vida financeira.</p></footer>
+                <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)}><CategoryForm onSubmit={handleCategorySubmit} onCancel={() => setIsCategoryModalOpen(false)} categoryData={editingCategory} existingGroups={existingGroups} /></Modal>
+                <PaymentAmountModal isOpen={isPaymentModalOpen} onClose={() => setPaymentModalOpen(false)} onSubmit={handleConfirmPayment} expense={expenseToPay} />
+                <ConfirmationModal isOpen={isDeleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} onConfirm={confirmDeleteCategory} title="Excluir Categoria" message="Tem certeza?" />
+                <ConfirmationModal isOpen={isDeleteGroupConfirmOpen} onClose={() => setDeleteGroupConfirmOpen(false)} onConfirm={confirmDeleteGroup} title="Excluir Grupo" message="Confirma?" />
+                <ConfirmationModal isOpen={isImportConfirmOpen} onClose={() => setImportConfirmOpen(false)} onConfirm={() => { setInitialData(JSON.parse(fileToImport)); setImportConfirmOpen(false); setFileToImport(null); }} title="Importar" message="Substituir dados?" />
+                <PresetModal isOpen={isPresetModalOpen} onClose={() => setIsPresetModalOpen(false)} onSelectPreset={p => { setTempPresetCategories(p.categories.map(c => ({ ...c, id: Date.now() + Math.random(), budgetedValue: (data.income * c.percentage) / 100, expenses: [], isLocked: false }))); setIsPresetModalOpen(false); }} />
+                <EditGroupModal isOpen={isEditGroupModalOpen} onClose={() => { setEditGroupModalOpen(false); setEditingGroup(null); }} onSubmit={handleUpdateGroupName} groupName={editingGroup} />
+            </div>
+            {unbalanced && !tempPresetCategories && <BudgetAdjustmentBar totalPercentage={totalPct} onAdjust={handleAutoAdjust} />}
+        </div>
     );
 };
 
