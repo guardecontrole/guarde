@@ -1,5 +1,5 @@
 // Adaptação para rodar no navegador sem build system
-const { useState, useEffect, useRef, useMemo } = React;
+const { useState, useEffect, useRef } = React;
 
 // ==========================================
 // 1. ÍCONES (SVG NATIVO)
@@ -45,7 +45,7 @@ const availableColors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red
 
 const budgetPresets = [
     { name: 'Sugestão do App', description: 'Um modelo balanceado.', icon: Star, categories: [ { name: '🏠 Casa', percentage: 27.5, color: 'bg-blue-500', group: 'Custos de Vida' }, { name: '👶 Filhos', percentage: 21.5, color: 'bg-green-500', group: 'Custos de Vida' }, { name: '👤 Pessoal', percentage: 23.5, color: 'bg-purple-500', group: 'Custos de Vida' }, { name: '🚗 Carro', percentage: 17.5, color: 'bg-red-500', group: 'Custos de Vida' }, { name: '👵 Aposentadoria', percentage: 10.0, color: 'bg-yellow-500', group: 'Investimentos' } ] },
-    { name: 'Pai Rico, Pai Pobre', description: 'Pague-se primeiro.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
+    { name: 'Pai Rico, Pai Pobre', description: 'Inspirado em Robert Kiyosaki.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
     { name: 'Thiago Nigro (50/30/20)', description: 'O clássico 50-30-20.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Essenciais' }, { name: '🛍️ Não Essenciais', percentage: 30, color: 'bg-pink-500', group: 'Não Essenciais' }, { name: '📈 Investimentos', percentage: 20, color: 'bg-purple-500', group: 'Investimentos' } ] },
     { name: 'Nathalia Arcuri (70/30)', description: 'Foco no futuro.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 55, color: 'bg-blue-500', group: 'Presente' }, { name: '📚 Educação', percentage: 5, color: 'bg-teal-500', group: 'Presente' }, { name: '💸 Livre', percentage: 10, color: 'bg-pink-500', group: 'Presente' }, { name: '🎯 Metas', percentage: 20, color: 'bg-green-500', group: 'Futuro' }, { name: '👵 Aposentadoria', percentage: 10, color: 'bg-yellow-500', group: 'Futuro' } ] },
     { name: 'Bruno Perini', description: 'Foco em aportes.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 60, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Fundo', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 Aportes', percentage: 10, color: 'bg-purple-500', group: 'Investimentos' } ] },
@@ -435,17 +435,9 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
     );
 };
 
-// Componente Principal - AQUI ESTÁ A CORREÇÃO DEFINITIVA
+// Componente Principal
 const OrcamentoPage = ({ initialIncome = 0 }) => {
-    // 1. DADOS INICIAIS
     const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
-    
-    // 2. CORREÇÃO DO ERRO 'REFERENCE ERROR': DEFINIÇÃO SEGURA DOS GRUPOS EXISTENTES NO TOPO
-    const existingGroups = (data.categories || [])
-        .map(c => c.group)
-        .filter(g => g && g.trim())
-        .filter((value, index, self) => self.indexOf(value) === index); // Unique values
-
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
@@ -588,7 +580,14 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const totalPct = data.income > 0 ? (totalBudget / data.income) * 100 : 0;
     const unbalanced = Math.abs(100 - totalPct) > 0.1 && catsDisplay.length > 0;
     
-    if (isLoadingData) return <div className="text-center text-gray-500 mt-20">Carregando Orçamento...</div>;
+    if (isLoadingData) {
+        return (
+            <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                <p className="text-lg font-semibold animate-pulse">Carregando suas finanças...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-gray-900 min-h-screen font-sans text-gray-200 pb-40">
