@@ -123,7 +123,7 @@ const App = () => {
         }
     };
 
-    // Login Email/Senha (Restaurado com atributos para funcionar o Autofill)
+    // Login Email/Senha
     const handleEmailAuth = async (e) => {
         e.preventDefault();
         setAuthError('');
@@ -136,10 +136,10 @@ const App = () => {
         } catch (error) {
             console.error("Erro Auth:", error);
             if (error.code === 'auth/wrong-password') setAuthError('Senha incorreta.');
-            else if (error.code === 'auth/user-not-found') setAuthError('E-mail não cadastrado.');
+            else if (error.code === 'auth/user-not-found') setAuthError('E-mail não encontrado. Tente Cadastrar.');
             else if (error.code === 'auth/email-already-in-use') setAuthError('E-mail já está em uso.');
             else if (error.code === 'auth/weak-password') setAuthError('Senha muito fraca.');
-            else if (error.code === 'auth/invalid-credential') setAuthError('Credenciais inválidas.');
+            else if (error.code === 'auth/invalid-credential') setAuthError('Dados inválidos ou conta Google existente.');
             else setAuthError('Erro ao entrar. Verifique os dados.');
         }
     };
@@ -160,7 +160,7 @@ const App = () => {
 
     if (loading) return <div className="min-h-screen bg-app flex items-center justify-center"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
 
-    // --- TELA DE LOGIN (COM AUTOCOMPLETE RESTAURADO) ---
+    // --- TELA DE LOGIN ATUALIZADA (SEM BORDA BRANCA) ---
     if (!user) {
         return (
             <div className="min-h-screen bg-app flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-500">
@@ -169,7 +169,8 @@ const App = () => {
                     <div className="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] bg-purple-600/20 blur-[100px] rounded-full"></div>
                 </div>
 
-                <div className="bg-sidebar p-8 md:p-10 rounded-[30px] shadow-2xl w-full max-w-sm text-center border border-border relative z-10">
+                {/* REMOVIDO 'border border-border' DAQUI */}
+                <div className="bg-sidebar p-8 md:p-10 rounded-[30px] shadow-2xl w-full max-w-sm text-center relative z-10">
                     <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg shadow-primary/40">F</div>
                     <h1 className="text-2xl font-bold text-title mb-2 font-poppins">{isRegistering ? 'Criar Conta' : 'Bem-vindo'}</h1>
                     <p className="text-sec mb-8 text-sm">Entre com suas credenciais.</p>
@@ -177,7 +178,6 @@ const App = () => {
                     <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
                         <div className="relative">
                             <Icon name="mail" className="absolute left-4 top-3.5 text-sec" size={18} />
-                            {/* CAMPO EMAIL CORRIGIDO */}
                             <input 
                                 type="email" 
                                 name="email"
@@ -192,7 +192,6 @@ const App = () => {
                         </div>
                         <div className="relative">
                             <Icon name="lock" className="absolute left-4 top-3.5 text-sec" size={18} />
-                            {/* CAMPO SENHA CORRIGIDO */}
                             <input 
                                 type="password" 
                                 name="password"
