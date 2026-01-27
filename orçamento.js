@@ -1,8 +1,8 @@
 // Adaptação para rodar no navegador sem build system
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useMemo } = React;
 
 // ==========================================
-// 1. ÍCONES (SVG NATIVO) - Essencial para não travar
+// 1. ÍCONES (SVG NATIVO)
 // ==========================================
 const IconBase = ({ children, size = 24, className = "" }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
@@ -45,7 +45,7 @@ const availableColors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red
 
 const budgetPresets = [
     { name: 'Sugestão do App', description: 'Um modelo balanceado.', icon: Star, categories: [ { name: '🏠 Casa', percentage: 27.5, color: 'bg-blue-500', group: 'Custos de Vida' }, { name: '👶 Filhos', percentage: 21.5, color: 'bg-green-500', group: 'Custos de Vida' }, { name: '👤 Pessoal', percentage: 23.5, color: 'bg-purple-500', group: 'Custos de Vida' }, { name: '🚗 Carro', percentage: 17.5, color: 'bg-red-500', group: 'Custos de Vida' }, { name: '👵 Aposentadoria', percentage: 10.0, color: 'bg-yellow-500', group: 'Investimentos' } ] },
-    { name: 'Pai Rico, Pai Pobre', description: 'Inspirado em Robert Kiyosaki.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
+    { name: 'Pai Rico, Pai Pobre', description: 'Pague-se primeiro.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
     { name: 'Thiago Nigro (50/30/20)', description: 'O clássico 50-30-20.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Essenciais' }, { name: '🛍️ Não Essenciais', percentage: 30, color: 'bg-pink-500', group: 'Não Essenciais' }, { name: '📈 Investimentos', percentage: 20, color: 'bg-purple-500', group: 'Investimentos' } ] },
     { name: 'Nathalia Arcuri (70/30)', description: 'Foco no futuro.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 55, color: 'bg-blue-500', group: 'Presente' }, { name: '📚 Educação', percentage: 5, color: 'bg-teal-500', group: 'Presente' }, { name: '💸 Livre', percentage: 10, color: 'bg-pink-500', group: 'Presente' }, { name: '🎯 Metas', percentage: 20, color: 'bg-green-500', group: 'Futuro' }, { name: '👵 Aposentadoria', percentage: 10, color: 'bg-yellow-500', group: 'Futuro' } ] },
     { name: 'Bruno Perini', description: 'Foco em aportes.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 60, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Fundo', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 Aportes', percentage: 10, color: 'bg-purple-500', group: 'Investimentos' } ] },
@@ -435,9 +435,17 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
     );
 };
 
-// Componente Principal
+// Componente Principal - AQUI ESTÁ A CORREÇÃO DEFINITIVA
 const OrcamentoPage = ({ initialIncome = 0 }) => {
+    // 1. DADOS INICIAIS
     const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
+    
+    // 2. CORREÇÃO DO ERRO 'REFERENCE ERROR': DEFINIÇÃO SEGURA DOS GRUPOS EXISTENTES NO TOPO
+    const existingGroups = (data.categories || [])
+        .map(c => c.group)
+        .filter(g => g && g.trim())
+        .filter((value, index, self) => self.indexOf(value) === index); // Unique values
+
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
@@ -455,9 +463,6 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
     const [editingGroup, setEditingGroup] = useState(null);
     
-    // VARIÁVEL CRÍTICA PARA O MODAL DE CATEGORIA (FOI MOVIDA PARA CÁ PARA EVITAR REFERENCE ERROR)
-    const existingGroups = [...new Set((data.categories || []).map(c => c.group).filter(g => g && g.trim()))];
-
     // --- PERSISTÊNCIA REAL-TIME NO FIREBASE ---
     const [isLoadingData, setIsLoadingData] = useState(true);
     const { db, auth, appId } = window.firebaseApp || {};
