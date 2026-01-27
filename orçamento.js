@@ -1,9 +1,7 @@
-// Adaptação para rodar no navegador sem build system
+// orcamento.js - Versão de Resgate (Visual Moderno + Sem Travamentos)
 const { useState, useEffect, useRef } = React;
 
-// ==========================================
 // 1. ÍCONES (SVG NATIVO)
-// ==========================================
 const IconBase = ({ children, size = 24, className = "" }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
 );
@@ -37,19 +35,13 @@ const Play = (p) => <IconBase {...p}><polygon points="5 3 19 12 5 21 5 3"/></Ico
 const Copy = (p) => <IconBase {...p}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></IconBase>;
 const MoreVertical = (p) => <IconBase {...p}><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></IconBase>;
 
-// ==========================================
-// 2. CONFIGURAÇÕES E DADOS
-// ==========================================
+// 2. CONFIGURAÇÕES
 const initialData = { income: 0, categories: [] };
 const availableColors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
-
 const budgetPresets = [
     { name: 'Sugestão do App', description: 'Um modelo balanceado.', icon: Star, categories: [ { name: '🏠 Casa', percentage: 27.5, color: 'bg-blue-500', group: 'Custos de Vida' }, { name: '👶 Filhos', percentage: 21.5, color: 'bg-green-500', group: 'Custos de Vida' }, { name: '👤 Pessoal', percentage: 23.5, color: 'bg-purple-500', group: 'Custos de Vida' }, { name: '🚗 Carro', percentage: 17.5, color: 'bg-red-500', group: 'Custos de Vida' }, { name: '👵 Aposentadoria', percentage: 10.0, color: 'bg-yellow-500', group: 'Investimentos' } ] },
-    { name: 'Pai Rico, Pai Pobre', description: 'Pague-se primeiro.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
+    { name: 'Pai Rico, Pai Pobre', description: 'Inspirado em Robert Kiyosaki.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
     { name: 'Thiago Nigro (50/30/20)', description: 'O clássico 50-30-20.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Essenciais' }, { name: '🛍️ Não Essenciais', percentage: 30, color: 'bg-pink-500', group: 'Não Essenciais' }, { name: '📈 Investimentos', percentage: 20, color: 'bg-purple-500', group: 'Investimentos' } ] },
-    { name: 'Nathalia Arcuri (70/30)', description: 'Foco no futuro.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 55, color: 'bg-blue-500', group: 'Presente' }, { name: '📚 Educação', percentage: 5, color: 'bg-teal-500', group: 'Presente' }, { name: '💸 Livre', percentage: 10, color: 'bg-pink-500', group: 'Presente' }, { name: '🎯 Metas', percentage: 20, color: 'bg-green-500', group: 'Futuro' }, { name: '👵 Aposentadoria', percentage: 10, color: 'bg-yellow-500', group: 'Futuro' } ] },
-    { name: 'Bruno Perini', description: 'Foco em aportes.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 60, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Fundo', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 Aportes', percentage: 10, color: 'bg-purple-500', group: 'Investimentos' } ] },
-    { name: 'Warren Buffett', description: 'Simplicidade 90/10.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Reserva', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 S&P 500', percentage: 18, color: 'bg-purple-500', group: 'Investimentos' }, { name: '🏦 Renda Fixa', percentage: 2, color: 'bg-teal-500', group: 'Investimentos' } ] }
 ];
 
 const useHistoryState = (initial) => {
@@ -63,9 +55,7 @@ const useHistoryState = (initial) => {
 
 const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(v) ? 0 : v);
 
-// ==========================================
-// 3. COMPONENTES UI (MODAIS E FORMS)
-// ==========================================
+// 3. COMPONENTES UI
 const Modal = ({ children, isOpen, onClose }) => !isOpen ? null : (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
         <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md m-4 relative p-6">
@@ -185,13 +175,14 @@ const ExpenseForm = ({ onSubmit, onCancel, expenseData }) => {
 };
 
 const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAddExpense, onMarkAsPaid, onUndoPayment, onOpenPaymentModal, onTogglePause, onDuplicateExpense }) => {
-    const [formOpen, setFormOpen] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [actionExp, setActionExp] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
     
     // SAFETY CHECK: Garante que expenses é um array. Evita tela branca.
-    const expenses = category?.expenses || [];
+    if (!category) return null;
+    const expenses = category.expenses || [];
     
     const total = expenses.filter(e => !e.isPaused).reduce((acc, e) => acc + e.installmentValue, 0);
     const avail = (category.budgetedValue || 0) - total;
@@ -207,7 +198,7 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
                 </div>
             </div>
             <div className="flex justify-end mb-6">
-                <button onClick={() => { setEditing(null); setFormOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 font-semibold"><Plus size={20}/> Adicionar Despesa</button>
+                <button onClick={() => { setEditing(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 font-semibold"><Plus size={20}/> Adicionar Despesa</button>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left table-auto border-collapse">
@@ -274,11 +265,11 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
                 </table>
             </div>
 
-            <Modal isOpen={formOpen} onClose={() => setFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdateExpense(category.id, d); else onAddExpense(category.id, d); setFormOpen(false); }} onCancel={() => setFormOpen(false)} expenseData={editing} /></Modal>
+            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdateExpense(category.id, d); else onAddExpense(category.id, d); setIsFormOpen(false); }} onCancel={() => setIsFormOpen(false)} expenseData={editing} /></Modal>
             <Modal isOpen={!!actionExp} onClose={() => setActionExp(null)}>
                 {actionExp && <div className="text-white space-y-2">
                     <h3 className="text-center font-bold mb-4">{actionExp.description}</h3>
-                    <button onClick={() => { setEditing(actionExp); setFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button>
+                    <button onClick={() => { setEditing(actionExp); setIsFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button>
                     <button onClick={() => { onDuplicateExpense(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Copy size={18}/> Duplicar</button>
                     <button onClick={() => { onTogglePause(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2">{actionExp.isPaused ? <Play size={18}/> : <Pause size={18}/>} {actionExp.isPaused ? 'Reativar' : 'Pausar'}</button>
                     {actionExp.paidInstallments > 0 && <button onClick={() => { onUndoPayment(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-yellow-400 rounded flex gap-2"><Undo2 size={18}/> Desfazer Pagamento</button>}
@@ -378,7 +369,6 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
         onDrop: (target) => { if (dragItem) onMoveItem(dragItem, target); setDragItem(null); setDragOver(null); }
     };
 
-    // BLINDAGEM: Agrupamento seguro
     const grouped = cats.filter(c => c.group && typeof c.group === 'string' && c.group.trim() !== '').reduce((acc, c) => { (acc[c.group] = acc[c.group] || []).push(c); return acc; }, {});
     const orphans = cats.filter(c => !c.group || typeof c.group !== 'string' || c.group.trim() === '');
 
@@ -455,65 +445,14 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
     const [editingGroup, setEditingGroup] = useState(null);
     
-    // --- PERSISTÊNCIA NO FIREBASE ---
-    const [isLoadingData, setIsLoadingData] = useState(true);
-    const { db, auth, appId } = window.firebaseApp || {};
+    const existingGroups = [...new Set((data.categories || []).map(c => c.group).filter(g => g && g.trim()))];
 
-    // 1. Carregar dados do Firebase ao iniciar
+    // AUTOMAÇÃO
     useEffect(() => {
-        const loadBudget = async () => {
-            if (!auth || !auth.currentUser || !db) {
-                 setIsLoadingData(false);
-                 return;
-            }
-            try {
-                const docRef = window.firebase.doc(db, `artifacts/${appId}/users/${auth.currentUser.uid}/data/budget`);
-                const docSnap = await window.firebase.getDoc(docRef);
-                if (docSnap.exists()) {
-                    const loadedData = docSnap.data();
-                    // BLINDAGEM DE DADOS: Garante que categories existe e é array
-                    if (!loadedData.categories) loadedData.categories = [];
-                    // BLINDAGEM: Garante que expenses dentro de cada categoria seja array
-                    loadedData.categories = loadedData.categories.map(c => ({
-                        ...c,
-                        expenses: Array.isArray(c.expenses) ? c.expenses : []
-                    }));
-                    setInitialData(loadedData);
-                }
-            } catch (e) {
-                console.error("Erro ao carregar orçamento:", e);
-            } finally {
-                setIsLoadingData(false);
-            }
-        };
-        loadBudget();
-    }, []);
-
-    // 2. Salvar dados no Firebase quando houver alteração
-    useEffect(() => {
-        if (isLoadingData) return; // Não salvar enquanto carrega
-        if (!auth || !auth.currentUser || !db) return;
-
-        const saveBudget = async () => {
-            try {
-                const docRef = window.firebase.doc(db, `artifacts/${appId}/users/${auth.currentUser.uid}/data/budget`);
-                await window.firebase.setDoc(docRef, data);
-            } catch (e) {
-                console.error("Erro ao salvar orçamento:", e);
-            }
-        };
-
-        const timeoutId = setTimeout(saveBudget, 1000); // Debounce de 1s
-        return () => clearTimeout(timeoutId);
-    }, [data, isLoadingData]);
-
-
-    // --- AUTOMAÇÃO DA RECEITA ---
-    useEffect(() => {
-        if (!isLoadingData && initialIncome > 0 && Math.abs(initialIncome - data.income) > 0.01) {
+        if (initialIncome > 0 && Math.abs(initialIncome - data.income) > 0.01) {
             handleUpdateIncome(initialIncome);
         }
-    }, [initialIncome, isLoadingData]);
+    }, [initialIncome]);
 
     const handleUpdateIncome = (val) => {
         if (data.income === val) return;
@@ -581,8 +520,6 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const totalBudget = catsDisplay.reduce((a, c) => a + c.budgetedValue, 0);
     const totalPct = data.income > 0 ? (totalBudget / data.income) * 100 : 0;
     const unbalanced = Math.abs(100 - totalPct) > 0.1 && catsDisplay.length > 0;
-    
-    if (isLoadingData) return <div className="text-center text-gray-500 mt-20">Carregando Orçamento...</div>;
 
     return (
         <div className="bg-gray-900 min-h-screen font-sans text-gray-200 pb-40">
