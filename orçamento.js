@@ -184,53 +184,207 @@ const ExpenseForm = ({ onSubmit, onCancel, expenseData }) => {
     );
 };
 
-const ExpenseList = ({ category, onBack, onUpdate, onDelete, onAdd, onPay, onUndoPay, onOpenPayModal, onPause, onDup }) => {
-    const [formOpen, setFormOpen] = useState(false);
-    const [editing, setEditing] = useState(null);
-    const [actionExp, setActionExp] = useState(null);
-    
-    // CORREÇÃO CRÍTICA: Garante que expenses é sempre um array para evitar o erro "undefined"
+const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAddExpense, onMarkAsPaid, onUndoPayment, onOpenPaymentModal, onTogglePause, onDuplicateExpense }) => {
+    // CORREÇÃO AQUI: Mudamos o nome do estado para isFormOpen para padronizar
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingExpense, setEditingExpense] = useState(null);
+    const [isConfirmationModalOpen, setConfirmationModalOpen] = useState(false);
+    const [expenseToDelete, setExpenseToDelete] = useState(null);
+    const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+    const [selectedExpenseForAction, setSelectedExpenseForAction] = useState(null);
+
+    const openActionsModal = (expense) => {
+        setSelectedExpenseForAction(expense);
+        setIsActionModalOpen(true);
+    };
+
+    const closeActionsModal = () => {
+        setIsActionModalOpen(false);
+        setSelectedExpenseForAction(null);
+    };
+
+    const handleAddClick = () => {
+        setEditingExpense(null);
+        setIsFormOpen(true);
+    };
+
+    const handleEditClick = (expense) => {
+        setEditingExpense(expense);
+        setIsFormOpen(true);
+        closeActionsModal();
+    };
+
+    const handleDeleteRequest = (expenseId) => {
+        setExpenseToDelete(expenseId);
+        setConfirmationModalOpen(true);
+        closeActionsModal();
+    };
+
+    const confirmDelete = () => {
+        onDeleteExpense(category.id, expenseToDelete);
+        setConfirmationModalOpen(false);
+        setExpenseToDelete(null);
+    };
+
+    const handleFormSubmit = (expenseData) => {
+        if (editingExpense) {
+            onUpdateExpense(category.id, expenseData);
+        } else {
+            onAddExpense(category.id, expenseData);
+        }
+        setIsFormOpen(false);
+        setEditingExpense(null);
+    };
+
+    // Garante que expenses é um array
     const expenses = category.expenses || [];
     
-    const total = expenses.filter(e => !e.isPaused).reduce((acc, e) => acc + e.installmentValue, 0);
-    const avail = (category.budgetedValue || 0) - total;
+    const totalCategoryValue = expenses
+        .filter(exp => !exp.isPaused)
+        .reduce((sum, exp) => sum + exp.installmentValue, 0);
+    const budgetedValue = category.budgetedValue || 0;
+    const availableValue = budgetedValue - totalCategoryValue;
 
     return (
-        <div className="bg-gray-900 text-gray-200 p-6 rounded-2xl animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4"><button onClick={onBack} className="p-2 hover:bg-gray-700 rounded-full"><ArrowLeft /></button><h2 className="text-2xl font-bold">{category.name}</h2></div>
-                <div className="text-right"><p className="text-sm text-gray-400">Disponível</p><p className={`text-xl font-bold ${avail >= 0 ? 'text-green-400' : 'text-yellow-400'}`}>{formatCurrency(avail)}</p></div>
+        <div className="bg-gray-900 text-gray-200 p-4 sm:p-6 lg:p-8 rounded-2xl animate-fade-in">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center">
+                    <button onClick={onBack} className="p-2 rounded-full hover:bg-gray-700 transition mr-4">
+                        <ArrowLeft size={24} />
+                    </button>
+                    <div className={`w-4 h-8 rounded mr-3 ${category.color}`}></div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white flex-grow">{category.name}</h2>
+                </div>
+                <div className="flex-shrink-0 grid grid-cols-3 gap-4 sm:gap-6 text-right w-full sm:w-auto">
+                    <div>
+                        <p className="text-gray-400 text-sm">Orçado</p>
+                        <p className="text-xl font-bold text-white">{formatCurrency(budgetedValue)}</p>
+                    </div>
+                    <div>
+                        <p className="text-gray-400 text-sm">Gasto</p>
+                        <p className="text-xl font-bold text-red-400">{formatCurrency(totalCategoryValue)}</p>
+                    </div>
+                    <div>
+                        <p className="text-gray-400 text-sm">Disponível</p>
+                        <p className={`text-xl font-bold ${availableValue >= 0 ? 'text-green-400' : 'text-yellow-400'}`}>
+                            {formatCurrency(availableValue)}
+                        </p>
+                    </div>
+                </div>
             </div>
-            <button onClick={() => { setEditing(null); setIsFormOpen(true); }} className="mb-6 flex items-center gap-2 px-4 py-2 bg-blue-600 rounded hover:bg-blue-500 ml-auto"><Plus /> Nova Despesa</button>
-            <div className="space-y-2">
-                {expenses.length === 0 && <p className="text-center text-gray-500 py-4">Nenhuma despesa.</p>}
-                {expenses.map(exp => {
-                    const paid = exp.paidInstallments || 0;
-                    const done = paid >= exp.installments;
-                    return (
-                        <div key={exp.id} className={`flex justify-between items-center p-3 bg-gray-800 rounded border-l-4 ${exp.isPaused ? 'border-gray-600 opacity-60' : 'border-blue-500'}`}>
-                            <div>
-                                <p className="font-medium">{exp.description} {exp.isPaused && '(Pausado)'}</p>
-                                <p className="text-sm text-gray-400">{exp.status} - {formatCurrency(exp.installmentValue)} {exp.status === 'Andamento' && `(${paid}/${exp.installments})`}</p>
-                            </div>
-                            <div className="flex gap-2">
-                                {!done && !exp.isPaused && <button onClick={() => exp.status === 'Fixa-Variável' ? onOpenPayModal(exp) : onPay(category.id, exp.id)} className="p-2 text-green-400 hover:bg-gray-700 rounded"><CheckCircle size={18}/></button>}
-                                <button onClick={() => setActionExp(exp)} className="p-2 text-gray-400 hover:bg-gray-700 rounded"><MoreVertical size={18}/></button>
-                            </div>
+
+            <div className="flex justify-end mb-6">
+                <button onClick={handleAddClick} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-transform transform hover:scale-105 shadow-lg">
+                    <Plus size={20} />
+                    Adicionar Despesa
+                </button>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full text-left table-auto">
+                    <thead className="border-b-2 border-gray-700">
+                        <tr className="text-sm text-gray-400">
+                            <th className="p-3">Descrição</th>
+                            <th className="p-3 text-right">Valor Mensal</th>
+                            <th className="p-3 text-center">Progresso</th>
+                            <th className="p-3 text-center">Status</th>
+                            <th className="p-3 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {expenses.length === 0 ? (
+                            <tr>
+                                <td colSpan="5" className="text-center py-10 text-gray-500">Nenhuma despesa adicionada.</td>
+                            </tr>
+                        ) : expenses.map(expense => {
+                            const isPaused = expense.isPaused;
+                            const paidInstallments = expense.paidInstallments || 0;
+                            const isComplete = paidInstallments >= expense.installments;
+
+                            let dueDate = null;
+                            let isOverdue = false;
+
+                            if (expense.startDate) {
+                                const startDate = new Date(expense.startDate);
+                                dueDate = new Date(startDate.getFullYear(), startDate.getMonth() + paidInstallments, startDate.getDate() + 1);
+                                const today = new Date(); today.setHours(0, 0, 0, 0);
+                                if (today > dueDate && !isComplete && !isPaused) {
+                                    isOverdue = true;
+                                }
+                            }
+
+                            const remainingInstallments = expense.installments - paidInstallments;
+                            const remainingValue = remainingInstallments * expense.installmentValue;
+                            const displayStatus = isPaused ? 'Pausado' : isComplete ? 'Pago' : (isOverdue ? 'Atrasado' : expense.status);
+
+                            return (
+                                <tr key={expense.id} className={`border-b border-gray-800 transition-colors ${isPaused ? 'bg-gray-800/60' : 'hover:bg-gray-800/50'} ${isOverdue && !isPaused ? 'bg-red-900/30' : ''}`}>
+                                    <td className={`p-3 font-medium text-white transition-opacity ${isPaused ? 'opacity-60' : ''}`}>
+                                        <div className="flex items-center gap-2">
+                                            <span>{expense.description}</span>
+                                            {expense.observation && (
+                                                <div className="relative group flex-shrink-0">
+                                                    <MessageSquare size={14} className="text-gray-500 cursor-pointer" />
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs bg-gray-900 border border-gray-700 text-white text-sm rounded-lg py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-xl">
+                                                        <p className="font-semibold mb-1">Observação:</p>
+                                                        <p className="whitespace-pre-wrap">{expense.observation}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {isOverdue && dueDate && <div className="text-xs text-red-400 font-semibold mt-1">Vencido em: {dueDate.toLocaleDateString('pt-BR')}</div>}
+                                    </td>
+                                    <td className={`p-3 text-right font-semibold text-blue-400 transition-opacity ${isPaused ? 'opacity-60' : ''}`}>{formatCurrency(expense.installmentValue)}</td>
+                                    <td className={`p-3 text-center text-gray-300 transition-opacity ${isPaused ? 'opacity-60' : ''}`}>
+                                        {(() => {
+                                            if (expense.status === 'Variável') return <span>Pag. Única</span>;
+                                            if (expense.status === 'Fixo') return isComplete ? <span>Pago</span> : (dueDate ? <span className="text-xs">Próx. Venc: {dueDate.toLocaleDateString('pt-BR')}</span> : <span className="text-xs text-gray-500">Sem data</span>);
+                                            if (expense.status === 'Fixa-Variável') return <div>{dueDate && <span className="text-xs">Próx. Venc: {dueDate.toLocaleDateString('pt-BR')}</span>}</div>;
+                                            return <div><span className="font-mono">{paidInstallments} / {expense.installments}</span><div className="text-xs text-gray-500">Falta: {formatCurrency(remainingValue)}</div></div>;
+                                        })()}
+                                    </td>
+                                    <td className={`p-3 text-center transition-opacity ${isPaused ? 'opacity-60' : ''}`}>
+                                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+                                            displayStatus === 'Pausado' ? 'bg-gray-600/50 text-gray-400' :
+                                            displayStatus === 'Pago' ? 'bg-green-500/20 text-green-400' :
+                                            displayStatus === 'Atrasado' ? 'bg-red-500/20 text-red-400' :
+                                            'bg-gray-500/20 text-gray-300'
+                                        }`}>{displayStatus}</span>
+                                    </td>
+                                    <td className="p-3">
+                                        <div className="flex justify-center items-center">
+                                            <div className={`transition-opacity ${isPaused ? 'opacity-60' : ''}`}>
+                                                {!isComplete && (
+                                                    <button onClick={() => expense.status === 'Fixa-Variável' ? onOpenPaymentModal(expense) : onMarkAsPaid(category.id, expense.id)} disabled={isPaused} className="p-2 text-green-400 hover:bg-green-500/20 rounded-md transition disabled:cursor-not-allowed disabled:text-gray-600"><CheckCircle size={18} /></button>
+                                                )}
+                                            </div>
+                                            <button onClick={() => openActionsModal(expense)} className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-md transition"><MoreVertical size={18} /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
+            <Modal isOpen={isExpenseModalOpen} onClose={() => setIsFormOpen(false)}>
+                <ExpenseForm onSubmit={handleFormSubmit} onCancel={() => setIsFormOpen(false)} expenseData={editingExpense} />
+            </Modal>
+            <ConfirmationModal isOpen={isConfirmationModalOpen} onClose={() => setConfirmationModalOpen(false)} onConfirm={confirmDelete} title="Excluir Despesa" message="Tem certeza?" />
+            <Modal isOpen={isActionModalOpen} onClose={closeActionsModal} maxWidth="max-w-sm">
+                {selectedExpenseForAction && (
+                    <div className="text-white">
+                        <h3 className="text-lg font-bold mb-4 text-center">Ações</h3>
+                        <div className="flex flex-col gap-2">
+                            <button onClick={() => handleEditClick(selectedExpenseForAction)} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button>
+                            <button onClick={() => { onDuplicateExpense(category.id, selectedExpenseForAction.id); closeActionsModal(); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Copy size={18}/> Duplicar</button>
+                            <button onClick={() => { onTogglePause(category.id, selectedExpenseForAction.id); closeActionsModal(); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2">{selectedExpenseForAction.isPaused ? <Play size={18}/> : <Pause size={18}/>} {selectedExpenseForAction.isPaused ? 'Reativar' : 'Pausar'}</button>
+                            {selectedExpenseForAction.paidInstallments > 0 && <button onClick={() => { onUndoPayment(category.id, selectedExpenseForAction.id); closeActionsModal(); }} className="w-full text-left p-3 hover:bg-gray-700 text-yellow-400 rounded flex gap-2"><Undo2 size={18}/> Desfazer Pagto</button>}
+                            <button onClick={() => handleDeleteRequest(selectedExpenseForAction.id)} className="w-full text-left p-3 hover:bg-gray-700 text-red-400 rounded flex gap-2"><Trash2 size={18}/> Excluir</button>
                         </div>
-                    );
-                })}
-            </div>
-            <Modal isOpen={formOpen} onClose={() => setFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdate(category.id, d); else onAdd(category.id, d); setFormOpen(false); }} onCancel={() => setFormOpen(false)} expenseData={editing} /></Modal>
-            <Modal isOpen={!!actionExp} onClose={() => setActionExp(null)}>
-                {actionExp && <div className="text-white space-y-2">
-                    <h3 className="text-center font-bold mb-4">{actionExp.description}</h3>
-                    <button onClick={() => { setEditing(actionExp); setFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button>
-                    <button onClick={() => { onDuplicateExpense(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Copy size={18}/> Duplicar</button>
-                    <button onClick={() => { onTogglePause(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2">{actionExp.isPaused ? <Play size={18}/> : <Pause size={18}/>} {actionExp.isPaused ? 'Reativar' : 'Pausar'}</button>
-                    {actionExp.paidInstallments > 0 && <button onClick={() => { onUndoPayment(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-yellow-400 rounded flex gap-2"><Undo2 size={18}/> Desfazer Pagamento</button>}
-                    <button onClick={() => { onDeleteExpense(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-red-400 rounded flex gap-2"><Trash2 size={18}/> Excluir</button>
-                </div>}
+                    </div>
+                )}
             </Modal>
         </div>
     );
@@ -477,7 +631,7 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
                 <header className="mb-8"><h1 className="text-3xl sm:text-4xl font-bold text-white text-center">Controle de Orçamento Pessoal</h1><p className="text-center text-gray-400 mt-2">Controle suas finanças de forma simples e visual.</p></header>
                 <main>
                     {selectedCategory ? (
-                        <ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))} onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))} onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])} onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))} onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: x.paidInstallments - 1, paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))} onOpenPaymentModal={e => { setExpenseToPay(e); setPaymentModalOpen(true); }} onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })} />
+                        <ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))} onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))} onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])} onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))} onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: x.paidInstallments - 1, paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))} onOpenPaymentModal={e => { setExpenseToPay(e); setPaymentModalOpen(true); }} onTogglePause={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, isPaused: !x.isPaused } : x))} onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })} />
                     ) : (
                         <CategoryList categories={data.categories} income={data.income} onSelectCategory={setSelectedCategory} onUpdateIncome={handleUpdateIncome} onUpdateCategoryBudget={handleUpdateCategoryBudget} onOpenCategoryModal={c => { setEditingCategory(c || null); setIsCategoryModalOpen(true); }} onDeleteCategoryRequest={id => { setCategoryToDelete(id); setDeleteConfirmOpen(true); }} onDeleteGroupRequest={grp => { setGroupToDelete(grp); setDeleteGroupConfirmOpen(true); }} onOpenPresetModal={() => setIsPresetModalOpen(true)} onExport={handleExportData} onImport={handleImportClick} tempPresetCategories={tempPresetCategories} onConfirmPreset={() => { setData({ ...data, categories: tempPresetCategories }); setTempPresetCategories(null); }} onCancelPreset={() => { setTempPresetCategories(null); setIsPresetModalOpen(true); }} onToggleLock={handleToggleCategoryLock} onMoveItem={handleMoveItem} onOpenEditGroupModal={n => { setEditingGroup(n); setEditGroupModalOpen(true); }} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
                     )}
