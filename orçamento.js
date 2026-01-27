@@ -1,11 +1,12 @@
 // Adaptação para rodar no navegador sem build system
 const { useState, useEffect, useRef } = React;
 
-// --- ÍCONES EMBUTIDOS MANUALMENTE (Para eliminar erro de biblioteca externa) ---
+// ==========================================
+// 1. ÍCONES (SVG NATIVO) - Essencial para não travar
+// ==========================================
 const IconBase = ({ children, size = 24, className = "" }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
 );
-// Definição manual dos ícones para garantir que carreguem
 const ChevronRight = (p) => <IconBase {...p}><path d="m9 18 6-6-6-6"/></IconBase>;
 const Folder = (p) => <IconBase {...p}><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></IconBase>;
 const Plus = (p) => <IconBase {...p}><path d="M5 12h14"/><path d="M12 5v14"/></IconBase>;
@@ -36,6 +37,9 @@ const Play = (p) => <IconBase {...p}><polygon points="5 3 19 12 5 21 5 3"/></Ico
 const Copy = (p) => <IconBase {...p}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></IconBase>;
 const MoreVertical = (p) => <IconBase {...p}><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></IconBase>;
 
+// ==========================================
+// 2. CONFIGURAÇÕES E DADOS
+// ==========================================
 const initialData = { income: 0, categories: [] };
 const availableColors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
 
@@ -59,7 +63,9 @@ const useHistoryState = (initial) => {
 
 const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(v) ? 0 : v);
 
-// --- COMPONENTES UI ---
+// ==========================================
+// 3. COMPONENTES UI (MODAIS E FORMS)
+// ==========================================
 const Modal = ({ children, isOpen, onClose }) => !isOpen ? null : (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
         <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md m-4 relative p-6">
@@ -184,7 +190,7 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
     const [actionExp, setActionExp] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
     
-    // SAFETY CHECK: Garante que expenses é um array
+    // SAFETY CHECK: Garante que expenses é um array. Evita tela branca.
     if (!category) return null;
     const expenses = category.expenses || [];
     
@@ -193,30 +199,82 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
 
     return (
         <div className="bg-gray-900 text-gray-200 p-6 rounded-2xl animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                 <div className="flex items-center gap-4"><button onClick={onBack} className="p-2 hover:bg-gray-700 rounded-full"><ArrowLeft /></button><h2 className="text-2xl font-bold">{category.name}</h2></div>
-                <div className="text-right"><p className="text-sm text-gray-400">Disponível</p><p className={`text-xl font-bold ${avail >= 0 ? 'text-green-400' : 'text-yellow-400'}`}>{formatCurrency(avail)}</p></div>
+                <div className="flex gap-6 text-right">
+                     <div><p className="text-sm text-gray-400">Orçado</p><p className="text-xl font-bold text-white">{formatCurrency(category.budgetedValue || 0)}</p></div>
+                     <div><p className="text-sm text-gray-400">Gasto</p><p className="text-xl font-bold text-red-400">{formatCurrency(total)}</p></div>
+                     <div><p className="text-sm text-gray-400">Disponível</p><p className={`text-xl font-bold ${avail >= 0 ? 'text-green-400' : 'text-yellow-400'}`}>{formatCurrency(avail)}</p></div>
+                </div>
             </div>
-            <button onClick={() => { setEditing(null); setIsFormOpen(true); }} className="mb-6 flex items-center gap-2 px-4 py-2 bg-blue-600 rounded hover:bg-blue-500 ml-auto"><Plus /> Nova Despesa</button>
-            <div className="space-y-2">
-                {expenses.length === 0 && <p className="text-center text-gray-500 py-4">Nenhuma despesa.</p>}
-                {expenses.map(exp => {
-                    const paid = exp.paidInstallments || 0;
-                    const done = paid >= exp.installments;
-                    return (
-                        <div key={exp.id} className={`flex justify-between items-center p-3 bg-gray-800 rounded border-l-4 ${exp.isPaused ? 'border-gray-600 opacity-60' : 'border-blue-500'}`}>
-                            <div>
-                                <p className="font-medium">{exp.description} {exp.isPaused && '(Pausado)'}</p>
-                                <p className="text-sm text-gray-400">{exp.status} - {formatCurrency(exp.installmentValue)} {exp.status === 'Andamento' && `(${paid}/${exp.installments})`}</p>
-                            </div>
-                            <div className="flex gap-2">
-                                {!done && !exp.isPaused && <button onClick={() => exp.status === 'Fixa-Variável' ? onOpenPaymentModal(exp) : onMarkAsPaid(category.id, exp.id)} className="p-2 text-green-400 hover:bg-green-500/20 rounded"><CheckCircle size={18}/></button>}
-                                <button onClick={() => setActionExp(exp)} className="p-2 text-gray-400 hover:bg-gray-700 rounded"><MoreVertical size={18}/></button>
-                            </div>
-                        </div>
-                    );
-                })}
+            <div className="flex justify-end mb-6">
+                <button onClick={() => { setEditing(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 font-semibold"><Plus size={20}/> Adicionar Despesa</button>
             </div>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left table-auto border-collapse">
+                    <thead className="border-b border-gray-700">
+                        <tr className="text-sm text-gray-400">
+                            <th className="p-4 font-semibold">Descrição</th>
+                            <th className="p-4 font-semibold text-right">Valor Mensal</th>
+                            <th className="p-4 font-semibold text-center">Progresso</th>
+                            <th className="p-4 font-semibold text-center">Status</th>
+                            <th className="p-4 font-semibold text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {expenses.length === 0 ? (
+                            <tr><td colSpan="5" className="text-center py-10 text-gray-500">Nenhuma despesa adicionada.</td></tr>
+                        ) : expenses.map(exp => {
+                            const isPaused = exp.isPaused;
+                            const paid = exp.paidInstallments || 0;
+                            const done = paid >= exp.installments;
+                            let dueDate = null, isOverdue = false;
+                            
+                            if (exp.startDate) {
+                                const start = new Date(exp.startDate);
+                                dueDate = new Date(start.getFullYear(), start.getMonth() + paid, start.getDate() + 1);
+                                const today = new Date(); today.setHours(0,0,0,0);
+                                if (today > dueDate && !done && !isPaused) isOverdue = true;
+                            }
+                            
+                            const remaining = (exp.installments - paid) * exp.installmentValue;
+                            const statusLabel = isPaused ? 'Pausado' : done ? 'Pago' : isOverdue ? 'Atrasado' : exp.status;
+                            const statusColor = isPaused ? 'bg-gray-700 text-gray-400' : done ? 'bg-green-500/20 text-green-400' : isOverdue ? 'bg-red-500/20 text-red-400' : exp.status === 'Fixa-Variável' ? 'bg-indigo-500/20 text-indigo-400' : exp.status === 'Fixo' ? 'bg-blue-500/20 text-blue-400' : 'bg-yellow-500/20 text-yellow-400';
+
+                            return (
+                                <tr key={exp.id} className={`border-b border-gray-800 hover:bg-gray-800/50 transition ${isPaused ? 'opacity-60' : ''}`}>
+                                    <td className="p-4 font-bold text-white">
+                                        <div className="flex items-center gap-2">
+                                            {exp.description}
+                                            {exp.observation && <div className="relative group"><MessageSquare size={16} className="text-gray-500 cursor-pointer"/><div className="absolute bottom-full left-0 mb-2 w-64 p-2 bg-gray-900 border border-gray-700 rounded text-xs hidden group-hover:block z-10">{exp.observation}</div></div>}
+                                        </div>
+                                    </td>
+                                    <td className="p-4 text-right font-bold text-blue-400">{formatCurrency(exp.installmentValue)}</td>
+                                    <td className="p-4 text-center text-gray-300">
+                                        {exp.status === 'Fixo' || exp.status === 'Fixa-Variável' ? (
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-xs text-gray-400">Próx. Venc:</span>
+                                                <span className="text-sm font-medium">{dueDate ? dueDate.toLocaleDateString('pt-BR') : 'N/A'}</span>
+                                            </div>
+                                        ) : exp.status === 'Variável' ? 'Pag. Única' : (
+                                            <div className="flex flex-col items-center">
+                                                <span className="font-bold">{paid} / {exp.installments}</span>
+                                                <span className="text-xs text-gray-500">Falta: {formatCurrency(remaining)}</span>
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="p-4 text-center"><span className={`px-3 py-1 rounded-md text-xs font-bold ${statusColor}`}>{statusLabel}</span></td>
+                                    <td className="p-4 text-center flex justify-center gap-2">
+                                        {!done && !isPaused && <button onClick={() => exp.status === 'Fixa-Variável' ? onOpenPaymentModal(exp) : onMarkAsPaid(category.id, exp.id)} className="p-2 text-green-400 hover:bg-green-500/20 rounded-lg"><CheckCircle size={20}/></button>}
+                                        <button onClick={() => setActionExp(exp)} className="p-2 text-gray-400 hover:bg-gray-700 rounded-lg"><MoreVertical size={20}/></button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
             <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdateExpense(category.id, d); else onAddExpense(category.id, d); setIsFormOpen(false); }} onCancel={() => setIsFormOpen(false)} expenseData={editing} /></Modal>
             <Modal isOpen={!!actionExp} onClose={() => setActionExp(null)}>
                 {actionExp && <div className="text-white space-y-2">
@@ -397,6 +455,9 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
     const [editingGroup, setEditingGroup] = useState(null);
     
+    // VARIÁVEL CRÍTICA PARA O MODAL DE CATEGORIA (FOI MOVIDA PARA CÁ PARA EVITAR REFERENCE ERROR)
+    const existingGroups = [...new Set((data.categories || []).map(c => c.group).filter(g => g && g.trim()))];
+
     // --- PERSISTÊNCIA REAL-TIME NO FIREBASE ---
     const [isLoadingData, setIsLoadingData] = useState(true);
     const { db, auth, appId } = window.firebaseApp || {};
