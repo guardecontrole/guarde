@@ -1,4 +1,4 @@
-// Adaptação para rodar no navegador sem build system
+// orcamento.js - Versão com Persistência no Firebase + Design Moderno
 const { useState, useEffect, useRef } = React;
 
 // ==========================================
@@ -185,7 +185,7 @@ const ExpenseForm = ({ onSubmit, onCancel, expenseData }) => {
 };
 
 const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAddExpense, onMarkAsPaid, onUndoPayment, onOpenPaymentModal, onTogglePause, onDuplicateExpense }) => {
-    const [formOpen, setFormOpen] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [actionExp, setActionExp] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
@@ -207,7 +207,7 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
                 </div>
             </div>
             <div className="flex justify-end mb-6">
-                <button onClick={() => { setEditing(null); setFormOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 font-semibold"><Plus size={20}/> Adicionar Despesa</button>
+                <button onClick={() => { setEditing(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 font-semibold"><Plus size={20}/> Adicionar Despesa</button>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left table-auto border-collapse">
@@ -274,11 +274,11 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
                 </table>
             </div>
 
-            <Modal isOpen={formOpen} onClose={() => setFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdateExpense(category.id, d); else onAddExpense(category.id, d); setFormOpen(false); }} onCancel={() => setFormOpen(false)} expenseData={editing} /></Modal>
+            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdateExpense(category.id, d); else onAddExpense(category.id, d); setIsFormOpen(false); }} onCancel={() => setIsFormOpen(false)} expenseData={editing} /></Modal>
             <Modal isOpen={!!actionExp} onClose={() => setActionExp(null)}>
                 {actionExp && <div className="text-white space-y-2">
                     <h3 className="text-center font-bold mb-4">{actionExp.description}</h3>
-                    <button onClick={() => { setEditing(actionExp); setFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button>
+                    <button onClick={() => { setEditing(actionExp); setIsFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button>
                     <button onClick={() => { onDuplicateExpense(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Copy size={18}/> Duplicar</button>
                     <button onClick={() => { onTogglePause(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2">{actionExp.isPaused ? <Play size={18}/> : <Pause size={18}/>} {actionExp.isPaused ? 'Reativar' : 'Pausar'}</button>
                     {actionExp.paidInstallments > 0 && <button onClick={() => { onUndoPayment(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-yellow-400 rounded flex gap-2"><Undo2 size={18}/> Desfazer Pagamento</button>}
@@ -378,7 +378,14 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3 border border-gray-700">
                     <div className="p-3 bg-green-500/20 rounded"><DollarSign className="text-green-400"/></div>
-                    <div><p className="text-gray-400 text-xs">Saldo Sugerido</p>{editInc ? <input autoFocus className="bg-transparent text-xl font-bold text-white w-full outline-none" value={incVal} onChange={e => setIncVal(e.target.value)} onBlur={() => { onUpdateIncome(parseFloat(incVal.replace(',', '.')) || 0); setEditInc(false); }} /> : <p onClick={() => !tempPresetCategories && setEditInc(true)} className="text-xl font-bold cursor-pointer hover:text-blue-400">{formatCurrency(income)}</p>}</div>
+                    <div>
+                        <p className="text-gray-400 text-xs">Saldo Sugerido</p>
+                        {editInc ? 
+                            <input autoFocus className="bg-transparent text-xl font-bold text-white w-full outline-none" value={incVal} onChange={e => setIncVal(e.target.value)} onBlur={() => { onUpdateIncome(parseFloat(incVal.replace(',', '.')) || 0); setEditInc(false); }} /> 
+                            : 
+                            <p onClick={() => !tempPresetCategories && setEditInc(true)} className="text-xl font-bold cursor-pointer hover:text-blue-400">{formatCurrency(income)}</p>
+                        }
+                    </div>
                 </div>
                 <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3"><div className="p-3 bg-red-500/20 rounded"><DollarSign className="text-red-400"/></div><div><p className="text-gray-400 text-xs">Despesas</p><p className="text-xl font-bold">{formatCurrency(totalExp)}</p></div></div>
                 <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3"><div className={`p-3 rounded ${balance >= 0 ? 'bg-blue-500/20' : 'bg-yellow-500/20'}`}><DollarSign className={balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}/></div><div><p className="text-gray-400 text-xs">Saldo</p><p className={`text-xl font-bold ${balance >= 0 ? 'text-white' : 'text-yellow-400'}`}>{formatCurrency(balance)}</p></div></div>
@@ -419,7 +426,7 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
     );
 };
 
-// Componente Principal
+// Componente Principal da Aplicação.
 const OrcamentoPage = ({ initialIncome = 0 }) => {
     const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -438,15 +445,56 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const [expenseToPay, setExpenseToPay] = useState(null);
     const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
     const [editingGroup, setEditingGroup] = useState(null);
+    
+    // --- PERSISTÊNCIA NO FIREBASE ---
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const { db, auth, appId } = window.firebaseApp || {};
 
-    const existingGroups = [...new Set(data.categories.map(c => c.group).filter(g => g && g.trim()))];
-
-    // AUTOMAÇÃO
+    // 1. Carregar dados do Firebase ao iniciar
     useEffect(() => {
-        if (initialIncome > 0 && Math.abs(initialIncome - data.income) > 0.01) {
+        const loadBudget = async () => {
+            if (!auth || !auth.currentUser) return;
+            try {
+                const docRef = window.firebase.doc(db, `artifacts/${appId}/users/${auth.currentUser.uid}/data/budget`);
+                const docSnap = await window.firebase.getDoc(docRef);
+                if (docSnap.exists()) {
+                    setInitialData(docSnap.data());
+                }
+            } catch (e) {
+                console.error("Erro ao carregar orçamento:", e);
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+        loadBudget();
+    }, []);
+
+    // 2. Salvar dados no Firebase quando houver alteração
+    useEffect(() => {
+        if (isLoadingData) return; // Não salvar enquanto carrega
+        if (!auth || !auth.currentUser) return;
+
+        const saveBudget = async () => {
+            try {
+                const docRef = window.firebase.doc(db, `artifacts/${appId}/users/${auth.currentUser.uid}/data/budget`);
+                await window.firebase.setDoc(docRef, data);
+            } catch (e) {
+                console.error("Erro ao salvar orçamento:", e);
+            }
+        };
+
+        const timeoutId = setTimeout(saveBudget, 1000); // Debounce de 1s
+        return () => clearTimeout(timeoutId);
+    }, [data, isLoadingData]);
+
+
+    // --- AUTOMAÇÃO DA RECEITA ---
+    useEffect(() => {
+        // Só atualiza a receita se os dados já tiverem carregado para não sobrescrever
+        if (!isLoadingData && initialIncome > 0 && Math.abs(initialIncome - data.income) > 0.01) {
             handleUpdateIncome(initialIncome);
         }
-    }, [initialIncome]);
+    }, [initialIncome, isLoadingData]);
 
     const handleUpdateIncome = (val) => {
         if (data.income === val) return;
@@ -511,6 +559,8 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const totalBudget = catsDisplay.reduce((a, c) => a + c.budgetedValue, 0);
     const totalPct = data.income > 0 ? (totalBudget / data.income) * 100 : 0;
     const unbalanced = Math.abs(100 - totalPct) > 0.1 && catsDisplay.length > 0;
+    
+    if (isLoadingData) return <div className="text-center text-gray-500 mt-20">Carregando Orçamento...</div>;
 
     return (
         <div className="bg-gray-900 min-h-screen font-sans text-gray-200 pb-40">
