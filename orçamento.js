@@ -1,13 +1,12 @@
-// Adaptação para rodar no navegador sem build system
+// orcamento.js - Versão com Cadeado Vermelho
 const { useState, useEffect, useRef } = React;
 
-// --- ÍCONES EMBUTIDOS (Solução Definitiva para não travar) ---
+// --- ÍCONES EMBUTIDOS ---
 const IconBase = ({ children, size = 24, className = "" }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         {children}
     </svg>
 );
-
 const ChevronRight = (p) => <IconBase {...p}><path d="m9 18 6-6-6-6"/></IconBase>;
 const Folder = (p) => <IconBase {...p}><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></IconBase>;
 const Plus = (p) => <IconBase {...p}><path d="M5 12h14"/><path d="M12 5v14"/></IconBase>;
@@ -180,7 +179,7 @@ const ExpenseForm = ({ onSubmit, onCancel, expenseData }) => {
     );
 };
 
-const ExpenseList = ({ category, onBack, onUpdate, onDelete, onAdd, onPay, onUndoPay, onOpenPayModal, onPause, onDup }) => {
+const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAddExpense, onMarkAsPaid, onUndoPayment, onOpenPaymentModal, onTogglePause, onDuplicateExpense }) => {
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [actionExp, setActionExp] = useState(null);
@@ -189,12 +188,12 @@ const ExpenseList = ({ category, onBack, onUpdate, onDelete, onAdd, onPay, onUnd
     const avail = (category.budgetedValue || 0) - total;
 
     return (
-        <div className="bg-gray-900 p-6 rounded-xl animate-fade-in">
+        <div className="bg-gray-900 text-gray-200 p-6 rounded-2xl animate-fade-in">
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4"><button onClick={onBack} className="p-2 hover:bg-gray-700 rounded-full"><ArrowLeft /></button><h2 className="text-2xl font-bold">{category.name}</h2></div>
                 <div className="text-right"><p className="text-sm text-gray-400">Disponível</p><p className={`text-xl font-bold ${avail >= 0 ? 'text-green-400' : 'text-yellow-400'}`}>{formatCurrency(avail)}</p></div>
             </div>
-            <button onClick={() => { setEditing(null); setFormOpen(true); }} className="mb-6 flex items-center gap-2 px-4 py-2 bg-blue-600 rounded hover:bg-blue-500 ml-auto"><Plus /> Nova Despesa</button>
+            <button onClick={() => { setEditing(null); setIsFormOpen(true); }} className="mb-6 flex items-center gap-2 px-4 py-2 bg-blue-600 rounded hover:bg-blue-500 ml-auto"><Plus /> Nova Despesa</button>
             <div className="space-y-2">
                 {category.expenses.length === 0 && <p className="text-center text-gray-500 py-4">Nenhuma despesa.</p>}
                 {category.expenses.map(exp => {
@@ -207,14 +206,14 @@ const ExpenseList = ({ category, onBack, onUpdate, onDelete, onAdd, onPay, onUnd
                                 <p className="text-sm text-gray-400">{exp.status} - {formatCurrency(exp.installmentValue)} {exp.status === 'Andamento' && `(${paid}/${exp.installments})`}</p>
                             </div>
                             <div className="flex gap-2">
-                                {!done && !exp.isPaused && <button onClick={() => exp.status === 'Fixa-Variável' ? onOpenPayModal(exp) : onPay(category.id, exp.id)} className="p-2 text-green-400 hover:bg-gray-700 rounded"><CheckCircle size={18}/></button>}
+                                {!done && !exp.isPaused && <button onClick={() => exp.status === 'Fixa-Variável' ? onOpenPaymentModal(exp) : onMarkAsPaid(category.id, exp.id)} className="p-2 text-green-400 hover:bg-gray-700 rounded"><CheckCircle size={18}/></button>}
                                 <button onClick={() => setActionExp(exp)} className="p-2 text-gray-400 hover:bg-gray-700 rounded"><MoreVertical size={18}/></button>
                             </div>
                         </div>
                     );
                 })}
             </div>
-            <Modal isOpen={formOpen} onClose={() => setFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdate(category.id, d); else onAdd(category.id, d); setFormOpen(false); }} onCancel={() => setFormOpen(false)} expenseData={editing} /></Modal>
+            <Modal isOpen={formOpen} onClose={() => setFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdateExpense(category.id, d); else onAddExpense(category.id, d); setFormOpen(false); }} onCancel={() => setFormOpen(false)} expenseData={editing} /></Modal>
             <Modal isOpen={!!actionExp} onClose={() => setActionExp(null)}>
                 {actionExp && <div className="text-white space-y-2">
                     <h3 className="text-center font-bold mb-4">{actionExp.description}</h3>
@@ -253,14 +252,14 @@ const CategoryItem = ({ category, income, onUpdateBudget, onSelectCategory, onEd
     const isTarget = dragProps.dragOverItem?.id === category.id;
 
     return (
-        <div draggable={!isPreviewing} onDragStart={() => dragProps.onDragStart({ id: category.id, type: 'category', group: category.group })} onDragEnd={dragProps.onDragEnd} onDrop={e => { e.preventDefault(); dragProps.onDrop({ id: category.id, type: 'category', group: category.group }); }} onDragOver={e => { e.preventDefault(); dragProps.onDragEnter({ id: category.id, type: 'category' }); }} className={`bg-gray-700/50 p-4 rounded-xl relative group ${isDragged ? 'opacity-50' : ''}`}>
+        <div draggable={!isPreviewing} onDragStart={() => dragProps.onDragStart({ id: category.id, type: 'category', group: category.group })} onDragEnd={dragProps.onDragEnd} onDrop={e => { e.preventDefault(); dragProps.onDrop({ id: category.id, type: 'category', group: category.group }); }} onDragOver={e => { e.preventDefault(); dragProps.onDragEnter({ id: category.id, type: 'category' }); }} className={`bg-gray-700/50 p-4 rounded-xl relative group ${isDragged ? 'opacity-50' : ''} ${category.isLocked ? 'border-2 border-red-500/50' : 'border-2 border-transparent'}`}>
             {isTarget && !isDragged && <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 rounded-full"/>}
             <div className="flex justify-between items-center mb-2">
-                <div onClick={() => !isPreviewing && onSelectCategory(category)} className="flex items-center gap-3 cursor-pointer flex-grow"><div className={`w-3 h-6 rounded ${category.color}`}/><Folder size={20} className="text-gray-400"/><span className="font-semibold">{category.name}</span></div>
-                <div className="flex gap-1"><button onClick={() => !isPreviewing && onToggleLock(category.id)} className={`p-2 rounded hover:bg-gray-600 ${category.isLocked ? 'text-yellow-400' : 'text-gray-400'}`}>{category.isLocked ? <Lock size={16}/> : <Unlock size={16}/>}</button><button onClick={() => !isPreviewing && onEdit(category)} className="p-2 text-gray-400 hover:text-blue-400 hover:bg-gray-600 rounded"><Edit size={16}/></button><button onClick={() => !isPreviewing && onDelete(category.id)} className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-600 rounded"><Trash2 size={16}/></button></div>
+                <div onClick={() => !isPreviewing && onSelectCategory(category)} className="flex items-center gap-3 cursor-pointer flex-grow"><div className={`w-3 h-6 rounded ${category.color}`}/><Folder size={20} className="text-gray-400"/><span className="font-semibold text-white">{category.name}</span></div>
+                <div className="flex gap-1"><button onClick={() => !isPreviewing && onToggleLock(category.id)} className={`p-2 rounded hover:bg-gray-600 ${category.isLocked ? 'text-red-400' : 'text-gray-400'}`}>{category.isLocked ? <Lock size={16}/> : <Unlock size={16}/>}</button><button onClick={() => !isPreviewing && onEdit(category)} className="p-2 text-gray-400 hover:text-blue-400 hover:bg-gray-600 rounded"><Edit size={16}/></button><button onClick={() => !isPreviewing && onDelete(category.id)} className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-600 rounded"><Trash2 size={16}/></button></div>
             </div>
             <div className="flex gap-2 items-center text-sm mb-2">
-                {mode === 'value' ? <div className="relative flex-grow"><span className="absolute left-2 top-2 text-gray-400">R$</span><input className="w-full bg-gray-800 rounded p-2 pl-8" value={val} onChange={e => setVal(e.target.value)} onBlur={() => handleBlur('value')} disabled={category.isLocked}/></div> : <div className="relative flex-grow"><input className="w-full bg-gray-800 rounded p-2 pr-8" value={pct} onChange={e => setPct(e.target.value)} onBlur={() => handleBlur('percent')} disabled={category.isLocked}/><span className="absolute right-2 top-2 text-gray-400">%</span></div>}
+                {mode === 'value' ? <div className="relative flex-grow"><span className="absolute left-2 top-2 text-gray-400">R$</span><input className="w-full bg-gray-800 text-white rounded p-2 pl-8" value={val} onChange={e => setVal(e.target.value)} onBlur={() => handleBlur('value')} disabled={category.isLocked}/></div> : <div className="relative flex-grow"><input className="w-full bg-gray-800 text-white rounded p-2 pr-8" value={pct} onChange={e => setPct(e.target.value)} onBlur={() => handleBlur('percent')} disabled={category.isLocked}/><span className="absolute right-2 top-2 text-gray-400">%</span></div>}
                 <button onClick={() => setMode(m => m === 'value' ? 'percent' : 'value')} className="p-2 bg-gray-800 rounded hover:text-blue-400"><RefreshCw size={16}/></button>
             </div>
             <div className="flex justify-between text-xs text-gray-400 mb-1"><span>Gasto: {formatCurrency(spent)}</span><span className={rest < 0 ? 'text-red-400' : 'text-green-400'}>{rest < 0 ? 'Estourado' : 'Sobra'}: {formatCurrency(Math.abs(rest))}</span></div>
@@ -362,29 +361,26 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
     );
 };
 
-// Componente Principal da Aplicação.
+// Componente Principal
 const OrcamentoPage = ({ initialIncome = 0 }) => {
     const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-    const [editingCategory, setEditingCategory] = useState(null);
-    const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-    const [categoryToDelete, setCategoryToDelete] = useState(null);
-    const [isDeleteGroupConfirmOpen, setDeleteGroupConfirmOpen] = useState(false);
-    const [groupToDelete, setGroupToDelete] = useState(null);
-    const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
-    const [isImportConfirmOpen, setImportConfirmOpen] = useState(false);
-    const [fileToImport, setFileToImport] = useState(null);
-    const fileInputRef = useRef(null);
-    const [tempPresetCategories, setTempPresetCategories] = useState(null);
-    const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
-    const [expenseToPay, setExpenseToPay] = useState(null);
-    const [isEditGroupModalOpen, setEditGroupModalOpen] = useState(false);
-    const [editingGroup, setEditingGroup] = useState(null);
-
+    const [catModalOpen, setCatModalOpen] = useState(false);
+    const [editCat, setEditCat] = useState(null);
+    const [delCatId, setDelCatId] = useState(null);
+    const [delGrpName, setDelGrpName] = useState(null);
+    const [presetOpen, setPresetOpen] = useState(false);
+    const [importOpen, setImportOpen] = useState(false);
+    const [importDataStr, setImportDataStr] = useState(null);
+    const [payModalOpen, setPayModalOpen] = useState(false);
+    const [payExpense, setPayExpense] = useState(null);
+    const [grpEditName, setGrpEditName] = useState(null);
+    const [tempPreset, setTempPreset] = useState(null);
+    
+    const fileRef = useRef(null);
     const existingGroups = [...new Set(data.categories.map(c => c.group).filter(g => g && g.trim()))];
 
-    // --- AUTOMAÇÃO (ÚNICA PARTE NOVA) ---
+    // AUTOMAÇÃO
     useEffect(() => {
         if (initialIncome > 0 && Math.abs(initialIncome - data.income) > 0.01) {
             handleUpdateIncome(initialIncome);
@@ -403,7 +399,7 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
 
     const handleCategorySubmit = (d) => {
         const newCats = d.id ? data.categories.map(c => c.id === d.id ? { ...c, ...d } : c) : [...data.categories, { ...d, id: Date.now(), budgetedValue: 0, expenses: [], isLocked: false }];
-        setData({ ...data, categories: newCats }); setIsCategoryModalOpen(false); setEditingCategory(null);
+        setData({ ...data, categories: newCats }); setCatModalOpen(false); setEditingCategory(null);
     };
     const confirmDeleteCategory = () => { if (categoryToDelete) setData({ ...data, categories: data.categories.filter(c => c.id !== categoryToDelete) }); setDeleteConfirmOpen(false); setCategoryToDelete(null); };
     const confirmDeleteGroup = () => { if (groupToDelete) setData({ ...data, categories: data.categories.map(c => c.group === groupToDelete ? { ...c, group: '' } : c) }); setDeleteGroupConfirmOpen(false); setGroupToDelete(null); };
@@ -463,7 +459,7 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
                 <header className="mb-8"><h1 className="text-3xl sm:text-4xl font-bold text-white text-center">Controle de Orçamento Pessoal</h1><p className="text-center text-gray-400 mt-2">Controle suas finanças de forma simples e visual.</p></header>
                 <main>
                     {selectedCategory ? (
-                        <ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))} onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))} onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])} onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))} onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: Math.max(0, x.paidInstallments - 1), paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))} onOpenPaymentModal={e => { setExpenseToPay(e); setPaymentModalOpen(true); }} onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })} />
+                        <ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))} onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))} onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])} onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))} onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: x.paidInstallments - 1, paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))} onOpenPaymentModal={e => { setExpenseToPay(e); setPaymentModalOpen(true); }} onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })} />
                     ) : (
                         <CategoryList categories={data.categories} income={data.income} onSelectCategory={setSelectedCategory} onUpdateIncome={handleUpdateIncome} onUpdateCategoryBudget={handleUpdateCategoryBudget} onOpenCategoryModal={c => { setEditingCategory(c || null); setIsCategoryModalOpen(true); }} onDeleteCategoryRequest={id => { setCategoryToDelete(id); setDeleteConfirmOpen(true); }} onDeleteGroupRequest={grp => { setGroupToDelete(grp); setDeleteGroupConfirmOpen(true); }} onOpenPresetModal={() => setIsPresetModalOpen(true)} onExport={handleExportData} onImport={handleImportClick} tempPresetCategories={tempPresetCategories} onConfirmPreset={() => { setData({ ...data, categories: tempPresetCategories }); setTempPresetCategories(null); }} onCancelPreset={() => { setTempPresetCategories(null); setIsPresetModalOpen(true); }} onToggleLock={handleToggleCategoryLock} onMoveItem={handleMoveItem} onOpenEditGroupModal={n => { setEditingGroup(n); setEditGroupModalOpen(true); }} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
                     )}
