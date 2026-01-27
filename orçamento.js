@@ -1,5 +1,5 @@
 // Adaptação para rodar no navegador sem build system
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useMemo } = React;
 
 // ==========================================
 // 1. ÍCONES (SVG NATIVO)
@@ -64,7 +64,7 @@ const useHistoryState = (initial) => {
 const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(v) ? 0 : v);
 
 // ==========================================
-// 3. COMPONENTES UI (MODAIS E FORMS)
+// 3. COMPONENTES UI
 // ==========================================
 const Modal = ({ children, isOpen, onClose }) => !isOpen ? null : (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
@@ -140,7 +140,7 @@ const CategoryForm = ({ onSubmit, onCancel, categoryData, existingGroups = [] })
             <h3 className="text-xl font-bold text-white">{categoryData?.id ? 'Editar' : 'Nova'} Categoria</h3>
             <input value={name} onChange={e => setName(e.target.value)} className="w-full bg-gray-700 text-white rounded p-3" placeholder="Nome" required />
             <input value={group} onChange={e => setGroup(e.target.value)} className="w-full bg-gray-700 text-white rounded p-3" placeholder="Grupo (Opcional)" list="gs" />
-            <datalist id="gs">{existingGroups.map(g => <option key={g} value={g} />)}</datalist>
+            <datalist id="gs">{(existingGroups || []).map(g => <option key={g} value={g} />)}</datalist>
             <div className="flex gap-3">{availableColors.map(c => <div key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full cursor-pointer ${c} ${color === c ? 'ring-2 ring-white' : ''}`} />)}</div>
             <div className="flex justify-end gap-3"><button type="button" onClick={onCancel} className="px-6 py-2 bg-gray-600 rounded text-white">Cancelar</button><button type="submit" className="px-6 py-2 bg-blue-600 rounded text-white">Salvar</button></div>
         </form>
@@ -190,10 +190,8 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
     const [actionExp, setActionExp] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
     
-    // SAFETY CHECK: Garante que expenses é um array. Evita tela branca.
     if (!category) return null;
     const expenses = category.expenses || [];
-    
     const total = expenses.filter(e => !e.isPaused).reduce((acc, e) => acc + e.installmentValue, 0);
     const avail = (category.budgetedValue || 0) - total;
 
@@ -213,78 +211,32 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
             <div className="overflow-x-auto">
                 <table className="w-full text-left table-auto border-collapse">
                     <thead className="border-b border-gray-700">
-                        <tr className="text-sm text-gray-400">
-                            <th className="p-4 font-semibold">Descrição</th>
-                            <th className="p-4 font-semibold text-right">Valor Mensal</th>
-                            <th className="p-4 font-semibold text-center">Progresso</th>
-                            <th className="p-4 font-semibold text-center">Status</th>
-                            <th className="p-4 font-semibold text-center">Ações</th>
-                        </tr>
+                        <tr className="text-sm text-gray-400"><th className="p-4">Descrição</th><th className="p-4 text-right">Valor</th><th className="p-4 text-center">Progresso</th><th className="p-4 text-center">Status</th><th className="p-4 text-center">Ações</th></tr>
                     </thead>
                     <tbody>
-                        {expenses.length === 0 ? (
-                            <tr><td colSpan="5" className="text-center py-10 text-gray-500">Nenhuma despesa adicionada.</td></tr>
-                        ) : expenses.map(exp => {
-                            const isPaused = exp.isPaused;
-                            const paid = exp.paidInstallments || 0;
-                            const done = paid >= exp.installments;
+                        {expenses.length === 0 ? (<tr><td colSpan="5" className="text-center py-10 text-gray-500">Nenhuma despesa adicionada.</td></tr>) : expenses.map(exp => {
+                            const isPaused = exp.isPaused; const paid = exp.paidInstallments || 0; const done = paid >= exp.installments;
                             let dueDate = null, isOverdue = false;
-                            
-                            if (exp.startDate) {
-                                const start = new Date(exp.startDate);
-                                dueDate = new Date(start.getFullYear(), start.getMonth() + paid, start.getDate() + 1);
-                                const today = new Date(); today.setHours(0,0,0,0);
-                                if (today > dueDate && !done && !isPaused) isOverdue = true;
-                            }
-                            
+                            if (exp.startDate) { const start = new Date(exp.startDate); dueDate = new Date(start.getFullYear(), start.getMonth() + paid, start.getDate() + 1); const today = new Date(); today.setHours(0,0,0,0); if (today > dueDate && !done && !isPaused) isOverdue = true; }
                             const remaining = (exp.installments - paid) * exp.installmentValue;
                             const statusLabel = isPaused ? 'Pausado' : done ? 'Pago' : isOverdue ? 'Atrasado' : exp.status;
                             const statusColor = isPaused ? 'bg-gray-700 text-gray-400' : done ? 'bg-green-500/20 text-green-400' : isOverdue ? 'bg-red-500/20 text-red-400' : exp.status === 'Fixa-Variável' ? 'bg-indigo-500/20 text-indigo-400' : exp.status === 'Fixo' ? 'bg-blue-500/20 text-blue-400' : 'bg-yellow-500/20 text-yellow-400';
-
                             return (
                                 <tr key={exp.id} className={`border-b border-gray-800 hover:bg-gray-800/50 transition ${isPaused ? 'opacity-60' : ''}`}>
-                                    <td className="p-4 font-bold text-white">
-                                        <div className="flex items-center gap-2">
-                                            {exp.description}
-                                            {exp.observation && <div className="relative group"><MessageSquare size={16} className="text-gray-500 cursor-pointer"/><div className="absolute bottom-full left-0 mb-2 w-64 p-2 bg-gray-900 border border-gray-700 rounded text-xs hidden group-hover:block z-10">{exp.observation}</div></div>}
-                                        </div>
-                                    </td>
+                                    <td className="p-4 font-bold text-white"><div className="flex items-center gap-2">{exp.description}{exp.observation && <div className="relative group"><MessageSquare size={16} className="text-gray-500 cursor-pointer"/><div className="absolute bottom-full left-0 mb-2 w-64 p-2 bg-gray-900 border border-gray-700 rounded text-xs hidden group-hover:block z-10">{exp.observation}</div></div>}</div></td>
                                     <td className="p-4 text-right font-bold text-blue-400">{formatCurrency(exp.installmentValue)}</td>
-                                    <td className="p-4 text-center text-gray-300">
-                                        {exp.status === 'Fixo' || exp.status === 'Fixa-Variável' ? (
-                                            <div className="flex flex-col items-center">
-                                                <span className="text-xs text-gray-400">Próx. Venc:</span>
-                                                <span className="text-sm font-medium">{dueDate ? dueDate.toLocaleDateString('pt-BR') : 'N/A'}</span>
-                                            </div>
-                                        ) : exp.status === 'Variável' ? 'Pag. Única' : (
-                                            <div className="flex flex-col items-center">
-                                                <span className="font-bold">{paid} / {exp.installments}</span>
-                                                <span className="text-xs text-gray-500">Falta: {formatCurrency(remaining)}</span>
-                                            </div>
-                                        )}
-                                    </td>
+                                    <td className="p-4 text-center text-gray-300">{exp.status === 'Fixo' || exp.status === 'Fixa-Variável' ? (<div className="flex flex-col items-center"><span className="text-xs text-gray-400">Próx. Venc:</span><span className="text-sm font-medium">{dueDate ? dueDate.toLocaleDateString('pt-BR') : 'N/A'}</span></div>) : exp.status === 'Variável' ? 'Pag. Única' : (<div className="flex flex-col items-center"><span className="font-bold">{paid} / {exp.installments}</span><span className="text-xs text-gray-500">Falta: {formatCurrency(remaining)}</span></div>)}</td>
                                     <td className="p-4 text-center"><span className={`px-3 py-1 rounded-md text-xs font-bold ${statusColor}`}>{statusLabel}</span></td>
-                                    <td className="p-4 text-center flex justify-center gap-2">
-                                        {!done && !isPaused && <button onClick={() => exp.status === 'Fixa-Variável' ? onOpenPaymentModal(exp) : onMarkAsPaid(category.id, exp.id)} className="p-2 text-green-400 hover:bg-green-500/20 rounded-lg"><CheckCircle size={20}/></button>}
-                                        <button onClick={() => setActionExp(exp)} className="p-2 text-gray-400 hover:bg-gray-700 rounded-lg"><MoreVertical size={20}/></button>
-                                    </td>
+                                    <td className="p-4 text-center flex justify-center gap-2">{!done && !isPaused && <button onClick={() => exp.status === 'Fixa-Variável' ? onOpenPaymentModal(exp) : onMarkAsPaid(category.id, exp.id)} className="p-2 text-green-400 hover:bg-green-500/20 rounded-lg"><CheckCircle size={20}/></button>}<button onClick={() => setActionExp(exp)} className="p-2 text-gray-400 hover:bg-gray-700 rounded-lg"><MoreVertical size={20}/></button></td>
                                 </tr>
                             );
                         })}
                     </tbody>
                 </table>
             </div>
-
             <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdateExpense(category.id, d); else onAddExpense(category.id, d); setIsFormOpen(false); }} onCancel={() => setIsFormOpen(false)} expenseData={editing} /></Modal>
             <Modal isOpen={!!actionExp} onClose={() => setActionExp(null)}>
-                {actionExp && <div className="text-white space-y-2">
-                    <h3 className="text-center font-bold mb-4">{actionExp.description}</h3>
-                    <button onClick={() => { setEditing(actionExp); setIsFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button>
-                    <button onClick={() => { onDuplicateExpense(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Copy size={18}/> Duplicar</button>
-                    <button onClick={() => { onTogglePause(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2">{actionExp.isPaused ? <Play size={18}/> : <Pause size={18}/>} {actionExp.isPaused ? 'Reativar' : 'Pausar'}</button>
-                    {actionExp.paidInstallments > 0 && <button onClick={() => { onUndoPayment(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-yellow-400 rounded flex gap-2"><Undo2 size={18}/> Desfazer Pagamento</button>}
-                    <button onClick={() => { setConfirmDelete(actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-red-400 rounded flex gap-2"><Trash2 size={18}/> Excluir</button>
-                </div>}
+                {actionExp && <div className="text-white space-y-2"><h3 className="text-center font-bold mb-4">{actionExp.description}</h3><button onClick={() => { setEditing(actionExp); setIsFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button><button onClick={() => { onDuplicateExpense(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Copy size={18}/> Duplicar</button><button onClick={() => { onTogglePause(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2">{actionExp.isPaused ? <Play size={18}/> : <Pause size={18}/>} {actionExp.isPaused ? 'Reativar' : 'Pausar'}</button>{actionExp.paidInstallments > 0 && <button onClick={() => { onUndoPayment(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-yellow-400 rounded flex gap-2"><Undo2 size={18}/> Desfazer Pagamento</button>}<button onClick={() => { setConfirmDelete(actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-red-400 rounded flex gap-2"><Trash2 size={18}/> Excluir</button></div>}
             </Modal>
             <ConfirmationModal isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={() => { onDeleteExpense(category.id, confirmDelete); setConfirmDelete(null); }} title="Excluir Despesa" message="Tem certeza?" />
         </div>
@@ -307,7 +259,6 @@ const CategoryItem = ({ category, income, onUpdateBudget, onSelectCategory, onEd
         onUpdateBudget(category.id, type === 'value' ? val : pct, type);
     };
 
-    // SAFETY CHECK: Garante que expenses é um array
     const expenses = category.expenses || [];
     const spent = expenses.filter(e => !e.isPaused).reduce((a, b) => a + b.installmentValue, 0);
     const rest = (category.budgetedValue || 0) - spent;
@@ -316,7 +267,6 @@ const CategoryItem = ({ category, income, onUpdateBudget, onSelectCategory, onEd
     const isDragged = dragProps.draggedItem?.id === category.id;
     const isTarget = dragProps.dragOverItem?.id === category.id;
 
-    // --- CADEADO VERMELHO MANTIDO ---
     return (
         <div draggable={!isPreviewing} onDragStart={() => dragProps.onDragStart({ id: category.id, type: 'category', group: category.group })} onDragEnd={dragProps.onDragEnd} onDrop={e => { e.preventDefault(); dragProps.onDrop({ id: category.id, type: 'category', group: category.group }); }} onDragOver={e => { e.preventDefault(); dragProps.onDragEnter({ id: category.id, type: 'category' }); }} className={`bg-gray-700/50 p-4 rounded-xl relative group ${isDragged ? 'opacity-50' : ''} ${category.isLocked ? 'border-2 border-red-500/50' : 'border-2 border-transparent'}`}>
             {isTarget && !isDragged && <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 rounded-full"/>}
@@ -350,10 +300,7 @@ const BudgetAdjustmentBar = ({ totalPercentage, onAdjust }) => {
 };
 
 const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, onUpdateCategoryBudget, onOpenCategoryModal, onDeleteCategoryRequest, onDeleteGroupRequest, onOpenPresetModal, onExport, onImport, tempPresetCategories, onConfirmPreset, onCancelPreset, onToggleLock, onMoveItem, onOpenEditGroupModal, undo, redo, canUndo, canRedo }) => {
-    // BLINDAGEM: Garante array
     const cats = tempPresetCategories || categories || [];
-    
-    // BLINDAGEM: Verifica se expenses existe antes de filtrar
     const totalExp = cats.reduce((acc, c) => {
         const catExpenses = c.expenses || [];
         const catTotal = catExpenses.filter(e => !e.isPaused).reduce((a, b) => a + b.installmentValue, 0);
@@ -387,14 +334,7 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3 border border-gray-700">
                     <div className="p-3 bg-green-500/20 rounded"><DollarSign className="text-green-400"/></div>
-                    <div>
-                        <p className="text-gray-400 text-xs">Saldo Sugerido</p>
-                        {editInc ? 
-                            <input autoFocus className="bg-transparent text-xl font-bold text-white w-full outline-none" value={incVal} onChange={e => setIncVal(e.target.value)} onBlur={() => { onUpdateIncome(parseFloat(incVal.replace(',', '.')) || 0); setEditInc(false); }} /> 
-                            : 
-                            <p onClick={() => !tempPresetCategories && setEditInc(true)} className="text-xl font-bold cursor-pointer hover:text-blue-400">{formatCurrency(income)}</p>
-                        }
-                    </div>
+                    <div><p className="text-gray-400 text-xs">Saldo Sugerido</p>{editInc ? <input autoFocus className="bg-transparent text-xl font-bold text-white w-full outline-none" value={incVal} onChange={e => setIncVal(e.target.value)} onBlur={() => { onUpdateIncome(parseFloat(incVal.replace(',', '.')) || 0); setEditInc(false); }} /> : <p onClick={() => !tempPresetCategories && setEditInc(true)} className="text-xl font-bold cursor-pointer hover:text-blue-400">{formatCurrency(income)}</p>}</div>
                 </div>
                 <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3"><div className="p-3 bg-red-500/20 rounded"><DollarSign className="text-red-400"/></div><div><p className="text-gray-400 text-xs">Despesas</p><p className="text-xl font-bold">{formatCurrency(totalExp)}</p></div></div>
                 <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3"><div className={`p-3 rounded ${balance >= 0 ? 'bg-blue-500/20' : 'bg-yellow-500/20'}`}><DollarSign className={balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}/></div><div><p className="text-gray-400 text-xs">Saldo</p><p className={`text-xl font-bold ${balance >= 0 ? 'text-white' : 'text-yellow-400'}`}>{formatCurrency(balance)}</p></div></div>
@@ -435,9 +375,17 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
     );
 };
 
-// Componente Principal
+// Componente Principal - AQUI ESTÁ A CORREÇÃO DEFINITIVA
 const OrcamentoPage = ({ initialIncome = 0 }) => {
+    // 1. DADOS INICIAIS
     const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
+    
+    // 2. CORREÇÃO DO ERRO 'REFERENCE ERROR': DEFINIÇÃO SEGURA DOS GRUPOS EXISTENTES NO TOPO
+    const existingGroups = useMemo(() => {
+        const cats = data?.categories || [];
+        return [...new Set(cats.map(c => c.group).filter(g => g && g.trim()))];
+    }, [data]);
+
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
