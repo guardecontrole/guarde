@@ -1,6 +1,6 @@
 const { useState, useEffect } = React;
 
-// --- ÍCONES ---
+// --- ÍCONES (Visual Clean) ---
 const Icon = ({ name, size = 20, className = "" }) => {
     const icons = {
         'dashboard': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>,
@@ -15,7 +15,7 @@ const Icon = ({ name, size = 20, className = "" }) => {
     return icons[name] || null;
 };
 
-// --- LAYOUT PRINCIPAL ---
+// --- ESTRUTURA DO SITE (MENU LATERAL + CONTEÚDO) ---
 const Layout = ({ children, activePage, onNavigate, user, onLogout, isDark, toggleTheme }) => {
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -25,7 +25,7 @@ const Layout = ({ children, activePage, onNavigate, user, onLogout, isDark, togg
 
     return (
         <div className="flex h-screen bg-app text-main font-sans overflow-hidden transition-colors duration-300">
-            {/* SIDEBAR DESKTOP */}
+            {/* MENU LATERAL (PC) */}
             <aside className="hidden md:flex w-[290px] flex-col bg-sidebar transition-colors duration-300 z-20 border-r border-border">
                 <div className="p-8 flex items-center gap-3">
                     <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30">F</div>
@@ -54,13 +54,15 @@ const Layout = ({ children, activePage, onNavigate, user, onLogout, isDark, togg
                 </div>
             </aside>
 
-            {/* CONTEÚDO PRINCIPAL */}
+            {/* ÁREA PRINCIPAL */}
             <main className="flex-1 flex flex-col h-full relative overflow-hidden bg-app transition-colors duration-300">
+                {/* Cabeçalho Mobile */}
                 <header className="md:hidden h-20 bg-sidebar flex items-center justify-between px-6 shadow-sm z-20 border-b border-border">
                     <div className="flex items-center gap-2"><div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">F</div><span className="text-lg font-bold text-title">Financely</span></div>
                     <div className="flex gap-3"><button onClick={toggleTheme} className="p-2 text-sec bg-hover rounded-xl"><Icon name={isDark ? 'sun' : 'moon'} size={20}/></button></div>
                 </header>
 
+                {/* Cabeçalho PC */}
                 <header className="hidden md:flex h-24 items-center justify-between px-10 bg-app transition-colors duration-300">
                     <div><p className="text-sm text-sec font-medium mb-1">Pages / {activePage.charAt(0).toUpperCase() + activePage.slice(1)}</p><h2 className="text-3xl font-bold text-title tracking-tight">{activePage === 'dashboard' ? 'Dashboard Principal' : activePage === 'orcamento' ? 'Controle de Orçamento' : 'Simulação'}</h2></div>
                     <div className="flex items-center gap-4 bg-sidebar p-2.5 rounded-full shadow-lg shadow-gray-200/5 dark:shadow-black/20 border border-border">
@@ -71,6 +73,7 @@ const Layout = ({ children, activePage, onNavigate, user, onLogout, isDark, togg
 
                 <div className="flex-1 overflow-y-auto p-4 md:p-10 scroll-smooth"><div className="max-w-[1600px] mx-auto pb-24 md:pb-8">{children}</div></div>
 
+                {/* Menu Inferior (Mobile) */}
                 <nav className="md:hidden fixed bottom-0 left-0 right-0 h-20 bg-sidebar border-t border-border flex justify-around items-center px-4 z-30 pb-2 rounded-t-[30px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
                     {menuItems.map(item => (<button key={item.id} onClick={() => onNavigate(item.id)} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-300 ${activePage === item.id ? 'bg-primary text-white shadow-lg shadow-primary/30 -translate-y-5' : 'text-sec'}`}><Icon name={item.icon} size={24} /></button>))}
                     <button onClick={onLogout} className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl text-sec hover:text-red-500"><Icon name="log-out" size={24} /></button>
@@ -80,7 +83,7 @@ const Layout = ({ children, activePage, onNavigate, user, onLogout, isDark, togg
     );
 };
 
-// --- APP RAÍZ (COM LOGIN) ---
+// --- APP E LÓGICA DE LOGIN ---
 const App = () => {
     const [user, setUser] = useState(null);
     const [currentPage, setCurrentPage] = useState('dashboard');
@@ -88,10 +91,10 @@ const App = () => {
     const [isDarkMode, setIsDarkMode] = useState(true);
     const [globalIncome, setGlobalIncome] = useState(0);
 
-    // Estados do Formulário de Login
+    // Estados do Login
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isRegistering, setIsRegistering] = useState(false); // Alterna entre Login e Cadastro
+    const [isRegistering, setIsRegistering] = useState(false);
     const [authError, setAuthError] = useState('');
 
     useEffect(() => {
@@ -108,7 +111,7 @@ const App = () => {
         return () => unsubscribe();
     }, []);
 
-    // Login com Google
+    // Login Google
     const handleGoogleLogin = async () => {
         try {
             setAuthError('');
@@ -116,11 +119,11 @@ const App = () => {
             await window.firebaseApp.auth.signInWithPopup(provider);
         } catch (error) {
             console.error(error);
-            setAuthError('Erro no Google. Tente usar email/senha.');
+            setAuthError('Erro no Google. Tente email e senha.');
         }
     };
 
-    // Login com Email/Senha
+    // Login Email/Senha (Restaurado com atributos para funcionar o Autofill)
     const handleEmailAuth = async (e) => {
         e.preventDefault();
         setAuthError('');
@@ -131,12 +134,13 @@ const App = () => {
                 await window.firebaseApp.auth.signInWithEmailAndPassword(email, password);
             }
         } catch (error) {
-            console.error(error);
+            console.error("Erro Auth:", error);
             if (error.code === 'auth/wrong-password') setAuthError('Senha incorreta.');
-            else if (error.code === 'auth/user-not-found') setAuthError('Usuário não encontrado.');
-            else if (error.code === 'auth/email-already-in-use') setAuthError('Este email já está cadastrado.');
-            else if (error.code === 'auth/weak-password') setAuthError('A senha deve ter pelo menos 6 caracteres.');
-            else setAuthError('Ocorreu um erro. Verifique seus dados.');
+            else if (error.code === 'auth/user-not-found') setAuthError('E-mail não cadastrado.');
+            else if (error.code === 'auth/email-already-in-use') setAuthError('E-mail já está em uso.');
+            else if (error.code === 'auth/weak-password') setAuthError('Senha muito fraca.');
+            else if (error.code === 'auth/invalid-credential') setAuthError('Credenciais inválidas.');
+            else setAuthError('Erro ao entrar. Verifique os dados.');
         }
     };
 
@@ -156,11 +160,10 @@ const App = () => {
 
     if (loading) return <div className="min-h-screen bg-app flex items-center justify-center"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
 
-    // --- TELA DE LOGIN ATUALIZADA ---
+    // --- TELA DE LOGIN (COM AUTOCOMPLETE RESTAURADO) ---
     if (!user) {
         return (
             <div className="min-h-screen bg-app flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-500">
-                {/* Background Decorativo */}
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
                     <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-primary/20 blur-[120px] rounded-full"></div>
                     <div className="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] bg-purple-600/20 blur-[100px] rounded-full"></div>
@@ -169,13 +172,17 @@ const App = () => {
                 <div className="bg-sidebar p-8 md:p-10 rounded-[30px] shadow-2xl w-full max-w-sm text-center border border-border relative z-10">
                     <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg shadow-primary/40">F</div>
                     <h1 className="text-2xl font-bold text-title mb-2 font-poppins">{isRegistering ? 'Criar Conta' : 'Bem-vindo'}</h1>
-                    <p className="text-sec mb-8 text-sm">Gerencie suas finanças com inteligência.</p>
+                    <p className="text-sec mb-8 text-sm">Entre com suas credenciais.</p>
 
                     <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
                         <div className="relative">
                             <Icon name="mail" className="absolute left-4 top-3.5 text-sec" size={18} />
+                            {/* CAMPO EMAIL CORRIGIDO */}
                             <input 
                                 type="email" 
+                                name="email"
+                                id="email"
+                                autoComplete="username"
                                 placeholder="Seu e-mail" 
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -185,8 +192,12 @@ const App = () => {
                         </div>
                         <div className="relative">
                             <Icon name="lock" className="absolute left-4 top-3.5 text-sec" size={18} />
+                            {/* CAMPO SENHA CORRIGIDO */}
                             <input 
                                 type="password" 
+                                name="password"
+                                id="password"
+                                autoComplete="current-password"
                                 placeholder="Sua senha" 
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -195,7 +206,7 @@ const App = () => {
                             />
                         </div>
                         
-                        {authError && <p className="text-red-500 text-xs text-left pl-1">{authError}</p>}
+                        {authError && <p className="text-red-500 text-xs text-left pl-1 font-bold">{authError}</p>}
 
                         <button type="submit" className="w-full py-3.5 bg-primary hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-all transform hover:scale-[1.02] shadow-lg shadow-primary/30">
                             {isRegistering ? 'Cadastrar' : 'Entrar'}
@@ -204,7 +215,7 @@ const App = () => {
 
                     <div className="flex items-center gap-4 mb-6">
                         <div className="h-px bg-border flex-1"></div>
-                        <span className="text-xs text-sec">ou continue com</span>
+                        <span className="text-xs text-sec">ou</span>
                         <div className="h-px bg-border flex-1"></div>
                     </div>
                     
@@ -215,7 +226,7 @@ const App = () => {
 
                     <p className="mt-6 text-sm text-sec">
                         {isRegistering ? 'Já tem uma conta?' : 'Não tem uma conta?'}
-                        <button onClick={() => setIsRegistering(!isRegistering)} className="text-primary font-bold ml-1 hover:underline">
+                        <button onClick={() => { setIsRegistering(!isRegistering); setAuthError(''); }} className="text-primary font-bold ml-1 hover:underline">
                             {isRegistering ? 'Fazer Login' : 'Cadastre-se'}
                         </button>
                     </p>
@@ -225,7 +236,14 @@ const App = () => {
     }
 
     return (
-        <Layout activePage={currentPage} onNavigate={setCurrentPage} user={user} onLogout={handleLogout} isDark={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)}>
+        <Layout 
+            activePage={currentPage} 
+            onNavigate={setCurrentPage} 
+            user={user} 
+            onLogout={handleLogout}
+            isDark={isDarkMode}
+            toggleTheme={() => setIsDarkMode(!isDarkMode)}
+        >
             {renderPage()}
         </Layout>
     );
