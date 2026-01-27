@@ -1,8 +1,8 @@
-// orcamento.js - Versão com Persistência no Firebase + Design Moderno
+// Adaptação para rodar no navegador sem build system
 const { useState, useEffect, useRef } = React;
 
 // ==========================================
-// 1. ÍCONES (SVG NATIVO)
+// 1. ÍCONES (SVG NATIVO) - Essencial para não travar
 // ==========================================
 const IconBase = ({ children, size = 24, className = "" }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
@@ -191,6 +191,7 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
     const [confirmDelete, setConfirmDelete] = useState(null);
     
     // SAFETY CHECK: Garante que expenses é um array. Evita tela branca.
+    if (!category) return null;
     const expenses = category.expenses || [];
     
     const total = expenses.filter(e => !e.isPaused).reduce((acc, e) => acc + e.installmentValue, 0);
@@ -426,7 +427,7 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
     );
 };
 
-// Componente Principal da Aplicação.
+// Componente Principal
 const OrcamentoPage = ({ initialIncome = 0 }) => {
     const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -453,7 +454,7 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     // 1. Carregar dados do Firebase ao iniciar
     useEffect(() => {
         const loadBudget = async () => {
-            if (!auth || !auth.currentUser) return;
+            if (!auth || !auth.currentUser || !db) return;
             try {
                 const docRef = window.firebase.doc(db, `artifacts/${appId}/users/${auth.currentUser.uid}/data/budget`);
                 const docSnap = await window.firebase.getDoc(docRef);
@@ -472,7 +473,7 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     // 2. Salvar dados no Firebase quando houver alteração
     useEffect(() => {
         if (isLoadingData) return; // Não salvar enquanto carrega
-        if (!auth || !auth.currentUser) return;
+        if (!auth || !auth.currentUser || !db) return;
 
         const saveBudget = async () => {
             try {
@@ -546,9 +547,16 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
         tempPresetCategories ? setTempPresetCategories(updated) : setData({ ...data, categories: updated });
     };
     const updateExp = (cid, fn) => {
+        // CORREÇÃO CRÍTICA: Garante que o array de despesas existe.
+        // Se c.expenses for undefined, usamos [], e o 'fn' vai adicionar a nova despesa a esse array.
         const newCats = data.categories.map(c => c.id === cid ? { ...c, expenses: fn(c.expenses || []) } : c);
+        
+        // Atualiza os dados globais
         setData({ ...data, categories: newCats });
-        if (selectedCategory) setSelectedCategory(newCats.find(c => c.id === cid));
+        
+        // Atualiza a visualização local IMEDIATAMENTE
+        const updatedCat = newCats.find(c => c.id === cid);
+        if (updatedCat) setSelectedCategory(updatedCat);
     };
     const handleConfirmPayment = (val) => { updateExp(selectedCategory.id, exps => exps.map(e => e.id === expenseToPay.id ? { ...e, paidInstallments: (e.paidInstallments||0)+1, installmentValue: val, paymentHistory: [...(e.paymentHistory||[]), {date: new Date().toISOString(), amount: val}] } : e)); setPaymentModalOpen(false); setExpenseToPay(null); };
     const handleImportClick = () => fileInputRef.current?.click();
