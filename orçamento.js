@@ -40,21 +40,22 @@ const BookOpen = (p) => <IconBase {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 
 const initialData = { income: 0, categories: [] };
 const availableColors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
 
-// Presets (Modelos)
 const budgetPresets = [
     { name: 'Sugestão do App', description: 'Modelo balanceado.', icon: Star, categories: [ { name: '🏠 Casa', percentage: 27.5, color: 'bg-blue-500', group: 'Custos de Vida' }, { name: '👶 Filhos', percentage: 21.5, color: 'bg-green-500', group: 'Custos de Vida' }, { name: '👤 Pessoal', percentage: 23.5, color: 'bg-purple-500', group: 'Custos de Vida' }, { name: '🚗 Carro', percentage: 17.5, color: 'bg-red-500', group: 'Custos de Vida' }, { name: '👵 Aposentadoria', percentage: 10.0, color: 'bg-yellow-500', group: 'Investimentos' } ] },
     { name: 'Pai Rico, Pai Pobre', description: 'Pague-se primeiro.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
-    { name: '50/30/20', description: 'Clássico financeiro.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Essenciais' }, { name: '🛍️ Não Essenciais', percentage: 30, color: 'bg-pink-500', group: 'Não Essenciais' }, { name: '📈 Investimentos', percentage: 20, color: 'bg-purple-500', group: 'Investimentos' } ] }
+    { name: 'Thiago Nigro (50/30/20)', description: 'O clássico 50-30-20.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Essenciais' }, { name: '🛍️ Não Essenciais', percentage: 30, color: 'bg-pink-500', group: 'Não Essenciais' }, { name: '📈 Investimentos', percentage: 20, color: 'bg-purple-500', group: 'Investimentos' } ] },
+    { name: 'Nathalia Arcuri (70/30)', description: 'Foco no futuro.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 55, color: 'bg-blue-500', group: 'Presente' }, { name: '📚 Educação', percentage: 5, color: 'bg-teal-500', group: 'Presente' }, { name: '💸 Livre', percentage: 10, color: 'bg-pink-500', group: 'Presente' }, { name: '🎯 Metas', percentage: 20, color: 'bg-green-500', group: 'Futuro' }, { name: '👵 Aposentadoria', percentage: 10, color: 'bg-yellow-500', group: 'Futuro' } ] },
+    { name: 'Bruno Perini', description: 'Foco em aportes.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 60, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Fundo', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 Aportes', percentage: 10, color: 'bg-purple-500', group: 'Investimentos' } ] },
+    { name: 'Warren Buffett', description: 'Simplicidade 90/10.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Reserva', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 S&P 500', percentage: 18, color: 'bg-purple-500', group: 'Investimentos' }, { name: '🏦 Renda Fixa', percentage: 2, color: 'bg-teal-500', group: 'Investimentos' } ] }
 ];
 
-// Hook de Histórico (Undo/Redo) - CORRIGIDO
+// Hook de Histórico (Undo/Redo) - CORRIGIDO (Sem JSON.stringify)
 const useHistoryState = (initial) => {
     const [state, setState] = useState({ past: [], present: initial, future: [] });
     
     const undo = () => { if (!state.past.length) return; const newPast = state.past.slice(0, -1); setState({ past: newPast, present: state.past[state.past.length - 1], future: [state.present, ...state.future] }); };
     const redo = () => { if (!state.future.length) return; const newFuture = state.future.slice(1); setState({ past: [...state.past, state.present], present: state.future[0], future: newFuture }); };
     
-    // SEM JSON.STRINGIFY para evitar erros circulares
     const set = (newVal) => { 
         setState({ past: [...state.past, state.present], present: newVal, future: [] }); 
     };
@@ -68,9 +69,9 @@ const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency'
 // ==========================================
 // 3. COMPONENTES UI (GENÉRICOS)
 // ==========================================
-const Modal = ({ children, isOpen, onClose }) => !isOpen ? null : (
+const Modal = ({ children, isOpen, onClose, maxWidth = "max-w-md" }) => !isOpen ? null : (
     <div className="fixed inset-0 bg-black/70 z-50 flex justify-center items-center p-4">
-        <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md m-4 relative p-6 border border-border animate-fade-in">
+        <div className={`bg-card rounded-2xl shadow-2xl w-full ${maxWidth} m-4 relative p-6 border border-border animate-fade-in`}>
             <button onClick={onClose} className="absolute top-4 right-4 text-sec hover:text-main"><X size={24} /></button>
             {children}
         </div>
@@ -83,6 +84,29 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => !i
             <div className="w-16 h-16 flex items-center justify-center bg-yellow-500/20 rounded-full mb-4"><AlertTriangle size={40} className="text-yellow-500" /></div>
             <h3 className="text-xl font-bold mb-2">{title}</h3><p className="text-sec mb-6">{message}</p>
             <div className="flex justify-center space-x-4 w-full"><button onClick={onClose} className="flex-1 px-6 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-500">Cancelar</button><button onClick={onConfirm} className="flex-1 px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-semibold">Confirmar</button></div>
+        </div>
+    </Modal>
+);
+
+// --- COMPONENTE PRESET MODAL RESTAURADO ---
+const PresetModal = ({ isOpen, onClose, onSelectPreset }) => !isOpen ? null : (
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-4xl">
+        <div className="text-main">
+            <h3 className="text-2xl font-bold mb-2 text-center">Modelos de Orçamento</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                {budgetPresets.map(p => (
+                    <div key={p.name} onClick={() => onSelectPreset(p)} className="bg-app p-6 rounded-xl border border-border hover:border-primary cursor-pointer transition-colors group">
+                        <div className="flex items-center mb-3">
+                            <p.icon className="text-primary mr-3" size={24} />
+                            <h4 className="text-lg font-bold group-hover:text-primary transition-colors">{p.name}</h4>
+                        </div>
+                        <p className="text-sec text-sm mb-4">{p.description}</p>
+                        <div className="flex flex-wrap gap-2">
+                            {p.categories.map(c => <span key={c.name} className="text-xs bg-card px-2 py-1 rounded text-sec border border-border">{c.name} {c.percentage}%</span>)}
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     </Modal>
 );
@@ -578,28 +602,36 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const unbalanced = Math.abs(100 - totalPct) > 0.1 && catsDisplay.length > 0;
     
     if (isLoadingData) {
-        return <div className="text-center text-sec mt-20 animate-pulse">Carregando Orçamento...</div>;
+        return (
+            <div className="min-h-screen bg-app flex flex-col items-center justify-center text-main">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+                <p className="text-lg font-semibold animate-pulse text-sec">Carregando Orçamento...</p>
+            </div>
+        );
     }
 
     return (
-        <div className="font-sans text-main">
-            <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileSelect} />
-            <main>
-                {selectedCategory ? (
-                    <ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))} onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))} onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])} onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))} onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: x.paidInstallments - 1, paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))} onOpenPaymentModal={e => { setExpenseToPay(e); setPaymentModalOpen(true); }} onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })} onTogglePause={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, isPaused: !x.isPaused } : x))} />
-                ) : (
-                    <CategoryList categories={data.categories} income={data.income} onSelectCategory={setSelectedCategory} onUpdateIncome={handleUpdateIncome} onUpdateCategoryBudget={handleUpdateCategoryBudget} onOpenCategoryModal={c => { setEditingCategory(c || null); setIsCategoryModalOpen(true); }} onDeleteCategoryRequest={id => { setCategoryToDelete(id); setDeleteConfirmOpen(true); }} onDeleteGroupRequest={grp => { setGroupToDelete(grp); setDeleteGroupConfirmOpen(true); }} onOpenPresetModal={() => setIsPresetModalOpen(true)} onExport={handleExportData} onImport={handleImportClick} tempPresetCategories={tempPresetCategories} onConfirmPreset={() => { setData({ ...data, categories: tempPresetCategories }); setTempPresetCategories(null); }} onCancelPreset={() => { setTempPresetCategories(null); setIsPresetModalOpen(true); }} onToggleLock={handleToggleCategoryLock} onMoveItem={handleMoveItem} onOpenEditGroupModal={n => { setEditingGroup(n); setEditGroupModalOpen(true); }} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
-                )}
-            </main>
-            
-            <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)}><CategoryForm onSubmit={handleCategorySubmit} onCancel={() => setIsCategoryModalOpen(false)} categoryData={editingCategory} existingGroups={existingGroups} /></Modal>
-            <PaymentAmountModal isOpen={isPaymentModalOpen} onClose={() => setPaymentModalOpen(false)} onSubmit={handleConfirmPayment} expense={expenseToPay} />
-            <ConfirmationModal isOpen={isDeleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} onConfirm={confirmDeleteCategory} title="Excluir Categoria" message="Tem certeza?" />
-            <ConfirmationModal isOpen={isDeleteGroupConfirmOpen} onClose={() => setDeleteGroupConfirmOpen(false)} onConfirm={confirmDeleteGroup} title="Excluir Grupo" message="Confirma?" />
-            <ConfirmationModal isOpen={isImportConfirmOpen} onClose={() => setImportConfirmOpen(false)} onConfirm={() => { setInitialData(JSON.parse(fileToImport)); setImportConfirmOpen(false); setFileToImport(null); }} title="Importar" message="Substituir dados?" />
-            <PresetModal isOpen={isPresetModalOpen} onClose={() => setIsPresetModalOpen(false)} onSelectPreset={p => { setTempPresetCategories(p.categories.map(c => ({ ...c, id: Date.now() + Math.random(), budgetedValue: (data.income * c.percentage) / 100, expenses: [], isLocked: false }))); setIsPresetModalOpen(false); }} />
-            <EditGroupModal isOpen={isEditGroupModalOpen} onClose={() => { setEditGroupModalOpen(false); setEditingGroup(null); }} onSubmit={handleUpdateGroupName} groupName={editingGroup} />
-            
+        <div className="min-h-screen font-sans text-main pb-40">
+            <style>{`@keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } .animate-fade-in { animation: fade-in 0.5s ease-out forwards; } .animate-pulse-border { animation: pulse-border 2s infinite; border: 2px solid; } @keyframes pulse-border { 0%, 100% { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { border-color: rgba(59, 130, 246, 1); box-shadow: 0 0 10px 2px rgba(59, 130, 246, 0.2); } } @keyframes fade-in-down { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } } .animate-fade-in-down { animation: fade-in-down 0.2s ease-out forwards; }`}</style>
+            <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
+                <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileSelect} />
+                <header className="mb-8"><h1 className="text-3xl sm:text-4xl font-bold text-title text-center">Planejamento Orçamentário</h1><p className="text-center text-sec mt-2">Distribua sua renda e acompanhe suas metas.</p></header>
+                <main>
+                    {selectedCategory ? (
+                        <ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))} onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))} onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])} onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))} onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: x.paidInstallments - 1, paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))} onOpenPaymentModal={e => { setExpenseToPay(e); setPaymentModalOpen(true); }} onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })} onTogglePause={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, isPaused: !x.isPaused } : x))} />
+                    ) : (
+                        <CategoryList categories={data.categories} income={data.income} onSelectCategory={setSelectedCategory} onUpdateIncome={handleUpdateIncome} onUpdateCategoryBudget={handleUpdateCategoryBudget} onOpenCategoryModal={c => { setEditingCategory(c || null); setIsCategoryModalOpen(true); }} onDeleteCategoryRequest={id => { setCategoryToDelete(id); setDeleteConfirmOpen(true); }} onDeleteGroupRequest={grp => { setGroupToDelete(grp); setDeleteGroupConfirmOpen(true); }} onOpenPresetModal={() => setIsPresetModalOpen(true)} onExport={handleExportData} onImport={handleImportClick} tempPresetCategories={tempPresetCategories} onConfirmPreset={() => { setData({ ...data, categories: tempPresetCategories }); setTempPresetCategories(null); }} onCancelPreset={() => { setTempPresetCategories(null); setIsPresetModalOpen(true); }} onToggleLock={handleToggleCategoryLock} onMoveItem={handleMoveItem} onOpenEditGroupModal={n => { setEditingGroup(n); setEditGroupModalOpen(true); }} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
+                    )}
+                </main>
+                <footer className="text-center mt-12 text-sec text-sm"><p>Desenvolvido para facilitar sua vida financeira.</p></footer>
+                <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)}><CategoryForm onSubmit={handleCategorySubmit} onCancel={() => setIsCategoryModalOpen(false)} categoryData={editingCategory} existingGroups={existingGroups} /></Modal>
+                <PaymentAmountModal isOpen={isPaymentModalOpen} onClose={() => setPaymentModalOpen(false)} onSubmit={handleConfirmPayment} expense={expenseToPay} />
+                <ConfirmationModal isOpen={isDeleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} onConfirm={confirmDeleteCategory} title="Excluir Categoria" message="Tem certeza?" />
+                <ConfirmationModal isOpen={isDeleteGroupConfirmOpen} onClose={() => setDeleteGroupConfirmOpen(false)} onConfirm={confirmDeleteGroup} title="Excluir Grupo" message="Confirma?" />
+                <ConfirmationModal isOpen={isImportConfirmOpen} onClose={() => setImportConfirmOpen(false)} onConfirm={() => { setInitialData(JSON.parse(fileToImport)); setImportConfirmOpen(false); setFileToImport(null); }} title="Importar" message="Substituir dados?" />
+                <PresetModal isOpen={isPresetModalOpen} onClose={() => setIsPresetModalOpen(false)} onSelectPreset={p => { setTempPresetCategories(p.categories.map(c => ({ ...c, id: Date.now() + Math.random(), budgetedValue: (data.income * c.percentage) / 100, expenses: [], isLocked: false }))); setIsPresetModalOpen(false); }} />
+                <EditGroupModal isOpen={isEditGroupModalOpen} onClose={() => { setEditGroupModalOpen(false); setEditingGroup(null); }} onSubmit={handleUpdateGroupName} groupName={editingGroup} />
+            </div>
             {unbalanced && !tempPresetCategories && <BudgetAdjustmentBar totalPercentage={totalPct} onAdjust={handleAutoAdjust} />}
         </div>
     );
