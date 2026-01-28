@@ -2,9 +2,9 @@
 const { useState, useEffect, useRef, useMemo } = React;
 
 // ==========================================
-// 1. ÍCONES (SVG NATIVO)
+// 1. ÍCONES (SVG NATIVO - ESTILO CLEAN)
 // ==========================================
-const IconBase = ({ children, size = 24, className = "" }) => (
+const IconBase = ({ children, size = 20, className = "" }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
 );
 const ChevronRight = (p) => <IconBase {...p}><path d="m9 18 6-6-6-6"/></IconBase>;
@@ -14,16 +14,7 @@ const Edit = (p) => <IconBase {...p}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5
 const Trash2 = (p) => <IconBase {...p}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></IconBase>;
 const ArrowLeft = (p) => <IconBase {...p}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></IconBase>;
 const DollarSign = (p) => <IconBase {...p}><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></IconBase>;
-const Percent = (p) => <IconBase {...p}><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></IconBase>;
-const X = (p) => <IconBase {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>;
-const AlertTriangle = (p) => <IconBase {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></IconBase>;
-const BookOpen = (p) => <IconBase {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconBase>;
-const Star = (p) => <IconBase {...p}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></IconBase>;
-const Upload = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></IconBase>;
-const Download = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></IconBase>;
-const Check = (p) => <IconBase {...p}><path d="M20 6 9 17l-5-5"/></IconBase>;
 const RefreshCw = (p) => <IconBase {...p}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></IconBase>;
-const Eye = (p) => <IconBase {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></IconBase>;
 const Layers = (p) => <IconBase {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0l-9.17-4.16"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0l-9.17-4.16"/></IconBase>;
 const ChevronDown = (p) => <IconBase {...p}><path d="m6 9 6 6 6-6"/></IconBase>;
 const Lock = (p) => <IconBase {...p}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>;
@@ -36,6 +27,12 @@ const Pause = (p) => <IconBase {...p}><rect width="4" height="16" x="6" y="4"/><
 const Play = (p) => <IconBase {...p}><polygon points="5 3 19 12 5 21 5 3"/></IconBase>;
 const Copy = (p) => <IconBase {...p}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></IconBase>;
 const MoreVertical = (p) => <IconBase {...p}><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></IconBase>;
+const X = (p) => <IconBase {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>;
+const AlertTriangle = (p) => <IconBase {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></IconBase>;
+const Upload = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></IconBase>;
+const Download = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></IconBase>;
+const Star = (p) => <IconBase {...p}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></IconBase>;
+const BookOpen = (p) => <IconBase {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconBase>;
 
 // ==========================================
 // 2. CONFIGURAÇÕES E DADOS
@@ -43,24 +40,21 @@ const MoreVertical = (p) => <IconBase {...p}><circle cx="12" cy="12" r="1"/><cir
 const initialData = { income: 0, categories: [] };
 const availableColors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
 
+// Presets (Modelos)
 const budgetPresets = [
-    { name: 'Sugestão do App', description: 'Um modelo balanceado.', icon: Star, categories: [ { name: '🏠 Casa', percentage: 27.5, color: 'bg-blue-500', group: 'Custos de Vida' }, { name: '👶 Filhos', percentage: 21.5, color: 'bg-green-500', group: 'Custos de Vida' }, { name: '👤 Pessoal', percentage: 23.5, color: 'bg-purple-500', group: 'Custos de Vida' }, { name: '🚗 Carro', percentage: 17.5, color: 'bg-red-500', group: 'Custos de Vida' }, { name: '👵 Aposentadoria', percentage: 10.0, color: 'bg-yellow-500', group: 'Investimentos' } ] },
-    { name: 'Pai Rico, Pai Pobre', description: 'Inspirado em Robert Kiyosaki.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
-    { name: 'Thiago Nigro (50/30/20)', description: 'O clássico 50-30-20.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Essenciais' }, { name: '🛍️ Não Essenciais', percentage: 30, color: 'bg-pink-500', group: 'Não Essenciais' }, { name: '📈 Investimentos', percentage: 20, color: 'bg-purple-500', group: 'Investimentos' } ] },
-    { name: 'Nathalia Arcuri (70/30)', description: 'Foco no futuro.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 55, color: 'bg-blue-500', group: 'Presente' }, { name: '📚 Educação', percentage: 5, color: 'bg-teal-500', group: 'Presente' }, { name: '💸 Livre', percentage: 10, color: 'bg-pink-500', group: 'Presente' }, { name: '🎯 Metas', percentage: 20, color: 'bg-green-500', group: 'Futuro' }, { name: '👵 Aposentadoria', percentage: 10, color: 'bg-yellow-500', group: 'Futuro' } ] },
-    { name: 'Bruno Perini', description: 'Foco em aportes.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 60, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Fundo', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 Aportes', percentage: 10, color: 'bg-purple-500', group: 'Investimentos' } ] },
-    { name: 'Warren Buffett', description: 'Simplicidade 90/10.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Reserva', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 S&P 500', percentage: 18, color: 'bg-purple-500', group: 'Investimentos' }, { name: '🏦 Renda Fixa', percentage: 2, color: 'bg-teal-500', group: 'Investimentos' } ] }
+    { name: 'Sugestão do App', description: 'Modelo balanceado.', icon: Star, categories: [ { name: '🏠 Casa', percentage: 27.5, color: 'bg-blue-500', group: 'Custos de Vida' }, { name: '👶 Filhos', percentage: 21.5, color: 'bg-green-500', group: 'Custos de Vida' }, { name: '👤 Pessoal', percentage: 23.5, color: 'bg-purple-500', group: 'Custos de Vida' }, { name: '🚗 Carro', percentage: 17.5, color: 'bg-red-500', group: 'Custos de Vida' }, { name: '👵 Aposentadoria', percentage: 10.0, color: 'bg-yellow-500', group: 'Investimentos' } ] },
+    { name: 'Pai Rico, Pai Pobre', description: 'Pague-se primeiro.', icon: BookOpen, categories: [ { name: '💰 Pague-se Primeiro', percentage: 30, color: 'bg-purple-500', group: 'Investimentos' }, { name: '✅ Necessidades', percentage: 60, color: 'bg-blue-500', group: 'Necessidades' }, { name: '🛍️ Desejos', percentage: 10, color: 'bg-pink-500', group: 'Desejos' } ] },
+    { name: '50/30/20', description: 'Clássico financeiro.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Essenciais' }, { name: '🛍️ Não Essenciais', percentage: 30, color: 'bg-pink-500', group: 'Não Essenciais' }, { name: '📈 Investimentos', percentage: 20, color: 'bg-purple-500', group: 'Investimentos' } ] }
 ];
 
-// --- CORREÇÃO DO ERRO DE JSON CIRCULAR ---
-// Removemos o JSON.stringify para evitar o crash ao lidar com eventos ou objetos complexos
+// Hook de Histórico (Undo/Redo) - CORRIGIDO
 const useHistoryState = (initial) => {
     const [state, setState] = useState({ past: [], present: initial, future: [] });
     
     const undo = () => { if (!state.past.length) return; const newPast = state.past.slice(0, -1); setState({ past: newPast, present: state.past[state.past.length - 1], future: [state.present, ...state.future] }); };
     const redo = () => { if (!state.future.length) return; const newFuture = state.future.slice(1); setState({ past: [...state.past, state.present], present: state.future[0], future: newFuture }); };
     
-    // AQUI ESTAVA O ERRO: Removemos a verificação rigorosa que quebrava o app
+    // SEM JSON.STRINGIFY para evitar erros circulares
     const set = (newVal) => { 
         setState({ past: [...state.past, state.present], present: newVal, future: [] }); 
     };
@@ -72,12 +66,12 @@ const useHistoryState = (initial) => {
 const formatCurrency = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(v) ? 0 : v);
 
 // ==========================================
-// 3. COMPONENTES UI
+// 3. COMPONENTES UI (GENÉRICOS)
 // ==========================================
 const Modal = ({ children, isOpen, onClose }) => !isOpen ? null : (
-    <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-        <div className="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md m-4 relative p-6">
-            <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={24} /></button>
+    <div className="fixed inset-0 bg-black/70 z-50 flex justify-center items-center p-4">
+        <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md m-4 relative p-6 border border-border animate-fade-in">
+            <button onClick={onClose} className="absolute top-4 right-4 text-sec hover:text-main"><X size={24} /></button>
             {children}
         </div>
     </div>
@@ -85,55 +79,27 @@ const Modal = ({ children, isOpen, onClose }) => !isOpen ? null : (
 
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => !isOpen ? null : (
     <Modal isOpen={isOpen} onClose={onClose}>
-        <div className="text-white flex flex-col items-center text-center">
+        <div className="text-main flex flex-col items-center text-center">
             <div className="w-16 h-16 flex items-center justify-center bg-yellow-500/20 rounded-full mb-4"><AlertTriangle size={40} className="text-yellow-500" /></div>
-            <h3 className="text-xl font-bold mb-2">{title}</h3><p className="text-gray-300 mb-6">{message}</p>
+            <h3 className="text-xl font-bold mb-2">{title}</h3><p className="text-sec mb-6">{message}</p>
             <div className="flex justify-center space-x-4 w-full"><button onClick={onClose} className="flex-1 px-6 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-500">Cancelar</button><button onClick={onConfirm} className="flex-1 px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 font-semibold">Confirmar</button></div>
         </div>
     </Modal>
 );
 
+// ==========================================
+// 4. FORMULÁRIOS
+// ==========================================
 const PaymentAmountModal = ({ isOpen, onClose, onSubmit, expense }) => {
     const [amount, setAmount] = useState('');
     useEffect(() => { if (isOpen && expense) setAmount(String(expense.installmentValue || '').replace('.', ',')); }, [isOpen, expense]);
     if (!isOpen) return null;
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
-            <form onSubmit={(e) => { e.preventDefault(); const val = parseFloat(String(amount).replace(',', '.')); if (!isNaN(val) && val >= 0) onSubmit(val); }} className="space-y-4 text-white">
-                <h3 className="text-xl font-bold">Registrar Pagamento</h3><p>Valor pago para <span className="font-bold">{expense?.description}</span>?</p>
-                <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-gray-700 text-white rounded-lg p-3" required autoFocus />
-                <div className="flex justify-end gap-3"><button type="button" onClick={onClose} className="px-6 py-2 bg-gray-600 rounded-lg">Cancelar</button><button type="submit" className="px-6 py-2 bg-blue-600 rounded-lg">Confirmar</button></div>
-            </form>
-        </Modal>
-    );
-};
-
-const PresetModal = ({ isOpen, onClose, onSelectPreset }) => !isOpen ? null : (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-4xl">
-        <div className="text-white"><h3 className="text-2xl font-bold mb-2 text-center">Modelos de Orçamento</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                {budgetPresets.map(p => (
-                    <div key={p.name} onClick={() => onSelectPreset(p)} className="bg-gray-700/50 p-6 rounded-xl border border-gray-700 hover:border-blue-500 cursor-pointer">
-                        <div className="flex items-center mb-3"><p.icon className="text-blue-400 mr-3" size={24} /><h4 className="text-lg font-bold">{p.name}</h4></div>
-                        <p className="text-gray-400 text-sm mb-4">{p.description}</p>
-                        <div className="flex flex-wrap gap-2">{p.categories.map(c => <span key={c.name} className="text-xs bg-gray-800 px-2 py-1 rounded text-gray-300">{c.name} {c.percentage}%</span>)}</div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    </Modal>
-);
-
-const EditGroupModal = ({ isOpen, onClose, onSubmit, groupName }) => {
-    const [name, setName] = useState('');
-    useEffect(() => { if (isOpen) setName(groupName); }, [isOpen, groupName]);
-    if (!isOpen) return null;
-    return (
-        <Modal isOpen={isOpen} onClose={onClose}>
-            <form onSubmit={e => { e.preventDefault(); if (name.trim() && name !== groupName) onSubmit(groupName, name.trim()); onClose(); }} className="space-y-6 text-white">
-                <h3 className="text-xl font-bold">Editar Grupo</h3>
-                <input value={name} onChange={e => setName(e.target.value)} className="w-full bg-gray-700 text-white rounded-lg p-3" required autoFocus />
-                <div className="flex justify-end gap-3"><button type="button" onClick={onClose} className="px-6 py-2 bg-gray-600 rounded-lg">Cancelar</button><button type="submit" className="px-6 py-2 bg-blue-600 rounded-lg">Salvar</button></div>
+            <form onSubmit={(e) => { e.preventDefault(); const val = parseFloat(String(amount).replace(',', '.')); if (!isNaN(val) && val >= 0) onSubmit(val); }} className="space-y-4 text-main">
+                <h3 className="text-xl font-bold">Registrar Pagamento</h3><p className="text-sec">Valor pago para <span className="font-bold text-main">{expense?.description}</span>?</p>
+                <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-app text-main rounded-lg p-3 border border-border outline-none focus:border-primary" required autoFocus />
+                <div className="flex justify-end gap-3"><button type="button" onClick={onClose} className="px-6 py-2 bg-gray-600 rounded-lg text-white">Cancelar</button><button type="submit" className="px-6 py-2 bg-primary text-white rounded-lg">Confirmar</button></div>
             </form>
         </Modal>
     );
@@ -145,13 +111,28 @@ const CategoryForm = ({ onSubmit, onCancel, categoryData, existingGroups = [] })
     const [color, setColor] = useState(categoryData?.color || availableColors[0]);
     return (
         <form onSubmit={e => { e.preventDefault(); onSubmit({ ...categoryData, name, group, color }); }} className="space-y-6">
-            <h3 className="text-xl font-bold text-white">{categoryData?.id ? 'Editar' : 'Nova'} Categoria</h3>
-            <input value={name} onChange={e => setName(e.target.value)} className="w-full bg-gray-700 text-white rounded p-3" placeholder="Nome" required />
-            <input value={group} onChange={e => setGroup(e.target.value)} className="w-full bg-gray-700 text-white rounded p-3" placeholder="Grupo (Opcional)" list="gs" />
+            <h3 className="text-xl font-bold text-main">{categoryData?.id ? 'Editar' : 'Nova'} Categoria</h3>
+            <input value={name} onChange={e => setName(e.target.value)} className="w-full bg-app text-main rounded p-3 border border-border outline-none focus:border-primary" placeholder="Nome" required />
+            <input value={group} onChange={e => setGroup(e.target.value)} className="w-full bg-app text-main rounded p-3 border border-border outline-none focus:border-primary" placeholder="Grupo (Opcional)" list="gs" />
             <datalist id="gs">{(existingGroups || []).map(g => <option key={g} value={g} />)}</datalist>
-            <div className="flex gap-3">{availableColors.map(c => <div key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full cursor-pointer ${c} ${color === c ? 'ring-2 ring-white' : ''}`} />)}</div>
-            <div className="flex justify-end gap-3"><button type="button" onClick={onCancel} className="px-6 py-2 bg-gray-600 rounded text-white">Cancelar</button><button type="submit" className="px-6 py-2 bg-blue-600 rounded text-white">Salvar</button></div>
+            <div className="flex gap-3">{availableColors.map(c => <div key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full cursor-pointer ${c} ${color === c ? 'ring-2 ring-white scale-110' : ''}`} />)}</div>
+            <div className="flex justify-end gap-3"><button type="button" onClick={onCancel} className="px-6 py-2 bg-gray-600 rounded text-white">Cancelar</button><button type="submit" className="px-6 py-2 bg-primary rounded text-white">Salvar</button></div>
         </form>
+    );
+};
+
+const EditGroupModal = ({ isOpen, onClose, onSubmit, groupName }) => {
+    const [name, setName] = useState('');
+    useEffect(() => { if (isOpen) setName(groupName); }, [isOpen, groupName]);
+    if (!isOpen) return null;
+    return (
+        <Modal isOpen={isOpen} onClose={onClose}>
+            <form onSubmit={e => { e.preventDefault(); if (name.trim() && name !== groupName) onSubmit(groupName, name.trim()); onClose(); }} className="space-y-6 text-main">
+                <h3 className="text-xl font-bold">Editar Grupo</h3>
+                <input value={name} onChange={e => setName(e.target.value)} className="w-full bg-app text-main rounded-lg p-3 border border-border outline-none focus:border-primary" required autoFocus />
+                <div className="flex justify-end gap-3"><button type="button" onClick={onClose} className="px-6 py-2 bg-gray-600 rounded-lg text-white">Cancelar</button><button type="submit" className="px-6 py-2 bg-primary rounded-lg text-white">Salvar</button></div>
+            </form>
+        </Modal>
     );
 };
 
@@ -180,18 +161,21 @@ const ExpenseForm = ({ onSubmit, onCancel, expenseData }) => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <h3 className="text-xl font-bold text-white">{expenseData ? 'Editar' : 'Nova'} Despesa</h3>
-            <input value={desc} onChange={e => setDesc(e.target.value)} className="w-full bg-gray-700 text-white rounded p-3" placeholder="Descrição" required />
-            <input value={val} onChange={e => setVal(e.target.value)} className="w-full bg-gray-700 text-white rounded p-3" placeholder="Valor" required />
-            {status === 'Andamento' && <input type="number" value={inst} onChange={e => setInst(e.target.value)} className="w-full bg-gray-700 text-white rounded p-3" placeholder="Parcelas" min="1" />}
-            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-gray-700 text-white rounded p-3" required />
-            <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-gray-700 text-white rounded p-3"><option value="Andamento">Parcelado</option><option value="Fixo">Fixo</option><option value="Fixa-Variável">Fixo Variável</option><option value="Variável">Único</option></select>
-            <textarea value={obs} onChange={e => setObs(e.target.value)} className="w-full bg-gray-700 text-white rounded p-3" placeholder="Obs" />
-            <div className="flex justify-end gap-3"><button type="button" onClick={onCancel} className="px-6 py-2 bg-gray-600 rounded text-white">Cancelar</button><button type="submit" className="px-6 py-2 bg-blue-600 rounded text-white">Salvar</button></div>
+            <h3 className="text-xl font-bold text-main">{expenseData ? 'Editar' : 'Nova'} Despesa</h3>
+            <input value={desc} onChange={e => setDesc(e.target.value)} className="w-full bg-app text-main rounded p-3 border border-border" placeholder="Descrição" required />
+            <input value={val} onChange={e => setVal(e.target.value)} className="w-full bg-app text-main rounded p-3 border border-border" placeholder="Valor" required />
+            {status === 'Andamento' && <input type="number" value={inst} onChange={e => setInst(e.target.value)} className="w-full bg-app text-main rounded p-3 border border-border" placeholder="Parcelas" min="1" />}
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-app text-main rounded p-3 border border-border" required />
+            <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-app text-main rounded p-3 border border-border"><option value="Andamento">Parcelado</option><option value="Fixo">Fixo</option><option value="Fixa-Variável">Fixo Variável</option><option value="Variável">Único</option></select>
+            <textarea value={obs} onChange={e => setObs(e.target.value)} className="w-full bg-app text-main rounded p-3 border border-border" placeholder="Obs" />
+            <div className="flex justify-end gap-3"><button type="button" onClick={onCancel} className="px-6 py-2 bg-gray-600 rounded text-white">Cancelar</button><button type="submit" className="px-6 py-2 bg-primary rounded text-white">Salvar</button></div>
         </form>
     );
 };
 
+// ==========================================
+// 5. COMPONENTES DE LISTAGEM (DETALHES)
+// ==========================================
 const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAddExpense, onMarkAsPaid, onUndoPayment, onOpenPaymentModal, onTogglePause, onDuplicateExpense }) => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -204,38 +188,38 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
     const avail = (category.budgetedValue || 0) - total;
 
     return (
-        <div className="bg-gray-900 text-gray-200 p-6 rounded-2xl animate-fade-in">
+        <div className="bg-card text-main p-6 rounded-[20px] animate-fade-in shadow-card border border-border">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                <div className="flex items-center gap-4"><button onClick={onBack} className="p-2 hover:bg-gray-700 rounded-full"><ArrowLeft /></button><h2 className="text-2xl font-bold">{category.name}</h2></div>
+                <div className="flex items-center gap-4"><button onClick={onBack} className="p-2 hover:bg-hover rounded-full transition-colors"><ArrowLeft /></button><h2 className="text-2xl font-bold">{category.name}</h2></div>
                 <div className="flex gap-6 text-right">
-                     <div><p className="text-sm text-gray-400">Orçado</p><p className="text-xl font-bold text-white">{formatCurrency(category.budgetedValue || 0)}</p></div>
-                     <div><p className="text-sm text-gray-400">Gasto</p><p className="text-xl font-bold text-red-400">{formatCurrency(total)}</p></div>
-                     <div><p className="text-sm text-gray-400">Disponível</p><p className={`text-xl font-bold ${avail >= 0 ? 'text-green-400' : 'text-yellow-400'}`}>{formatCurrency(avail)}</p></div>
+                     <div><p className="text-sm text-sec">Orçado</p><p className="text-xl font-bold text-main">{formatCurrency(category.budgetedValue || 0)}</p></div>
+                     <div><p className="text-sm text-sec">Gasto</p><p className="text-xl font-bold text-red-500">{formatCurrency(total)}</p></div>
+                     <div><p className="text-sm text-sec">Disponível</p><p className={`text-xl font-bold ${avail >= 0 ? 'text-green-500' : 'text-yellow-500'}`}>{formatCurrency(avail)}</p></div>
                 </div>
             </div>
             <div className="flex justify-end mb-6">
-                <button onClick={() => { setEditing(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 font-semibold"><Plus size={20}/> Adicionar Despesa</button>
+                <button onClick={() => { setEditing(null); setIsFormOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-primary rounded-xl hover:bg-blue-600 font-semibold text-white shadow-lg shadow-primary/30 transition-all hover:scale-105"><Plus size={20}/> Nova Despesa</button>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left table-auto border-collapse">
-                    <thead className="border-b border-gray-700">
-                        <tr className="text-sm text-gray-400"><th className="p-4">Descrição</th><th className="p-4 text-right">Valor</th><th className="p-4 text-center">Progresso</th><th className="p-4 text-center">Status</th><th className="p-4 text-center">Ações</th></tr>
+                    <thead className="border-b border-border">
+                        <tr className="text-sm text-sec uppercase tracking-wider"><th className="p-4">Descrição</th><th className="p-4 text-right">Valor</th><th className="p-4 text-center">Progresso</th><th className="p-4 text-center">Status</th><th className="p-4 text-center">Ações</th></tr>
                     </thead>
                     <tbody>
-                        {expenses.length === 0 ? (<tr><td colSpan="5" className="text-center py-10 text-gray-500">Nenhuma despesa adicionada.</td></tr>) : expenses.map(exp => {
+                        {expenses.length === 0 ? (<tr><td colSpan="5" className="text-center py-10 text-sec">Nenhuma despesa adicionada nesta categoria.</td></tr>) : expenses.map(exp => {
                             const isPaused = exp.isPaused; const paid = exp.paidInstallments || 0; const done = paid >= exp.installments;
                             let dueDate = null, isOverdue = false;
                             if (exp.startDate) { const start = new Date(exp.startDate); dueDate = new Date(start.getFullYear(), start.getMonth() + paid, start.getDate() + 1); const today = new Date(); today.setHours(0,0,0,0); if (today > dueDate && !done && !isPaused) isOverdue = true; }
                             const remaining = (exp.installments - paid) * exp.installmentValue;
                             const statusLabel = isPaused ? 'Pausado' : done ? 'Pago' : isOverdue ? 'Atrasado' : exp.status;
-                            const statusColor = isPaused ? 'bg-gray-700 text-gray-400' : done ? 'bg-green-500/20 text-green-400' : isOverdue ? 'bg-red-500/20 text-red-400' : exp.status === 'Fixa-Variável' ? 'bg-indigo-500/20 text-indigo-400' : exp.status === 'Fixo' ? 'bg-blue-500/20 text-blue-400' : 'bg-yellow-500/20 text-yellow-400';
+                            const statusColor = isPaused ? 'bg-gray-500/20 text-gray-500' : done ? 'bg-green-500/20 text-green-500' : isOverdue ? 'bg-red-500/20 text-red-500' : exp.status === 'Fixa-Variável' ? 'bg-indigo-500/20 text-indigo-500' : exp.status === 'Fixo' ? 'bg-blue-500/20 text-blue-500' : 'bg-yellow-500/20 text-yellow-500';
                             return (
-                                <tr key={exp.id} className={`border-b border-gray-800 hover:bg-gray-800/50 transition ${isPaused ? 'opacity-60' : ''}`}>
-                                    <td className="p-4 font-bold text-white"><div className="flex items-center gap-2">{exp.description}{exp.observation && <div className="relative group"><MessageSquare size={16} className="text-gray-500 cursor-pointer"/><div className="absolute bottom-full left-0 mb-2 w-64 p-2 bg-gray-900 border border-gray-700 rounded text-xs hidden group-hover:block z-10">{exp.observation}</div></div>}</div></td>
-                                    <td className="p-4 text-right font-bold text-blue-400">{formatCurrency(exp.installmentValue)}</td>
-                                    <td className="p-4 text-center text-gray-300">{exp.status === 'Fixo' || exp.status === 'Fixa-Variável' ? (<div className="flex flex-col items-center"><span className="text-xs text-gray-400">Próx. Venc:</span><span className="text-sm font-medium">{dueDate ? dueDate.toLocaleDateString('pt-BR') : 'N/A'}</span></div>) : exp.status === 'Variável' ? 'Pag. Única' : (<div className="flex flex-col items-center"><span className="font-bold">{paid} / {exp.installments}</span><span className="text-xs text-gray-500">Falta: {formatCurrency(remaining)}</span></div>)}</td>
+                                <tr key={exp.id} className={`border-b border-border hover:bg-hover transition ${isPaused ? 'opacity-50' : ''}`}>
+                                    <td className="p-4 font-bold text-main"><div className="flex items-center gap-2">{exp.description}{exp.observation && <div className="relative group"><MessageSquare size={16} className="text-sec cursor-pointer"/><div className="absolute bottom-full left-0 mb-2 w-64 p-2 bg-black text-white rounded text-xs hidden group-hover:block z-10">{exp.observation}</div></div>}</div></td>
+                                    <td className="p-4 text-right font-bold text-primary">{formatCurrency(exp.installmentValue)}</td>
+                                    <td className="p-4 text-center text-sec">{exp.status === 'Fixo' || exp.status === 'Fixa-Variável' ? (<div className="flex flex-col items-center"><span className="text-xs">Venc:</span><span className="text-sm font-medium">{dueDate ? dueDate.toLocaleDateString('pt-BR') : 'N/A'}</span></div>) : exp.status === 'Variável' ? 'Único' : (<div className="flex flex-col items-center"><span className="font-bold">{paid} / {exp.installments}</span><span className="text-xs text-sec">Falta: {formatCurrency(remaining)}</span></div>)}</td>
                                     <td className="p-4 text-center"><span className={`px-3 py-1 rounded-md text-xs font-bold ${statusColor}`}>{statusLabel}</span></td>
-                                    <td className="p-4 text-center flex justify-center gap-2">{!done && !isPaused && <button onClick={() => exp.status === 'Fixa-Variável' ? onOpenPaymentModal(exp) : onMarkAsPaid(category.id, exp.id)} className="p-2 text-green-400 hover:bg-green-500/20 rounded-lg"><CheckCircle size={20}/></button>}<button onClick={() => setActionExp(exp)} className="p-2 text-gray-400 hover:bg-gray-700 rounded-lg"><MoreVertical size={20}/></button></td>
+                                    <td className="p-4 text-center flex justify-center gap-2">{!done && !isPaused && <button onClick={() => exp.status === 'Fixa-Variável' ? onOpenPaymentModal(exp) : onMarkAsPaid(category.id, exp.id)} className="p-2 text-green-500 hover:bg-green-500/10 rounded-lg"><CheckCircle size={20}/></button>}<button onClick={() => setActionExp(exp)} className="p-2 text-sec hover:bg-hover rounded-lg"><MoreVertical size={20}/></button></td>
                                 </tr>
                             );
                         })}
@@ -244,13 +228,16 @@ const ExpenseList = ({ category, onBack, onUpdateExpense, onDeleteExpense, onAdd
             </div>
             <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)}><ExpenseForm onSubmit={d => { if (editing) onUpdateExpense(category.id, d); else onAddExpense(category.id, d); setIsFormOpen(false); }} onCancel={() => setIsFormOpen(false)} expenseData={editing} /></Modal>
             <Modal isOpen={!!actionExp} onClose={() => setActionExp(null)}>
-                {actionExp && <div className="text-white space-y-2"><h3 className="text-center font-bold mb-4">{actionExp.description}</h3><button onClick={() => { setEditing(actionExp); setIsFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Edit size={18}/> Editar</button><button onClick={() => { onDuplicateExpense(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2"><Copy size={18}/> Duplicar</button><button onClick={() => { onTogglePause(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 rounded flex gap-2">{actionExp.isPaused ? <Play size={18}/> : <Pause size={18}/>} {actionExp.isPaused ? 'Reativar' : 'Pausar'}</button>{actionExp.paidInstallments > 0 && <button onClick={() => { onUndoPayment(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-yellow-400 rounded flex gap-2"><Undo2 size={18}/> Desfazer Pagamento</button>}<button onClick={() => { setConfirmDelete(actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-gray-700 text-red-400 rounded flex gap-2"><Trash2 size={18}/> Excluir</button></div>}
+                {actionExp && <div className="text-main space-y-2"><h3 className="text-center font-bold mb-4 text-xl">{actionExp.description}</h3><button onClick={() => { setEditing(actionExp); setIsFormOpen(true); setActionExp(null); }} className="w-full text-left p-3 hover:bg-hover rounded flex gap-2"><Edit size={18}/> Editar</button><button onClick={() => { onDuplicateExpense(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-hover rounded flex gap-2"><Copy size={18}/> Duplicar</button><button onClick={() => { onTogglePause(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-hover rounded flex gap-2">{actionExp.isPaused ? <Play size={18}/> : <Pause size={18}/>} {actionExp.isPaused ? 'Reativar' : 'Pausar'}</button>{actionExp.paidInstallments > 0 && <button onClick={() => { onUndoPayment(category.id, actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-hover text-yellow-500 rounded flex gap-2"><Undo2 size={18}/> Desfazer Pagamento</button>}<button onClick={() => { setConfirmDelete(actionExp.id); setActionExp(null); }} className="w-full text-left p-3 hover:bg-hover text-red-500 rounded flex gap-2"><Trash2 size={18}/> Excluir</button></div>}
             </Modal>
             <ConfirmationModal isOpen={!!confirmDelete} onClose={() => setConfirmDelete(null)} onConfirm={() => { onDeleteExpense(category.id, confirmDelete); setConfirmDelete(null); }} title="Excluir Despesa" message="Tem certeza?" />
         </div>
     );
 };
 
+// ==========================================
+// 6. CARD DE CATEGORIA (ITEM INDIVIDUAL)
+// ==========================================
 const CategoryItem = ({ category, income, onUpdateBudget, onSelectCategory, onEdit, onDelete, isPreviewing, onToggleLock, dragProps }) => {
     const [val, setVal] = useState('0,00');
     const [pct, setPct] = useState('0,0');
@@ -276,26 +263,52 @@ const CategoryItem = ({ category, income, onUpdateBudget, onSelectCategory, onEd
     const isTarget = dragProps.dragOverItem?.id === category.id;
 
     return (
-        <div draggable={!isPreviewing} onDragStart={() => dragProps.onDragStart({ id: category.id, type: 'category', group: category.group })} onDragEnd={dragProps.onDragEnd} onDrop={e => { e.preventDefault(); dragProps.onDrop({ id: category.id, type: 'category', group: category.group }); }} onDragOver={e => { e.preventDefault(); dragProps.onDragEnter({ id: category.id, type: 'category' }); }} className={`bg-gray-700/50 p-4 rounded-xl relative group ${isDragged ? 'opacity-50' : ''} ${category.isLocked ? 'border-2 border-red-500/50' : 'border-2 border-transparent'}`}>
-            {isTarget && !isDragged && <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 rounded-full"/>}
-            <div className="flex justify-between items-center mb-2">
-                <div onClick={() => !isPreviewing && onSelectCategory(category)} className="flex items-center gap-3 cursor-pointer flex-grow"><div className={`w-3 h-6 rounded ${category.color}`}/><Folder size={20} className="text-gray-400"/><span className="font-semibold text-white">{category.name}</span></div>
-                <div className="flex gap-1"><button onClick={() => !isPreviewing && onToggleLock(category.id)} className={`p-2 rounded hover:bg-gray-600 ${category.isLocked ? 'text-red-400' : 'text-gray-400'}`}>{category.isLocked ? <Lock size={16}/> : <Unlock size={16}/>}</button><button onClick={() => !isPreviewing && onEdit(category)} disabled={isPreviewing || category.isLocked} className="p-2 text-gray-400 hover:text-blue-400 hover:bg-gray-600 rounded disabled:opacity-50"><Edit size={18} /></button><button onClick={() => !isPreviewing && onDelete(category.id)} disabled={isPreviewing} className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-600 rounded disabled:opacity-50"><Trash2 size={18} /></button></div>
+        <div draggable={!isPreviewing} onDragStart={() => dragProps.onDragStart({ id: category.id, type: 'category', group: category.group })} onDragEnd={dragProps.onDragEnd} onDrop={e => { e.preventDefault(); dragProps.onDrop({ id: category.id, type: 'category', group: category.group }); }} onDragOver={e => { e.preventDefault(); dragProps.onDragEnter({ id: category.id, type: 'category' }); }} className={`bg-card p-4 rounded-xl border relative group transition-all ${isDragged ? 'opacity-50' : ''} ${category.isLocked ? 'border-red-500/50 shadow-sm' : 'border-border shadow-sm hover:shadow-md'}`}>
+            {isTarget && !isDragged && <div className="absolute top-0 left-0 right-0 h-1 bg-primary rounded-full"/>}
+            <div className="flex justify-between items-center mb-3">
+                <div onClick={() => !isPreviewing && onSelectCategory(category)} className="flex items-center gap-3 cursor-pointer flex-grow">
+                    <div className={`w-3 h-8 rounded-full ${category.color}`}/>
+                    <Folder size={20} className="text-sec"/>
+                    <span className="font-semibold text-main text-lg">{category.name}</span>
+                </div>
+                <div className="flex gap-1">
+                    <button onClick={() => !isPreviewing && onToggleLock(category.id)} className={`p-2 rounded-lg hover:bg-hover transition-colors ${category.isLocked ? 'text-red-500' : 'text-sec'}`}>{category.isLocked ? <Lock size={16}/> : <Unlock size={16}/>}</button>
+                    <button onClick={() => !isPreviewing && onEdit(category)} disabled={isPreviewing || category.isLocked} className="p-2 text-sec hover:text-primary hover:bg-hover rounded-lg transition-colors disabled:opacity-50"><Edit size={18} /></button>
+                    <button onClick={() => !isPreviewing && onDelete(category.id)} disabled={isPreviewing} className="p-2 text-sec hover:text-red-500 hover:bg-hover rounded-lg transition-colors disabled:opacity-50"><Trash2 size={18} /></button>
+                </div>
             </div>
-            <div className="flex gap-2 items-center text-sm mb-2">
-                {mode === 'value' ? <div className="relative flex-grow"><span className="absolute left-2 top-2 text-gray-400">R$</span><input className="w-full bg-gray-800 text-white rounded p-2 pl-8" value={val} onChange={e => setVal(e.target.value)} onBlur={() => handleBlur('value')} disabled={category.isLocked}/></div> : <div className="relative flex-grow"><input className="w-full bg-gray-800 text-white rounded p-2 pr-8" value={pct} onChange={e => setPct(e.target.value)} onBlur={() => handleBlur('percent')} disabled={category.isLocked}/><span className="absolute right-2 top-2 text-gray-400">%</span></div>}
-                <button onClick={() => setMode(m => m === 'value' ? 'percent' : 'value')} disabled={isPreviewing || category.isLocked} className="p-2 text-gray-400 bg-gray-700 rounded-lg hover:text-blue-400 transition disabled:opacity-50"><RefreshCw size={16} /></button>
+            
+            <div className="flex gap-3 items-center text-sm mb-3">
+                {mode === 'value' ? 
+                    <div className="relative flex-grow group">
+                        <span className="absolute left-3 top-2.5 text-sec">R$</span>
+                        <input className="w-full bg-app text-main font-bold rounded-lg p-2 pl-9 border border-transparent hover:border-border focus:border-primary focus:bg-card outline-none transition-all" value={val} onChange={e => setVal(e.target.value)} onBlur={() => handleBlur('value')} disabled={category.isLocked}/>
+                    </div> 
+                    : 
+                    <div className="relative flex-grow group">
+                        <input className="w-full bg-app text-main font-bold rounded-lg p-2 pr-8 border border-transparent hover:border-border focus:border-primary focus:bg-card outline-none transition-all" value={pct} onChange={e => setPct(e.target.value)} onBlur={() => handleBlur('percent')} disabled={category.isLocked}/>
+                        <span className="absolute right-3 top-2.5 text-sec">%</span>
+                    </div>
+                }
+                <button onClick={() => setMode(m => m === 'value' ? 'percent' : 'value')} disabled={isPreviewing || category.isLocked} className="p-2 text-sec bg-app rounded-lg hover:text-primary transition-colors disabled:opacity-50"><RefreshCw size={16} /></button>
             </div>
-            <div className="flex justify-between text-xs text-gray-400 mb-1"><span>Gasto: {formatCurrency(spent)}</span><span className={rest < 0 ? 'text-red-400' : 'text-green-400'}>{rest < 0 ? 'Estourado' : 'Sobra'}: {formatCurrency(Math.abs(rest))}</span></div>
-            <div className="w-full bg-gray-600 h-2 rounded-full"><div className={`h-2 rounded-full ${rest < 0 ? 'bg-red-500' : category.color}`} style={{ width: `${bar}%` }}/></div>
+            
+            <div className="flex justify-between text-xs font-medium text-sec mb-2">
+                <span>Gasto: <span className="text-main">{formatCurrency(spent)}</span></span>
+                <span className={rest < 0 ? 'text-red-500' : 'text-green-500'}>{rest < 0 ? 'Estourado' : 'Disponível'}: {formatCurrency(Math.abs(rest))}</span>
+            </div>
+            
+            <div className="w-full bg-app h-2.5 rounded-full overflow-hidden border border-border/50">
+                <div className={`h-full rounded-full transition-all duration-500 ${rest < 0 ? 'bg-red-500' : category.color}`} style={{ width: `${bar}%` }}/>
+            </div>
         </div>
     );
 };
 
 const PresetConfirmationBar = ({ onConfirm, onCancel }) => (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-800/90 p-4 flex justify-between items-center max-w-5xl mx-auto backdrop-blur-md z-50">
-        <p className="text-white font-bold">Usar este modelo?</p>
-        <div className="flex gap-4"><button onClick={onCancel} className="px-4 py-2 bg-gray-600 text-white rounded">Cancelar</button><button onClick={onConfirm} className="px-4 py-2 bg-green-600 text-white rounded">Confirmar</button></div>
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-card border border-border shadow-2xl p-4 flex justify-between items-center gap-8 rounded-2xl z-50 animate-fade-in-up">
+        <p className="text-main font-bold">Usar este modelo?</p>
+        <div className="flex gap-3"><button onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-main rounded-lg font-medium">Cancelar</button><button onClick={onConfirm} className="px-4 py-2 bg-green-500 text-white rounded-lg font-bold shadow-lg shadow-green-500/30">Confirmar</button></div>
     </div>
 );
 
@@ -303,10 +316,13 @@ const BudgetAdjustmentBar = ({ totalPercentage, onAdjust }) => {
     const diff = Math.abs(100 - totalPercentage).toFixed(1);
     const isOver = totalPercentage > 100;
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-yellow-500 p-4 z-40"><div className="container mx-auto flex justify-between items-center max-w-5xl text-yellow-400 font-bold"><span>{isOver ? `Passou ${diff}%` : `Falta ${diff}%`}</span><button onClick={onAdjust} className="px-4 py-2 bg-blue-600 text-white rounded">Ajustar</button></div></div>
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 z-40 shadow-lg"><div className="container mx-auto flex justify-between items-center max-w-5xl text-yellow-500 font-bold"><span>{isOver ? `Passou ${diff}%` : `Falta ${diff}%`}</span><button onClick={onAdjust} className="px-4 py-2 bg-primary text-white rounded-lg font-bold">Ajustar Automático</button></div></div>
     );
 };
 
+// ==========================================
+// 7. LISTA DE CATEGORIAS E GRUPOS (CORE)
+// ==========================================
 const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, onUpdateCategoryBudget, onOpenCategoryModal, onDeleteCategoryRequest, onDeleteGroupRequest, onOpenPresetModal, onExport, onImport, tempPresetCategories, onConfirmPreset, onCancelPreset, onToggleLock, onMoveItem, onOpenEditGroupModal, undo, redo, canUndo, canRedo }) => {
     const cats = tempPresetCategories || categories || [];
     const totalExp = cats.reduce((acc, c) => {
@@ -338,43 +354,89 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
     const orphans = cats.filter(c => !c.group || typeof c.group !== 'string' || c.group.trim() === '');
 
     return (
-        <div className="space-y-6 pb-24">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3 border border-gray-700">
-                    <div className="p-3 bg-green-500/20 rounded"><DollarSign className="text-green-400"/></div>
-                    <div><p className="text-gray-400 text-xs">Saldo Sugerido</p>{editInc ? <input autoFocus className="bg-transparent text-xl font-bold text-white w-full outline-none" value={incVal} onChange={e => setIncVal(e.target.value)} onBlur={() => { onUpdateIncome(parseFloat(incVal.replace(',', '.')) || 0); setEditInc(false); }} /> : <p onClick={() => !tempPresetCategories && setEditInc(true)} className="text-xl font-bold cursor-pointer hover:text-blue-400">{formatCurrency(income)}</p>}</div>
+        <div className="space-y-8 pb-32">
+            {/* Cards de Resumo do Orçamento */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-card p-6 rounded-[20px] shadow-card border border-border flex items-center gap-4 relative overflow-hidden group">
+                    <div className="p-4 bg-green-500/10 rounded-2xl text-green-500"><DollarSign size={28}/></div>
+                    <div><p className="text-sec text-sm font-medium mb-1">Renda Mensal</p>{editInc ? <input autoFocus className="bg-transparent text-2xl font-bold text-main w-full outline-none" value={incVal} onChange={e => setIncVal(e.target.value)} onBlur={() => { onUpdateIncome(parseFloat(incVal.replace(',', '.')) || 0); setEditInc(false); }} /> : <p onClick={() => !tempPresetCategories && setEditInc(true)} className="text-2xl font-bold text-main cursor-pointer hover:text-primary transition-colors">{formatCurrency(income)}</p>}</div>
                 </div>
-                <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3"><div className="p-3 bg-red-500/20 rounded"><DollarSign className="text-red-400"/></div><div><p className="text-gray-400 text-xs">Despesas</p><p className="text-xl font-bold">{formatCurrency(totalExp)}</p></div></div>
-                <div className="bg-gray-800 p-4 rounded-xl flex items-center gap-3"><div className={`p-3 rounded ${balance >= 0 ? 'bg-blue-500/20' : 'bg-yellow-500/20'}`}><DollarSign className={balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}/></div><div><p className="text-gray-400 text-xs">Saldo</p><p className={`text-xl font-bold ${balance >= 0 ? 'text-white' : 'text-yellow-400'}`}>{formatCurrency(balance)}</p></div></div>
+                <div className="bg-card p-6 rounded-[20px] shadow-card border border-border flex items-center gap-4">
+                    <div className="p-4 bg-red-500/10 rounded-2xl text-red-500"><DollarSign size={28}/></div>
+                    <div><p className="text-sec text-sm font-medium mb-1">Total Planejado</p><p className="text-2xl font-bold text-main">{formatCurrency(totalExp)}</p></div>
+                </div>
+                <div className="bg-card p-6 rounded-[20px] shadow-card border border-border flex items-center gap-4">
+                    <div className={`p-4 rounded-2xl ${balance >= 0 ? 'bg-blue-500/10 text-primary' : 'bg-yellow-500/10 text-yellow-500'}`}><DollarSign size={28}/></div>
+                    <div><p className="text-sec text-sm font-medium mb-1">Saldo Livre</p><p className={`text-2xl font-bold ${balance >= 0 ? 'text-primary' : 'text-yellow-500'}`}>{formatCurrency(balance)}</p></div>
+                </div>
             </div>
 
-            <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
-                <div className="flex flex-wrap gap-2 justify-end mb-4">
-                    <button onClick={undo} disabled={!canUndo} className="p-2 bg-gray-700 rounded disabled:opacity-50"><Undo2 size={20}/></button>
-                    <button onClick={redo} disabled={!canRedo} className="p-2 bg-gray-700 rounded disabled:opacity-50"><Redo2 size={20}/></button>
-                    <button onClick={onImport} disabled={!!tempPresetCategories} className="p-2 bg-gray-700 rounded hover:bg-gray-600"><Upload size={20}/></button>
-                    <button onClick={onExport} disabled={!!tempPresetCategories} className="p-2 bg-gray-700 rounded hover:bg-gray-600"><Download size={20}/></button>
-                    <button onClick={onOpenCategoryModal} disabled={!hasIncome || !!tempPresetCategories} className="flex items-center gap-2 px-3 py-2 bg-blue-600 rounded hover:bg-blue-500 disabled:opacity-50"><Plus size={18}/> Categoria</button>
+            <div className="bg-white dark:bg-[#111C44] p-8 rounded-[30px] shadow-lg border border-border">
+                {/* Barra de Ferramentas */}
+                <div className="flex flex-wrap gap-3 justify-end mb-8">
+                    <button onClick={undo} disabled={!canUndo} className="p-2.5 bg-app rounded-xl text-sec hover:text-main hover:bg-hover disabled:opacity-30 transition-all"><Undo2 size={20}/></button>
+                    <button onClick={redo} disabled={!canRedo} className="p-2.5 bg-app rounded-xl text-sec hover:text-main hover:bg-hover disabled:opacity-30 transition-all"><Redo2 size={20}/></button>
+                    <div className="h-10 w-px bg-border mx-2"></div>
+                    <button onClick={onImport} disabled={!!tempPresetCategories} className="p-2.5 bg-app rounded-xl text-sec hover:text-main hover:bg-hover transition-all" title="Importar"><Upload size={20}/></button>
+                    <button onClick={onExport} disabled={!!tempPresetCategories} className="p-2.5 bg-app rounded-xl text-sec hover:text-main hover:bg-hover transition-all" title="Exportar"><Download size={20}/></button>
+                    <button onClick={onOpenCategoryModal} disabled={!hasIncome || !!tempPresetCategories} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-blue-600 font-bold shadow-lg shadow-primary/30 transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 ml-2"><Plus size={20}/> Nova Categoria</button>
                 </div>
 
                 {cats.length === 0 && (
-                    <div className="text-center py-10 border-2 border-dashed border-gray-700 rounded-xl">
-                        <p className="text-gray-400 mb-4">Seu orçamento está vazio.</p>
-                        <button onClick={onOpenPresetModal} disabled={!hasIncome} className="px-4 py-2 bg-purple-600 rounded text-white hover:bg-purple-500 disabled:opacity-50">Usar Modelo</button>
+                    <div className="text-center py-20 border-2 border-dashed border-border rounded-3xl bg-app/50">
+                        <div className="w-20 h-20 bg-card rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-sec"><BookOpen size={40}/></div>
+                        <h3 className="text-xl font-bold text-main mb-2">Comece seu Planejamento</h3>
+                        <p className="text-sec mb-6">Seu orçamento está vazio. Crie categorias ou use um modelo pronto.</p>
+                        <button onClick={onOpenPresetModal} disabled={!hasIncome} className="px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-primary/30">Usar Modelo Pronto</button>
                     </div>
                 )}
 
-                {Object.entries(grouped).map(([grp, grpCats]) => (
-                    <div key={grp} className="mb-4">
-                        <div className="flex justify-between items-center bg-gray-700/30 p-2 rounded mb-2 cursor-pointer" onClick={() => setCollapsed(p => ({...p, [grp]: !p[grp]}))}>
-                            <div className="flex items-center gap-2"><Layers size={16} className="text-gray-400"/><span className="font-bold uppercase text-sm tracking-wider">{grp}</span><ChevronDown size={16} className={`transform transition ${collapsed[grp] ? '-rotate-90' : ''}`}/></div>
-                            <div className="flex gap-2"><button onClick={e => { e.stopPropagation(); onOpenEditGroupModal(grp); }} className="p-1 hover:text-blue-400"><Edit size={16}/></button><button onClick={e => { e.stopPropagation(); onDeleteGroupRequest(grp); }} className="p-1 hover:text-red-400"><Trash2 size={16}/></button></div>
+                {/* --- GRUPOS COM TOTAIS (AQUI ESTÁ A MÁGICA) --- */}
+                {Object.entries(grouped).map(([grp, grpCats]) => {
+                    // Cálculo dos Totais do Grupo
+                    const groupBudget = grpCats.reduce((a, c) => a + (c.budgetedValue || 0), 0);
+                    const groupSpent = grpCats.reduce((a, c) => {
+                        const catSpent = (c.expenses || []).filter(e => !e.isPaused).reduce((s, e) => s + e.installmentValue, 0);
+                        return a + catSpent;
+                    }, 0);
+                    const groupProgress = groupBudget > 0 ? (groupSpent / groupBudget) * 100 : 0;
+
+                    return (
+                        <div key={grp} className="mb-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-hover/50 p-3 rounded-xl mb-3 cursor-pointer group border border-transparent hover:border-border transition-all" onClick={() => setCollapsed(p => ({...p, [grp]: !p[grp]}))}>
+                                <div className="flex items-center gap-3">
+                                    <div className="p-1.5 bg-card rounded-lg text-sec shadow-sm"><Layers size={18}/></div>
+                                    <span className="font-bold uppercase text-sm tracking-wider text-main">{grp}</span>
+                                    <ChevronDown size={16} className={`text-sec transform transition-transform duration-300 ${collapsed[grp] ? '-rotate-90' : ''}`}/>
+                                </div>
+                                
+                                <div className="flex items-center gap-4 mt-2 sm:mt-0 w-full sm:w-auto justify-between sm:justify-end">
+                                    {/* INFO DO GRUPO */}
+                                    <div className="text-right text-xs mr-2">
+                                        <span className="text-sec block sm:inline">Gasto: </span>
+                                        <span className="font-bold text-main">{formatCurrency(groupSpent)}</span>
+                                        <span className="text-sec mx-1">/</span>
+                                        <span className="font-bold text-sec">{formatCurrency(groupBudget)}</span>
+                                        <span className={`ml-2 font-bold ${groupProgress > 100 ? 'text-red-500' : 'text-green-500'}`}>({groupProgress.toFixed(1)}%)</span>
+                                    </div>
+
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={e => { e.stopPropagation(); onOpenEditGroupModal(grp); }} className="p-1.5 hover:bg-card rounded-lg text-sec hover:text-primary transition-colors"><Edit size={16}/></button>
+                                        <button onClick={e => { e.stopPropagation(); onDeleteGroupRequest(grp); }} className="p-1.5 hover:bg-card rounded-lg text-sec hover:text-red-500 transition-colors"><Trash2 size={16}/></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {!collapsed[grp] && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-2 animate-fade-in">
+                                    {grpCats.map(c => <CategoryItem key={c.id} category={c} income={income} onUpdateBudget={onUpdateCategoryBudget} onSelectCategory={onSelectCategory} onEdit={onOpenCategoryModal} onDelete={onDeleteCategoryRequest} isPreviewing={!!tempPresetCategories} onToggleLock={onToggleLock} dragProps={dragProps} />)}
+                                </div>
+                            )}
                         </div>
-                        {!collapsed[grp] && <div className="pl-4 space-y-2 border-l border-gray-700 ml-2">{grpCats.map(c => <CategoryItem key={c.id} category={c} income={income} onUpdateBudget={onUpdateCategoryBudget} onSelectCategory={onSelectCategory} onEdit={onOpenCategoryModal} onDelete={onDeleteCategoryRequest} isPreviewing={!!tempPresetCategories} onToggleLock={onToggleLock} dragProps={dragProps} />)}</div>}
-                    </div>
-                ))}
+                    );
+                })}
                 
-                <div className="space-y-2 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                     {orphans.map(c => <CategoryItem key={c.id} category={c} income={income} onUpdateBudget={onUpdateCategoryBudget} onSelectCategory={onSelectCategory} onEdit={onOpenCategoryModal} onDelete={onDeleteCategoryRequest} isPreviewing={!!tempPresetCategories} onToggleLock={onToggleLock} dragProps={dragProps} />)}
                 </div>
             </div>
@@ -383,12 +445,11 @@ const CategoryList = ({ categories, income, onSelectCategory, onUpdateIncome, on
     );
 };
 
-// Componente Principal - AQUI ESTÁ A CORREÇÃO DEFINITIVA
+// Componente Principal
 const OrcamentoPage = ({ initialIncome = 0 }) => {
-    // 1. DADOS INICIAIS
     const { state: data, set: setData, undo, redo, canUndo, canRedo, setInitial: setInitialData } = useHistoryState(initialData);
     
-    // 2. CORREÇÃO DO ERRO 'REFERENCE ERROR': DEFINIÇÃO SEGURA DOS GRUPOS EXISTENTES NO TOPO
+    // Lista segura de grupos
     const existingGroups = useMemo(() => {
         const cats = data?.categories || [];
         return [...new Set(cats.map(c => c.group).filter(g => g && g.trim()))];
@@ -415,58 +476,36 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const [isLoadingData, setIsLoadingData] = useState(true);
     const { db, auth, appId } = window.firebaseApp || {};
 
-    // 1. Carregar dados em tempo real (onSnapshot)
+    // 1. Carregar
     useEffect(() => {
-        if (!auth || !auth.currentUser || !db) {
-            setIsLoadingData(false);
-            return;
-        }
-
+        if (!auth || !auth.currentUser || !db) { setIsLoadingData(false); return; }
         const docRef = window.firebase.doc(db, `artifacts/${appId}/users/${auth.currentUser.uid}/data/budget`);
         const unsubscribe = window.firebase.onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
                 const loadedData = docSnap.data();
-                // BLINDAGEM: Garante que arrays não sejam nulos
                 if (!loadedData.categories) loadedData.categories = [];
-                loadedData.categories = loadedData.categories.map(c => ({
-                    ...c,
-                    expenses: Array.isArray(c.expenses) ? c.expenses : []
-                }));
+                loadedData.categories = loadedData.categories.map(c => ({ ...c, expenses: Array.isArray(c.expenses) ? c.expenses : [] }));
                 setInitialData(loadedData);
             }
             setIsLoadingData(false);
-        }, (error) => {
-            console.error("Erro ao carregar orçamento:", error);
-            setIsLoadingData(false);
-        });
-
+        }, (error) => { console.error("Erro load:", error); setIsLoadingData(false); });
         return () => unsubscribe();
     }, []);
 
-    // 2. Salvar dados no Firebase (apenas se já carregou)
+    // 2. Salvar
     useEffect(() => {
-        if (isLoadingData) return; // PROIBIDO SALVAR ENQUANTO CARREGA
-        if (!auth || !auth.currentUser || !db) return;
-
+        if (isLoadingData || !auth || !auth.currentUser || !db) return;
         const saveBudget = async () => {
-            try {
-                const docRef = window.firebase.doc(db, `artifacts/${appId}/users/${auth.currentUser.uid}/data/budget`);
-                await window.firebase.setDoc(docRef, data);
-            } catch (e) {
-                console.error("Erro ao salvar orçamento:", e);
-            }
+            try { await window.firebase.setDoc(window.firebase.doc(db, `artifacts/${appId}/users/${auth.currentUser.uid}/data/budget`), data); } 
+            catch (e) { console.error("Erro save:", e); }
         };
-
-        const timeoutId = setTimeout(saveBudget, 1000); // Salva após 1s de inatividade
+        const timeoutId = setTimeout(saveBudget, 1000); 
         return () => clearTimeout(timeoutId);
     }, [data, isLoadingData]);
 
-
     // --- AUTOMAÇÃO DA RECEITA ---
     useEffect(() => {
-        if (!isLoadingData && initialIncome > 0 && Math.abs(initialIncome - data.income) > 0.01) {
-            handleUpdateIncome(initialIncome);
-        }
+        if (!isLoadingData && initialIncome > 0 && Math.abs(initialIncome - data.income) > 0.01) handleUpdateIncome(initialIncome);
     }, [initialIncome, isLoadingData]);
 
     const handleUpdateIncome = (val) => {
@@ -485,6 +524,8 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
         const newCats = d.id ? currentCats.map(c => c.id === d.id ? { ...c, ...d } : c) : [...currentCats, { ...d, id: Date.now(), budgetedValue: 0, expenses: [], isLocked: false }];
         setData({ ...data, categories: newCats }); setIsCategoryModalOpen(false); setEditingCategory(null);
     };
+    
+    // Funções de Gerenciamento (Delete, Move, Lock...)
     const confirmDeleteCategory = () => { if (categoryToDelete) setData({ ...data, categories: (data.categories || []).filter(c => c.id !== categoryToDelete) }); setDeleteConfirmOpen(false); setCategoryToDelete(null); };
     const confirmDeleteGroup = () => { if (groupToDelete) setData({ ...data, categories: (data.categories || []).map(c => c.group === groupToDelete ? { ...c, group: '' } : c) }); setDeleteGroupConfirmOpen(false); setGroupToDelete(null); };
     const handleUpdateGroupName = (o, n) => { setData({ ...data, categories: (data.categories || []).map(c => c.group === o ? { ...c, group: n } : c) }); setEditGroupModalOpen(false); setEditingGroup(null); };
@@ -537,36 +578,28 @@ const OrcamentoPage = ({ initialIncome = 0 }) => {
     const unbalanced = Math.abs(100 - totalPct) > 0.1 && catsDisplay.length > 0;
     
     if (isLoadingData) {
-        return (
-            <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-                <p className="text-lg font-semibold animate-pulse">Carregando suas finanças...</p>
-            </div>
-        );
+        return <div className="text-center text-sec mt-20 animate-pulse">Carregando Orçamento...</div>;
     }
 
     return (
-        <div className="bg-gray-900 min-h-screen font-sans text-gray-200 pb-40">
-            <style>{`@keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } .animate-fade-in { animation: fade-in 0.5s ease-out forwards; } .animate-pulse-border { animation: pulse-border 2s infinite; border: 2px solid; } @keyframes pulse-border { 0%, 100% { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { border-color: rgba(59, 130, 246, 1); box-shadow: 0 0 10px 2px rgba(59, 130, 246, 0.2); } } @keyframes fade-in-down { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } } .animate-fade-in-down { animation: fade-in-down 0.2s ease-out forwards; }`}</style>
-            <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
-                <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileSelect} />
-                <header className="mb-8"><h1 className="text-3xl sm:text-4xl font-bold text-white text-center">Controle de Orçamento Pessoal</h1><p className="text-center text-gray-400 mt-2">Controle suas finanças de forma simples e visual.</p></header>
-                <main>
-                    {selectedCategory ? (
-                        <ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))} onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))} onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])} onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))} onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: x.paidInstallments - 1, paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))} onOpenPaymentModal={e => { setExpenseToPay(e); setPaymentModalOpen(true); }} onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })} onTogglePause={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, isPaused: !x.isPaused } : x))} />
-                    ) : (
-                        <CategoryList categories={data.categories} income={data.income} onSelectCategory={setSelectedCategory} onUpdateIncome={handleUpdateIncome} onUpdateCategoryBudget={handleUpdateCategoryBudget} onOpenCategoryModal={c => { setEditingCategory(c || null); setIsCategoryModalOpen(true); }} onDeleteCategoryRequest={id => { setCategoryToDelete(id); setDeleteConfirmOpen(true); }} onDeleteGroupRequest={grp => { setGroupToDelete(grp); setDeleteGroupConfirmOpen(true); }} onOpenPresetModal={() => setIsPresetModalOpen(true)} onExport={handleExportData} onImport={handleImportClick} tempPresetCategories={tempPresetCategories} onConfirmPreset={() => { setData({ ...data, categories: tempPresetCategories }); setTempPresetCategories(null); }} onCancelPreset={() => { setTempPresetCategories(null); setIsPresetModalOpen(true); }} onToggleLock={handleToggleCategoryLock} onMoveItem={handleMoveItem} onOpenEditGroupModal={n => { setEditingGroup(n); setEditGroupModalOpen(true); }} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
-                    )}
-                </main>
-                <footer className="text-center mt-12 text-gray-500 text-sm"><p>Desenvolvido para facilitar sua vida financeira.</p></footer>
-                <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)}><CategoryForm onSubmit={handleCategorySubmit} onCancel={() => setIsCategoryModalOpen(false)} categoryData={editingCategory} existingGroups={existingGroups} /></Modal>
-                <PaymentAmountModal isOpen={isPaymentModalOpen} onClose={() => setPaymentModalOpen(false)} onSubmit={handleConfirmPayment} expense={expenseToPay} />
-                <ConfirmationModal isOpen={isDeleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} onConfirm={confirmDeleteCategory} title="Excluir Categoria" message="Tem certeza?" />
-                <ConfirmationModal isOpen={isDeleteGroupConfirmOpen} onClose={() => setDeleteGroupConfirmOpen(false)} onConfirm={confirmDeleteGroup} title="Excluir Grupo" message="Confirma?" />
-                <ConfirmationModal isOpen={isImportConfirmOpen} onClose={() => setImportConfirmOpen(false)} onConfirm={() => { setInitialData(JSON.parse(fileToImport)); setImportConfirmOpen(false); setFileToImport(null); }} title="Importar" message="Substituir dados?" />
-                <PresetModal isOpen={isPresetModalOpen} onClose={() => setIsPresetModalOpen(false)} onSelectPreset={p => { setTempPresetCategories(p.categories.map(c => ({ ...c, id: Date.now() + Math.random(), budgetedValue: (data.income * c.percentage) / 100, expenses: [], isLocked: false }))); setIsPresetModalOpen(false); }} />
-                <EditGroupModal isOpen={isEditGroupModalOpen} onClose={() => { setEditGroupModalOpen(false); setEditingGroup(null); }} onSubmit={handleUpdateGroupName} groupName={editingGroup} />
-            </div>
+        <div className="font-sans text-main">
+            <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileSelect} />
+            <main>
+                {selectedCategory ? (
+                    <ExpenseList category={{...selectedCategory, expenses: selectedCategory.expenses || []}} onBack={() => setSelectedCategory(null)} onUpdateExpense={(cid, e) => updateExp(cid, exps => exps.map(x => x.id === e.id ? e : x))} onDeleteExpense={(cid, eid) => updateExp(cid, exps => exps.filter(x => x.id !== eid))} onAddExpense={(cid, e) => updateExp(cid, exps => [...exps, e])} onMarkAsPaid={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, paidInstallments: (x.paidInstallments || 0) + 1 } : x))} onUndoPayment={(cid, eid) => updateExp(cid, exps => exps.map(x => { if (x.id === eid) { const h = [...(x.paymentHistory||[])]; h.pop(); return { ...x, paidInstallments: x.paidInstallments - 1, paymentHistory: h, installmentValue: h.length ? h[h.length-1].amount : x.totalValue }; } return x; }))} onOpenPaymentModal={e => { setExpenseToPay(e); setPaymentModalOpen(true); }} onDuplicateExpense={(cid, eid) => updateExp(cid, exps => { const o = exps.find(x => x.id === eid); return o ? [...exps, { ...o, id: Date.now(), description: o.description + ' (Cópia)', paidInstallments: 0, paymentHistory: [] }] : exps; })} onTogglePause={(cid, eid) => updateExp(cid, exps => exps.map(x => x.id === eid ? { ...x, isPaused: !x.isPaused } : x))} />
+                ) : (
+                    <CategoryList categories={data.categories} income={data.income} onSelectCategory={setSelectedCategory} onUpdateIncome={handleUpdateIncome} onUpdateCategoryBudget={handleUpdateCategoryBudget} onOpenCategoryModal={c => { setEditingCategory(c || null); setIsCategoryModalOpen(true); }} onDeleteCategoryRequest={id => { setCategoryToDelete(id); setDeleteConfirmOpen(true); }} onDeleteGroupRequest={grp => { setGroupToDelete(grp); setDeleteGroupConfirmOpen(true); }} onOpenPresetModal={() => setIsPresetModalOpen(true)} onExport={handleExportData} onImport={handleImportClick} tempPresetCategories={tempPresetCategories} onConfirmPreset={() => { setData({ ...data, categories: tempPresetCategories }); setTempPresetCategories(null); }} onCancelPreset={() => { setTempPresetCategories(null); setIsPresetModalOpen(true); }} onToggleLock={handleToggleCategoryLock} onMoveItem={handleMoveItem} onOpenEditGroupModal={n => { setEditingGroup(n); setEditGroupModalOpen(true); }} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
+                )}
+            </main>
+            
+            <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)}><CategoryForm onSubmit={handleCategorySubmit} onCancel={() => setIsCategoryModalOpen(false)} categoryData={editingCategory} existingGroups={existingGroups} /></Modal>
+            <PaymentAmountModal isOpen={isPaymentModalOpen} onClose={() => setPaymentModalOpen(false)} onSubmit={handleConfirmPayment} expense={expenseToPay} />
+            <ConfirmationModal isOpen={isDeleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} onConfirm={confirmDeleteCategory} title="Excluir Categoria" message="Tem certeza?" />
+            <ConfirmationModal isOpen={isDeleteGroupConfirmOpen} onClose={() => setDeleteGroupConfirmOpen(false)} onConfirm={confirmDeleteGroup} title="Excluir Grupo" message="Confirma?" />
+            <ConfirmationModal isOpen={isImportConfirmOpen} onClose={() => setImportConfirmOpen(false)} onConfirm={() => { setInitialData(JSON.parse(fileToImport)); setImportConfirmOpen(false); setFileToImport(null); }} title="Importar" message="Substituir dados?" />
+            <PresetModal isOpen={isPresetModalOpen} onClose={() => setIsPresetModalOpen(false)} onSelectPreset={p => { setTempPresetCategories(p.categories.map(c => ({ ...c, id: Date.now() + Math.random(), budgetedValue: (data.income * c.percentage) / 100, expenses: [], isLocked: false }))); setIsPresetModalOpen(false); }} />
+            <EditGroupModal isOpen={isEditGroupModalOpen} onClose={() => { setEditGroupModalOpen(false); setEditingGroup(null); }} onSubmit={handleUpdateGroupName} groupName={editingGroup} />
+            
             {unbalanced && !tempPresetCategories && <BudgetAdjustmentBar totalPercentage={totalPct} onAdjust={handleAutoAdjust} />}
         </div>
     );
