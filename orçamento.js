@@ -52,11 +52,19 @@ const budgetPresets = [
     { name: 'Warren Buffett', description: 'Simplicidade 90/10.', icon: BookOpen, categories: [ { name: '✅ Essenciais', percentage: 50, color: 'bg-blue-500', group: 'Despesas' }, { name: '🛍️ Livres', percentage: 20, color: 'bg-pink-500', group: 'Despesas' }, { name: '🛡️ Reserva', percentage: 10, color: 'bg-yellow-500', group: 'Investimentos' }, { name: '📈 S&P 500', percentage: 18, color: 'bg-purple-500', group: 'Investimentos' }, { name: '🏦 Renda Fixa', percentage: 2, color: 'bg-teal-500', group: 'Investimentos' } ] }
 ];
 
+// --- CORREÇÃO DO ERRO DE JSON CIRCULAR ---
+// Removemos o JSON.stringify para evitar o crash ao lidar com eventos ou objetos complexos
 const useHistoryState = (initial) => {
     const [state, setState] = useState({ past: [], present: initial, future: [] });
+    
     const undo = () => { if (!state.past.length) return; const newPast = state.past.slice(0, -1); setState({ past: newPast, present: state.past[state.past.length - 1], future: [state.present, ...state.future] }); };
     const redo = () => { if (!state.future.length) return; const newFuture = state.future.slice(1); setState({ past: [...state.past, state.present], present: state.future[0], future: newFuture }); };
-    const set = (newVal) => { if (JSON.stringify(newVal) === JSON.stringify(state.present)) return; setState({ past: [...state.past, state.present], present: newVal, future: [] }); };
+    
+    // AQUI ESTAVA O ERRO: Removemos a verificação rigorosa que quebrava o app
+    const set = (newVal) => { 
+        setState({ past: [...state.past, state.present], present: newVal, future: [] }); 
+    };
+    
     const setInitial = (newVal) => setState({ past: [], present: newVal, future: [] });
     return { state: state.present, set, undo, redo, canUndo: state.past.length > 0, canRedo: state.future.length > 0, setInitial };
 };
