@@ -1,62 +1,99 @@
-/* style.css - Tema Dinâmico (Dark Padrão / Light Opcional) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-    /* --- PADRÃO: DARK MODE (Deep Space) --- */
-    --bg-body: #0B0E14;       /* Fundo Principal */
-    --bg-sidebar: #111827;    /* Fundo Menu Lateral */
-    --bg-card: #1F2937;       /* Fundo dos Cards/Elementos */
-    --bg-hover: rgba(255, 255, 255, 0.05); /* Cor ao passar o mouse */
+    /* Paleta Cyberpunk / Futurista */
+    --bg-space: #030305;      /* Fundo do vazio (preto profundo) */
+    --bg-panel: #0a0a0c;      /* Fundo dos painéis laterais */
+    --glass-bg: rgba(10, 10, 15, 0.6); /* Vidro fosco */
+    --glass-border: rgba(34, 211, 238, 0.15);
     
-    --text-primary: #F3F4F6;  /* Texto Principal (Branco/Cinza claro) */
-    --text-secondary: #9CA3AF;/* Texto Secundário (Cinza médio) */
+    --neon-cyan: #00f0ff;
+    --neon-cyan-dim: rgba(0, 240, 255, 0.2);
+    --neon-pink: #ff0055;
     
-    --border-color: #1F2937;  /* Bordas sutis */
-    
-    --primary: #3B82F6;       /* Azul Principal */
-    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --text-main: #f8fafc;
+    --text-muted: #64748b;
 }
 
-body.light-mode {
-    /* --- OPCIONAL: LIGHT MODE (Estilo Financely) --- */
-    --bg-body: #F4F7FE;
-    --bg-sidebar: #FFFFFF;
-    --bg-card: #FFFFFF;
-    --bg-hover: #F4F7FE;
-    
-    --text-primary: #1B2559;  /* Azul Marinho Escuro */
-    --text-secondary: #A3AED0;/* Cinza Azulado */
-    
-    --border-color: #E0E5F2;
-    
-    --primary: #4318FF;       /* Roxo/Azul Vibrante */
-    --shadow-card: 0px 18px 40px rgba(112, 144, 176, 0.12);
-}
-
-* { box-sizing: border-box; transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+* { box-sizing: border-box; }
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: var(--bg-body);
-    color: var(--text-primary);
+    background-color: var(--bg-space);
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(255, 0, 85, 0.03) 0%, transparent 50%);
+    color: var(--text-main);
     margin: 0; padding: 0; overflow: hidden;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* Scrollbar Futurista */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #4B5563; border-radius: 10px; }
-body.light-mode ::-webkit-scrollbar-thumb { background: #C4C4C4; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-cyan); }
 
-/* Classes Utilitárias Semânticas (Usadas no React) */
-.bg-app { background-color: var(--bg-body); }
-.bg-sidebar { background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
-.bg-header { background-color: var(--bg-sidebar); border-bottom: 1px solid var(--border-color); }
-.bg-card { background-color: var(--bg-card); box-shadow: var(--shadow-card); border-radius: 20px; }
-.text-main { color: var(--text-primary); }
-.text-sec { color: var(--text-secondary); }
-.hover-item:hover { background-color: var(--bg-hover); }
+/* Animações e Efeitos */
+.shadow-neon { box-shadow: 0 0 20px var(--neon-cyan-dim); }
+.text-neon { text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); }
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+}
 
-/* Animações */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+.animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+
+/* =========================================================
+   A MÁGICA: Sobrescrevendo componentes antigos globalmente
+   Isso transforma suas tabelas e modais antigos em neon/glass
+   ========================================================= */
+
+/* Transforma os fundos cinzas antigos em painéis de vidro */
+.bg-gray-800, .bg-gray-900 {
+    background-color: var(--glass-bg) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 16px !important;
+}
+
+/* Bordas antigas para sutis */
+.border-gray-700, .border-gray-600 { border-color: rgba(255,255,255,0.05) !important; }
+
+/* Transforma botões azuis genéricos em botões Neon Ciano */
+.bg-blue-600 {
+    background-color: transparent !important;
+    border: 1px solid var(--neon-cyan) !important;
+    color: var(--neon-cyan) !important;
+    box-shadow: 0 0 10px var(--neon-cyan-dim) !important;
+    transition: all 0.3s ease !important;
+}
+.bg-blue-600:hover {
+    background-color: var(--neon-cyan-dim) !important;
+    box-shadow: 0 0 20px var(--neon-cyan) !important;
+    transform: scale(1.02);
+}
+
+/* Ajusta Tabelas Antigas (RecordsTable, etc) */
+table { border-collapse: separate !important; border-spacing: 0 8px !important; }
+tr.border-b { border: none !important; background: rgba(255,255,255,0.02); transition: background 0.3s; }
+tr.border-b:hover { background: rgba(0, 240, 255, 0.05); box-shadow: inset 2px 0 0 var(--neon-cyan); }
+td, th { border: none !important; padding: 16px !important; }
+td:first-child, th:first-child { border-radius: 8px 0 0 8px; }
+td:last-child, th:last-child { border-radius: 0 8px 8px 0; }
+
+/* Entradas de formulário antigas */
+input, select, textarea {
+    background: rgba(0,0,0,0.5) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #fff !important;
+    transition: all 0.3s;
+}
+input:focus, select:focus {
+    border-color: var(--neon-cyan) !important;
+    box-shadow: 0 0 10px var(--neon-cyan-dim) !important;
+    outline: none !important;
+}
