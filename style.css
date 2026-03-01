@@ -1,5 +1,5 @@
-/* Importando Open Sans (corpo) e Poppins (títulos/botões) */
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@500;600;700&display=swap');
+/* Importando Open Sans (corpo) e Roboto (títulos/botões) */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
 
 :root {
     /* Paleta Cyberpunk / Futurista */
@@ -29,9 +29,10 @@ body {
     margin: 0; padding: 0; overflow: hidden;
 }
 
-/* Força a fonte Poppins em todos os títulos, destaques e botões */
-h1, h2, h3, h4, h5, h6, button, .font-poppins {
-    font-family: 'Poppins', sans-serif !important;
+/* Força a fonte Roboto em todos os títulos, destaques e botões */
+/* A classe .font-poppins foi mantida na regra apenas para redirecionar o código antigo para o Roboto sem quebrar nada */
+h1, h2, h3, h4, h5, h6, button, .font-poppins, .font-roboto {
+    font-family: 'Roboto', sans-serif !important;
 }
 
 /* --- CORREÇÃO DAS FONTES FINAS --- */
@@ -88,8 +89,8 @@ h1, h2, h3, h4, h5, h6, button, .font-poppins {
     color: var(--neon-cyan) !important;
     box-shadow: 0 0 10px var(--neon-cyan-dim) !important;
     transition: all 0.3s ease !important;
-    font-family: 'Poppins', sans-serif !important;
-    font-weight: 600 !important;
+    font-family: 'Roboto', sans-serif !important;
+    font-weight: 700 !important; /* Dando um peso extra pro Roboto nos botões */
 }
 .bg-blue-600:hover {
     background-color: var(--neon-cyan-dim) !important;
