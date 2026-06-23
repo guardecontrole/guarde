@@ -17,28 +17,36 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+
+    <!-- FIREBASE COMPAT (Evita o uso de type="module") -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-gray-900 text-gray-300">
     <div id="root"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { 
-            getAuth, onAuthStateChanged, signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut
-        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        import { 
-            getFirestore, collection, doc, onSnapshot, 
-            addDoc, deleteDoc, updateDoc, setDoc, getDoc, serverTimestamp 
-        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
-        // Torna o Firebase disponível globalmente
+    <script>
+        // Mapeando a versão compat para a estrutura que o seu app espera
         window.firebase = {
-            initializeApp,
-            getAuth, onAuthStateChanged, signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut,
-            getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, 
-            setDoc, getDoc, serverTimestamp
+            initializeApp: firebase.initializeApp,
+            getAuth: firebase.auth, 
+            onAuthStateChanged: (auth, cb) => auth().onAuthStateChanged(cb), 
+            signInWithEmailAndPassword: (auth, email, pass) => auth().signInWithEmailAndPassword(email, pass), 
+            createUserWithEmailAndPassword: (auth, email, pass) => auth().createUserWithEmailAndPassword(email, pass), 
+            GoogleAuthProvider: firebase.auth.GoogleAuthProvider, 
+            signInWithPopup: (auth, provider) => auth().signInWithPopup(provider), 
+            signOut: (auth) => auth().signOut(),
+            getFirestore: firebase.firestore, 
+            collection: (db, path) => db.collection(path), 
+            doc: (db, path, id) => id ? db.collection(path).doc(id) : db.doc(path), 
+            onSnapshot: (ref, cb) => ref.onSnapshot(cb), 
+            addDoc: (colRef, data) => colRef.add(data), 
+            deleteDoc: (docRef) => docRef.delete(), 
+            updateDoc: (docRef, data) => docRef.update(data), 
+            setDoc: (docRef, data, options) => docRef.set(data, options), 
+            getDoc: (docRef) => docRef.get(), 
+            serverTimestamp: firebase.firestore.FieldValue.serverTimestamp
         };
     </script>
 
@@ -61,8 +69,6 @@
     <script src="components/SortIndicator.js" type="text/babel"></script>
     
     <script src="hooks/useSortableData.js" type="text/babel"></script>
-    
-    <script src="orçamento.js" type="text/babel"></script>
 
     <script src="app.js" type="text/babel"></script>
 </body>
