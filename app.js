@@ -8,35 +8,7 @@ if (!window.firebase) {
 // ... resto do código continua igual
 
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
-// Aguarda Firebase estar pronto
-if (!window.firebase) {
-    await new Promise(resolve => {
-        if (window.firebase) resolve();
-        else window.addEventListener('firebase-ready', resolve, { once: true });
-    });
-}
-
-// Importa Recharts de forma segura
-const RechartsGlobal = window.Recharts || window.recharts || {};
-const { 
-    LineChart = null,
-    Line = null,
-    XAxis = null,
-    YAxis = null,
-    CartesianGrid = null,
-    Tooltip = null,
-    Legend = null,
-    ResponsiveContainer = null,
-    ComposedChart = null,
-    PieChart = null,
-    Pie = null,
-    Cell = null
-} = RechartsGlobal;
-
-// Verifica se carregou
-if (!ResponsiveContainer) {
-    console.error('❌ Recharts não carregou corretamente!');
-}
+const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, PieChart, Pie, Cell } = Recharts;
 
 // Importa componentes do escopo global
 const AuthModal = window.AuthModal;
