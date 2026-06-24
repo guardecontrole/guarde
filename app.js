@@ -6,7 +6,6 @@ if (!window.firebase) {
     });
 }
 
-const { useState, useEffect, useMemo, useRef, useCallback } = React;
 // ... resto do código continua igual
 
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
