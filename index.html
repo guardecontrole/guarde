@@ -41,11 +41,10 @@
             setDoc, getDoc, serverTimestamp
         };
         
-        // Avisa que o Firebase está pronto
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
 
-    <!-- TODOS os scripts com data-type="module" -->
+    <!-- Scripts COM data-type="module" para suportar imports -->
     <script src="firebase-config.js" type="text/babel" data-type="module"></script>
     <script src="utils/icons.js" type="text/babel" data-type="module"></script>
     <script src="utils/helpers.js" type="text/babel" data-type="module"></script>
