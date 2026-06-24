@@ -38,8 +38,6 @@ if (!ResponsiveContainer) {
     console.error('❌ Recharts não carregou corretamente!');
 }
 
-const { useState, useEffect, useMemo, useRef, useCallback } = React;
-
 // Importa componentes do escopo global
 const AuthModal = window.AuthModal;
 const OnboardingModal = window.OnboardingModal;
