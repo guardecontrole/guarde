@@ -1,5 +1,6 @@
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
 const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, PieChart, Pie, Cell } = Recharts;
+const { ChevronDown, Layers, Plus, Edit, Trash2 } = lucide;
 
 // Importa componentes do escopo global
 const AuthModal = window.AuthModal;
