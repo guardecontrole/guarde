@@ -1,3 +1,6 @@
+const { ResponsiveContainer, ComposedChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } = Recharts;
+
+
 const FinancialEvolutionChart = ({ data }) => { 
     const { useState } = React;
     const [visibility, setVisibility] = useState({ balance: true, saldoSugerido: true, expense: true, stabilityReserve: true, avgIncome: false }); 
