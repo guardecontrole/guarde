@@ -16,6 +16,9 @@ const ContributionAnalysis = window.ContributionAnalysis;
 const StabilityReserveHistoryTable = window.StabilityReserveHistoryTable;
 const SortIndicator = window.SortIndicator;
 
+// --- IMPORTAÇÃO CRUCIAL PARA O ORÇAMENTO FUNCIONAR ---
+const OrcamentoPage = window.OrcamentoPage;
+
 // Importa ícones
 const icons = window.icons;
 
@@ -87,6 +90,7 @@ function App() {
     const [showAdjustReserveModal, setShowAdjustReserveModal] = useState(false);
 
     const isSimulation = view === 'simulation';
+    const isBudget = view === 'budget';
     const participants = useMemo(() => userProfile?.participants || ['Eu'], [userProfile]);
 
     useEffect(() => {
@@ -969,6 +973,7 @@ function App() {
                              <div className="border-b border-gray-700 flex flex-wrap">
                                 <button onClick={() => {setView('dashboard'); setSimIncomes([]); setSimExpenses([]);}} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ view === 'dashboard' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Dashboard </button>
                                 <button onClick={() => setView('simulation')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ view === 'simulation' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Simulação </button>
+                                <button onClick={() => setView('budget')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ view === 'budget' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Orçamento </button>
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -995,183 +1000,190 @@ function App() {
                 {error && <div className="bg-red-900/50 border border-red-500 text-red-400 px-4 py-3 rounded-lg relative mb-6" role="alert">{error}</div>}
                 {success && <div className="bg-green-900/50 border border-green-500 text-green-400 px-4 py-3 rounded-lg relative mb-6" role="alert">{success}</div>}
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-8">
-                    
-                    {/* Coluna Principal (Esquerda) */}
-                    <div className="lg:col-span-8 space-y-8">
-                        <div id="summary-cards" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                                <h2 className="text-2xl font-semibold text-gray-200">Resumo de {filterYear}</h2>
-                                <div className="flex items-center gap-2">
-                                    <label htmlFor="filterYear" className="text-sm font-medium text-gray-400">Filtrar por Ano:</label>
-                                    <input id="filterYear" type="number" value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="w-32 px-3 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                                </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div 
-                                    id="monthly-salary-card" 
-                                    className={`relative group p-4 rounded-lg border transition-colors duration-300 ${
-                                        liquidityAnalysis.isLimited 
-                                            ? 'bg-orange-900/40 border-orange-600/50'
-                                            : (currentTwelveMonthAverage >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700')
-                                    }`}
-                                >
-                                     <h3 className={`flex items-center gap-2 text-lg font-semibold ${liquidityAnalysis.isLimited ? 'text-orange-300' : (currentTwelveMonthAverage >= 0 ? 'text-blue-300' : 'text-yellow-300')}`}>
-                                        <span role="img" aria-label="Sugestão">{liquidityAnalysis.isLimited ? '⚠️' : '💡'}</span>
-                                        Saldo Sugerido ({isSimulation && contextDate > new Date() ? 'Simulado' : 'Hoje'})
-                                     </h3>
-                                     
-                                     <span className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-gray-200 text-xs rounded p-2 w-80 text-center z-20 shadow-xl border border-gray-600 pointer-events-none">
-                                         {liquidityAnalysis.isLimited ? (
-                                             <>
-                                                <span className="block font-bold text-orange-400 mb-1">Valor Ajustado à Realidade</span>
-                                                A média sugerida seria <strong>{liquidityAnalysis.originalSuggestion.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>, mas seu saldo atual somado à reserva não atinge esse valor. Exibindo o máximo disponível em caixa.
-                                             </>
-                                         ) : (
-                                             "Este é o seu saldo médio dos últimos 12 meses. Use como guia para seus gastos mensais."
-                                         )}
-                                     </span>
+                {/* --- AQUI ESTÁ A INTEGRAÇÃO --- */}
+                {isBudget && (
+                    <OrcamentoPage initialIncome={liquidityAnalysis.displayValue} />
+                )}
 
-                                     <p className={`text-3xl font-bold mt-2 ${liquidityAnalysis.isLimited ? 'text-orange-400' : (currentTwelveMonthAverage >= 0 ? 'text-blue-400' : 'text-yellow-400')}`}>
-                                         {liquidityAnalysis.displayValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                     </p>
-                                     
-                                     {liquidityAnalysis.isLimited && (
-                                         <p className="text-xs text-orange-300/80 mt-1 flex items-center gap-1">
-                                             Limitado por: Renda + Reserva
-                                         </p>
-                                     )}
-                                 </div>
-                                <div className="bg-purple-900/50 p-4 rounded-lg border border-purple-700">
-                                         <h3 className="text-lg font-semibold text-purple-300 flex items-center justify-between relative group">
-                                            <div className="flex items-center gap-2">
-                                                <icons.ShieldIcon /> Reserva de Estabilidade
-                                            </div>
-                                            <button onClick={() => setShowAdjustReserveModal(true)} title="Ajustar Saldo Manualmente" className="text-purple-400 hover:text-white transition-colors">
-                                                <icons.AdjustIcon />
-                                            </button>
-                                            <span className="absolute -top-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-600 text-white text-xs rounded py-1 px-2 w-72 pointer-events-none">
-                                                Calculada mês a mês: Saldo Anterior + (Saldo do Mês - Média de Saldo dos 12 meses anteriores). A reserva é zerada se ficar negativa.
-                                            </span>
-                                        </h3>
-                                        <p className="text-3xl font-bold text-purple-400 mt-2">{finalStabilityReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                </div>
-
-                                {showFullSummary && (
-                                    <>
-                                        <div className="bg-green-900/50 p-4 rounded-lg border border-green-700"> 
-                                            <h3 className="text-lg font-semibold text-green-300">Total de Entradas (Renda)</h3> 
-                                            <p className="text-3xl font-bold text-green-400 mt-2">{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
-                                        </div>
-                                        
-                                        <div className="bg-red-900/50 p-4 rounded-lg border border-red-700"> <h3 className="text-lg font-semibold text-red-300">Total de Saídas</h3> <p className="text-3xl font-bold text-red-400 mt-2">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
-                                        
-                                        <div className="bg-green-900/50 p-4 rounded-lg border border-green-700/50">
-                                            <h3 className="text-base font-semibold text-green-300/80">Média de Entradas (12m)</h3>
-                                            <p className="text-2xl font-bold text-green-400/90 mt-2">{last12MonthsSummary.avgIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                        </div>
-                                        <div className="bg-red-900/50 p-4 rounded-lg border border-red-700/50">
-                                            <h3 className="text-base font-semibold text-red-300/80">Média de Saídas (12m)</h3>
-                                            <p className="text-2xl font-bold text-red-400/90 mt-2">{last12MonthsSummary.avgExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                                        </div>
-
-                                        <div className={`md:col-span-2 p-4 rounded-lg border ${balance >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}> 
-                                            <h3 className={`text-lg font-semibold ${balance >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>Saldo Final do Ano (Disponível)</h3> 
-                                            <p className={`text-3xl font-bold mt-2 ${balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}>{balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                            
-                            <div id="summary-toggle" className="text-center mt-6 border-t border-gray-700 pt-4">
-                                <button onClick={() => setShowFullSummary(!showFullSummary)} className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-3 py-1">
-                                    {showFullSummary ? 'Ocultar Detalhes do Ano' : 'Mostrar Detalhes do Ano'}
-                                </button>
-                            </div>
-                        </div>
+                {!isBudget && (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-8">
                         
-                        <FinancialEvolutionChart data={chartData} />
-
-                        <div id="detailed-reports" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                            <h2 className="text-2xl font-semibold text-gray-200 mb-4">Relatórios Detalhados</h2>
-                            <div className="border-b border-gray-700 flex flex-wrap">
-                                <button onClick={() => setActiveTab('summary')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'summary' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Resumo Mensal </button>
-                                <button onClick={() => setActiveTab('reserve')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'reserve' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Reserva de Estabilidade </button>
-                                <button onClick={() => setActiveTab('incomes')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'incomes' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Entradas </button>
-                                <button onClick={() => setActiveTab('expenses')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'expenses' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Saídas </button>
-                                {participants.length > 1 && (
-                                    <button onClick={() => setActiveTab('couple')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'couple' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Visão Casal </button>
-                                )}
-                            </div>
-                            <div className="mt-4"> 
-                                {isLoading && !user ? (<p className="text-gray-500 text-center py-4">Carregando dados...</p>) : ( <> 
-                                    {activeTab === 'summary' && <MonthlyBalanceHistoryTable data={sortedMonthlyBalanceHistory} isLoading={isLoading} sortConfig={sortConfigs.summary} requestSort={(key) => handleRequestSort('summary', key)} />} 
-                                    {activeTab === 'reserve' && <StabilityReserveHistoryTable data={sortedStabilityReserveHistory} sortConfig={sortConfigs.reserve} requestSort={(key) => handleRequestSort('reserve', key)} />} 
-                                    {activeTab === 'incomes' && <RecordsTable title={`Detalhes de Entradas (${filterYear})`} records={sortedFilteredIncomes} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="income" sortConfig={sortConfigs.incomes} requestSort={(key) => handleRequestSort('incomes', key)} isSimulation={isSimulation} participants={participants} />} 
-                                    {activeTab === 'expenses' && <RecordsTable title={`Detalhes de Saídas (${filterYear})`} records={sortedFilteredExpenses} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="expense" sortConfig={sortConfigs.expenses} requestSort={(key) => handleRequestSort('expenses', key)} isSimulation={isSimulation} />} 
-                                    {activeTab === 'couple' && participants.length > 1 && <ContributionAnalysis contributionData={contributionData} individualAverages={individualAverages} />}
-                                </> )} 
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Coluna de Ações (Direita) */}
-                    <div className="lg:col-span-4 space-y-8 lg:sticky top-24 h-screen">
-                        <div id="add-record-form" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                            <h3 className="text-xl font-semibold text-gray-200 mb-4">Adicionar Transação</h3>
-                            <div className="mb-4 border-b border-gray-700 flex"> <button onClick={() => setFormType('income')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'income' ? 'text-green-400 border-b-2 border-green-400' : 'text-gray-400 hover:text-green-400'}`}> Entrada </button> <button onClick={() => setFormType('expense')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'expense' ? 'text-red-400 border-b-2 border-red-400' : 'text-gray-400 hover:text-red-400'}`}> Saída </button> </div>
-                            <form onSubmit={handleAddRecord} className="space-y-4">
-                                <div> <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> <input id="description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={formType === 'income' ? 'Ex: Salário, Venda' : 'Ex: Aluguel, Compras'} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
-                                {participants.length > 1 && (
-                                    <div>
-                                        <label htmlFor="responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
-                                        <input 
-                                            id="responsible" 
-                                            list="responsible-options-add"
-                                            value={responsible} 
-                                            onChange={(e) => setResponsible(e.target.value)} 
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Quem?"
-                                        />
-                                        <datalist id="responsible-options-add">
-                                            {participants.map(p => <option key={p} value={p}>{p}</option>)}
-                                        </datalist>
+                        {/* Coluna Principal (Esquerda) */}
+                        <div className="lg:col-span-8 space-y-8">
+                            <div id="summary-cards" className="bg-gray-800 p-6 rounded-xl shadow-md">
+                                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                                    <h2 className="text-2xl font-semibold text-gray-200">Resumo de {filterYear}</h2>
+                                    <div className="flex items-center gap-2">
+                                        <label htmlFor="filterYear" className="text-sm font-medium text-gray-400">Filtrar por Ano:</label>
+                                        <input id="filterYear" type="number" value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="w-32 px-3 py-1 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                                     </div>
-                                )}
-                                <div> <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> <input id="amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1500.00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
-                                <div className="flex gap-4"> <div className="flex-1"> <label htmlFor="month" className="block text-sm font-medium text-gray-400 mb-1">Mês</label> <select id="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> {Array.from({length: 12}, (_, i) => <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}</option>)} </select> </div> <div className="flex-1"> <label htmlFor="year" className="block text-sm font-medium text-gray-400 mb-1">Ano</label> <input id="year" type="number" value={year} onChange={(e) => setYear(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div> </div>
-                                <button type="submit" className={`w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${formType === 'income' ? 'bg-green-600 hover:bg-green-500 focus:ring-green-500' : 'bg-red-600 hover:bg-red-500 focus:ring-red-500'}`}> Adicionar {formType === 'income' ? 'Entrada' : 'Saída'} </button>
-                            </form>
-                        </div>
-                        <div id="action-buttons" className="bg-gray-800 p-6 rounded-xl shadow-md">
-                            <h3 className="text-xl font-semibold text-gray-200 mb-4">Ferramentas</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <button 
-                                    onClick={() => setShowLeanCalculator(true)}
-                                    className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-yellow-700/80 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors border border-yellow-600/50">
-                                    <icons.CalculatorIcon />
-                                    Modo Vacas Magras
-                                </button>
+                                </div>
                                 
-                                {showRedoButton && (
-                                    <button 
-                                        onClick={handleRedoInitialAverage}
-                                        className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-500 transition-colors">
-                                        <icons.ResetIcon />
-                                        Refazer Média Inicial
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div 
+                                        id="monthly-salary-card" 
+                                        className={`relative group p-4 rounded-lg border transition-colors duration-300 ${
+                                            liquidityAnalysis.isLimited 
+                                                ? 'bg-orange-900/40 border-orange-600/50'
+                                                : (currentTwelveMonthAverage >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700')
+                                        }`}
+                                    >
+                                         <h3 className={`flex items-center gap-2 text-lg font-semibold ${liquidityAnalysis.isLimited ? 'text-orange-300' : (currentTwelveMonthAverage >= 0 ? 'text-blue-300' : 'text-yellow-300')}`}>
+                                            <span role="img" aria-label="Sugestão">{liquidityAnalysis.isLimited ? '⚠️' : '💡'}</span>
+                                            Saldo Sugerido ({isSimulation && contextDate > new Date() ? 'Simulado' : 'Hoje'})
+                                         </h3>
+                                         
+                                         <span className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-gray-200 text-xs rounded p-2 w-80 text-center z-20 shadow-xl border border-gray-600 pointer-events-none">
+                                             {liquidityAnalysis.isLimited ? (
+                                                 <>
+                                                    <span className="block font-bold text-orange-400 mb-1">Valor Ajustado à Realidade</span>
+                                                    A média sugerida seria <strong>{liquidityAnalysis.originalSuggestion.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>, mas seu saldo atual somado à reserva não atinge esse valor. Exibindo o máximo disponível em caixa.
+                                                 </>
+                                             ) : (
+                                                 "Este é o seu saldo médio dos últimos 12 meses. Use como guia para seus gastos mensais."
+                                             )}
+                                         </span>
+
+                                         <p className={`text-3xl font-bold mt-2 ${liquidityAnalysis.isLimited ? 'text-orange-400' : (currentTwelveMonthAverage >= 0 ? 'text-blue-400' : 'text-yellow-400')}`}>
+                                             {liquidityAnalysis.displayValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                         </p>
+                                         
+                                         {liquidityAnalysis.isLimited && (
+                                             <p className="text-xs text-orange-300/80 mt-1 flex items-center gap-1">
+                                                 Limitado por: Renda + Reserva
+                                             </p>
+                                         )}
+                                     </div>
+                                    <div className="bg-purple-900/50 p-4 rounded-lg border border-purple-700">
+                                            <h3 className="text-lg font-semibold text-purple-300 flex items-center justify-between relative group">
+                                                <div className="flex items-center gap-2">
+                                                    <icons.ShieldIcon /> Reserva de Estabilidade
+                                                </div>
+                                                <button onClick={() => setShowAdjustReserveModal(true)} title="Ajustar Saldo Manualmente" className="text-purple-400 hover:text-white transition-colors">
+                                                    <icons.AdjustIcon />
+                                                </button>
+                                                <span className="absolute -top-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-600 text-white text-xs rounded py-1 px-2 w-72 pointer-events-none">
+                                                    Calculada mês a mês: Saldo Anterior + (Saldo do Mês - Média de Saldo dos 12 meses anteriores). A reserva é zerada se ficar negativa.
+                                                </span>
+                                            </h3>
+                                            <p className="text-3xl font-bold text-purple-400 mt-2">{finalStabilityReserve.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                    </div>
+
+                                    {showFullSummary && (
+                                        <>
+                                            <div className="bg-green-900/50 p-4 rounded-lg border border-green-700"> 
+                                                <h3 className="text-lg font-semibold text-green-300">Total de Entradas (Renda)</h3> 
+                                                <p className="text-3xl font-bold text-green-400 mt-2">{totalRealIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
+                                            </div>
+                                            
+                                            <div className="bg-red-900/50 p-4 rounded-lg border border-red-700"> <h3 className="text-lg font-semibold text-red-300">Total de Saídas</h3> <p className="text-3xl font-bold text-red-400 mt-2">{totalExpenses.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> </div>
+                                            
+                                            <div className="bg-green-900/50 p-4 rounded-lg border border-green-700/50">
+                                                <h3 className="text-base font-semibold text-green-300/80">Média de Entradas (12m)</h3>
+                                                <p className="text-2xl font-bold text-green-400/90 mt-2">{last12MonthsSummary.avgIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                            </div>
+                                            <div className="bg-red-900/50 p-4 rounded-lg border border-red-700/50">
+                                                <h3 className="text-base font-semibold text-red-300/80">Média de Saídas (12m)</h3>
+                                                <p className="text-2xl font-bold text-red-400/90 mt-2">{last12MonthsSummary.avgExpense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                                            </div>
+
+                                            <div className={`md:col-span-2 p-4 rounded-lg border ${balance >= 0 ? 'bg-blue-900/50 border-blue-700' : 'bg-yellow-900/50 border-yellow-700'}`}> 
+                                                <h3 className={`text-lg font-semibold ${balance >= 0 ? 'text-blue-300' : 'text-yellow-300'}`}>Saldo Final do Ano (Disponível)</h3> 
+                                                <p className={`text-3xl font-bold mt-2 ${balance >= 0 ? 'text-blue-400' : 'text-yellow-400'}`}>{balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p> 
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                
+                                <div id="summary-toggle" className="text-center mt-6 border-t border-gray-700 pt-4">
+                                    <button onClick={() => setShowFullSummary(!showFullSummary)} className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-3 py-1">
+                                        {showFullSummary ? 'Ocultar Detalhes do Ano' : 'Mostrar Detalhes do Ano'}
                                     </button>
-                                )}
-                                <button onClick={handleImportClick} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.ImportIcon /> Importar </button>
-                                <button onClick={handleExportData} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.ExportIcon /> Exportar </button>
-                                <button onClick={handleUndo} disabled={!canUndo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.UndoIcon /> Desfazer </button>
-                                <button onClick={handleRedo} disabled={!canRedo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.RedoIcon /> Refazer </button>
-                                <button onClick={() => setIsTourOpen(true)} className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500 transition-colors"> <icons.HelpIcon /> Ajuda & Tour Guiado </button>
-                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json" />
+                                </div>
+                            </div>
+                            
+                            <FinancialEvolutionChart data={chartData} />
+
+                            <div id="detailed-reports" className="bg-gray-800 p-6 rounded-xl shadow-md">
+                                <h2 className="text-2xl font-semibold text-gray-200 mb-4">Relatórios Detalhados</h2>
+                                <div className="border-b border-gray-700 flex flex-wrap">
+                                    <button onClick={() => setActiveTab('summary')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'summary' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Resumo Mensal </button>
+                                    <button onClick={() => setActiveTab('reserve')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'reserve' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Reserva de Estabilidade </button>
+                                    <button onClick={() => setActiveTab('incomes')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'incomes' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Entradas </button>
+                                    <button onClick={() => setActiveTab('expenses')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'expenses' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Saídas </button>
+                                    {participants.length > 1 && (
+                                        <button onClick={() => setActiveTab('couple')} className={`py-2 px-4 text-sm sm:text-base font-semibold transition-colors duration-300 border-b-2 ${ activeTab === 'couple' ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-transparent hover:text-blue-300 hover:border-blue-300' }`} > Visão Casal </button>
+                                    )}
+                                </div>
+                                <div className="mt-4"> 
+                                    {isLoading && !user ? (<p className="text-gray-500 text-center py-4">Carregando dados...</p>) : ( <> 
+                                        {activeTab === 'summary' && <MonthlyBalanceHistoryTable data={sortedMonthlyBalanceHistory} isLoading={isLoading} sortConfig={sortConfigs.summary} requestSort={(key) => handleRequestSort('summary', key)} />} 
+                                        {activeTab === 'reserve' && <StabilityReserveHistoryTable data={sortedStabilityReserveHistory} sortConfig={sortConfigs.reserve} requestSort={(key) => handleRequestSort('reserve', key)} />} 
+                                        {activeTab === 'incomes' && <RecordsTable title={`Detalhes de Entradas (${filterYear})`} records={sortedFilteredIncomes} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="income" sortConfig={sortConfigs.incomes} requestSort={(key) => handleRequestSort('incomes', key)} isSimulation={isSimulation} participants={participants} />} 
+                                        {activeTab === 'expenses' && <RecordsTable title={`Detalhes de Saídas (${filterYear})`} records={sortedFilteredExpenses} onDelete={handleDeleteRecord} onEdit={(record, type) => setEditingRecord({...record, type})} type="expense" sortConfig={sortConfigs.expenses} requestSort={(key) => handleRequestSort('expenses', key)} isSimulation={isSimulation} />} 
+                                        {activeTab === 'couple' && participants.length > 1 && <ContributionAnalysis contributionData={contributionData} individualAverages={individualAverages} />}
+                                    </> )} 
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Coluna de Ações (Direita) */}
+                        <div className="lg:col-span-4 space-y-8 lg:sticky top-24 h-screen">
+                            <div id="add-record-form" className="bg-gray-800 p-6 rounded-xl shadow-md">
+                                <h3 className="text-xl font-semibold text-gray-200 mb-4">Adicionar Transação</h3>
+                                <div className="mb-4 border-b border-gray-700 flex"> <button onClick={() => setFormType('income')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'income' ? 'text-green-400 border-b-2 border-green-400' : 'text-gray-400 hover:text-green-400'}`}> Entrada </button> <button onClick={() => setFormType('expense')} className={`py-2 px-4 text-lg font-semibold transition-colors duration-300 ${formType === 'expense' ? 'text-red-400 border-b-2 border-red-400' : 'text-gray-400 hover:text-red-400'}`}> Saída </button> </div>
+                                <form onSubmit={handleAddRecord} className="space-y-4">
+                                    <div> <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-1">Descrição</label> <input id="description" type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={formType === 'income' ? 'Ex: Salário, Venda' : 'Ex: Aluguel, Compras'} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
+                                    {participants.length > 1 && (
+                                        <div>
+                                            <label htmlFor="responsible" className="block text-sm font-medium text-gray-400 mb-1">Responsável</label>
+                                            <input 
+                                                id="responsible" 
+                                                list="responsible-options-add"
+                                                value={responsible} 
+                                                onChange={(e) => setResponsible(e.target.value)} 
+                                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Quem?"
+                                            />
+                                            <datalist id="responsible-options-add">
+                                                {participants.map(p => <option key={p} value={p}>{p}</option>)}
+                                            </datalist>
+                                        </div>
+                                    )}
+                                    <div> <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">Valor (R$)</label> <input id="amount" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1500.00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div>
+                                    <div className="flex gap-4"> <div className="flex-1"> <label htmlFor="month" className="block text-sm font-medium text-gray-400 mb-1">Mês</label> <select id="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"> {Array.from({length: 12}, (_, i) => <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}</option>)} </select> </div> <div className="flex-1"> <label htmlFor="year" className="block text-sm font-medium text-gray-400 mb-1">Ano</label> <input id="year" type="number" value={year} onChange={(e) => setYear(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/> </div> </div>
+                                    <button type="submit" className={`w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${formType === 'income' ? 'bg-green-600 hover:bg-green-500 focus:ring-green-500' : 'bg-red-600 hover:bg-red-500 focus:ring-red-500'}`}> Adicionar {formType === 'income' ? 'Entrada' : 'Saída'} </button>
+                                </form>
+                            </div>
+                            <div id="action-buttons" className="bg-gray-800 p-6 rounded-xl shadow-md">
+                                <h3 className="text-xl font-semibold text-gray-200 mb-4">Ferramentas</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button 
+                                        onClick={() => setShowLeanCalculator(true)}
+                                        className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-yellow-700/80 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors border border-yellow-600/50">
+                                        <icons.CalculatorIcon />
+                                        Modo Vacas Magras
+                                    </button>
+                                    
+                                    {showRedoButton && (
+                                        <button 
+                                            onClick={handleRedoInitialAverage}
+                                            className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-500 transition-colors">
+                                            <icons.ResetIcon />
+                                            Refazer Média Inicial
+                                        </button>
+                                    )}
+                                    <button onClick={handleImportClick} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.ImportIcon /> Importar </button>
+                                    <button onClick={handleExportData} disabled={isSimulation} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.ExportIcon /> Exportar </button>
+                                    <button onClick={handleUndo} disabled={!canUndo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.UndoIcon /> Desfazer </button>
+                                    <button onClick={handleRedo} disabled={!canRedo} className="flex items-center justify-center text-sm px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-500 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"> <icons.RedoIcon /> Refazer </button>
+                                    <button onClick={() => setIsTourOpen(true)} className="col-span-2 flex items-center justify-center text-sm px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500 transition-colors"> <icons.HelpIcon /> Ajuda & Tour Guiado </button>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json" />
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                  <footer className="text-center mt-12 py-8 text-sm text-gray-500 border-t border-gray-800">
                     <div className="flex flex-col items-center justify-center">
