@@ -9,12 +9,21 @@ const firebaseConfig = {
     measurementId: "G-9D98TPEQ7V"
 };
 
-// Inicializa Firebase
-const { initializeApp, getAuth, getFirestore } = window.firebase;
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const appId = firebaseConfig.appId || 'default-app-id';
+// Inicializa Firebase (aguarda estar pronto)
+function initFirebase() {
+    const { initializeApp, getAuth, getFirestore } = window.firebase;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const appId = firebaseConfig.appId || 'default-app-id';
 
-// Torna disponível globalmente
-window.firebaseApp = { app, db, auth, appId };
+    window.firebaseApp = { app, db, auth, appId };
+    console.log('✅ Firebase inicializado com sucesso!');
+}
+
+// Inicializa quando o Firebase estiver pronto
+if (window.firebase) {
+    initFirebase();
+} else {
+    window.addEventListener('firebase-ready', initFirebase);
+}
