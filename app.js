@@ -1111,7 +1111,7 @@ function App() {
                                 </div>
                             </div>
                             
-                          /*  <FinancialEvolutionChart data={chartData} /> --> */
+                          <FinancialEvolutionChart data={chartData} />
 
                             <div id="detailed-reports" className="bg-gray-800 p-6 rounded-xl shadow-md">
                                 <h2 className="text-2xl font-semibold text-gray-200 mb-4">Relatórios Detalhados</h2>
