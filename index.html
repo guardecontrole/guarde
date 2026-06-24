@@ -4,68 +4,69 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Controle Financeiro Moderno</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- React 18 - Versões específicas e estáveis -->
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel para transformar JSX -->
+    <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+    
+    <!-- PropTypes -->
     <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
+    <!-- Recharts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.10.3/Recharts.min.js"></script>
 
-    <script src="https://unpkg.com/lucide-react@0.344.0/dist/umd/lucide-react.js"></script>
+    <!-- Firebase - Versão COMPAT (mais estável para CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Fallback para ícones enquanto não carregam */
+        .icon-placeholder {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: currentColor;
+            opacity: 0.5;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-gray-300">
     <div id="root"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { 
-            getAuth, onAuthStateChanged, signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut
-        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        import { 
-            getFirestore, collection, doc, onSnapshot, 
-            addDoc, deleteDoc, updateDoc, setDoc, getDoc, serverTimestamp 
-        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
-        // Torna o Firebase disponível globalmente
-        window.firebase = {
-            initializeApp,
-            getAuth, onAuthStateChanged, signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut,
-            getFirestore, collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, 
-            setDoc, getDoc, serverTimestamp
-        };
-    </script>
-
-    <script src="firebase-config.js" type="text/babel"></script>
-    <script src="utils/icons.js" type="text/babel"></script>
-    <script src="utils/helpers.js" type="text/babel"></script>
+    <!-- Scripts principais - SEM type="module" e SEM data-type="module" -->
+    <!-- Ordem correta de carregamento -->
+    <script src="firebase-config.js"></script>
+    <script src="utils/helpers.js"></script>
     
-    <script src="components/AuthModal.js" type="text/babel"></script>
-    <script src="components/OnboardingModal.js" type="text/babel"></script>
-    <script src="components/SettingsModal.js" type="text/babel"></script>
-    <script src="components/AdjustReserveModal.js" type="text/babel"></script>
-    <script src="components/LeanTimesCalculatorModal.js" type="text/babel"></script>
-    <script src="components/Tour.js" type="text/babel"></script>
-    <script src="components/RecordsTable.js" type="text/babel"></script>
-    <script src="components/EditModal.js" type="text/babel"></script>
-    <script src="components/FinancialEvolutionChart.js" type="text/babel"></script>
-    <script src="components/MonthlyBalanceHistoryTable.js" type="text/babel"></script>
-    <script src="components/ContributionAnalysis.js" type="text/babel"></script>
-    <script src="components/StabilityReserveHistoryTable.js" type="text/babel"></script>
-    <script src="components/SortIndicator.js" type="text/babel"></script>
+    <script src="components/AuthModal.js"></script>
+    <script src="components/OnboardingModal.js"></script>
+    <script src="components/SettingsModal.js"></script>
+    <script src="components/AdjustReserveModal.js"></script>
+    <script src="components/LeanTimesCalculatorModal.js"></script>
+    <script src="components/Tour.js"></script>
+    <script src="components/RecordsTable.js"></script>
+    <script src="components/EditModal.js"></script>
+    <script src="components/FinancialEvolutionChart.js"></script>
+    <script src="components/MonthlyBalanceHistoryTable.js"></script>
+    <script src="components/ContributionAnalysis.js"></script>
+    <script src="components/StabilityReserveHistoryTable.js"></script>
+    <script src="components/SortIndicator.js"></script>
     
-    <script src="hooks/useSortableData.js" type="text/babel"></script>
+    <script src="hooks/useSortableData.js"></script>
     
-    <script src="orçamento.js" type="text/babel"></script>
-
-    <script src="app.js" type="text/babel"></script>
+    <script src="orçamento.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
