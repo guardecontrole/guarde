@@ -1,3 +1,14 @@
+// Aguarda Firebase estar pronto
+if (!window.firebase) {
+    await new Promise(resolve => {
+        if (window.firebase) resolve();
+        else window.addEventListener('firebase-ready', resolve, { once: true });
+    });
+}
+
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+// ... resto do código continua igual
+
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
 const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, PieChart, Pie, Cell } = Recharts;
 
