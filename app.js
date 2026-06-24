@@ -8,7 +8,8 @@ if (!window.firebase) {
 // ... resto do código continua igual
 
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
-const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, PieChart, Pie, Cell } = Recharts;
+const RechartsGlobal = window.Recharts || window.recharts;
+const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, PieChart, Pie, Cell } = RechartsGlobal;
 
 // Importa componentes do escopo global
 const AuthModal = window.AuthModal;
