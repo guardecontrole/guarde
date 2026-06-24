@@ -1,4 +1,4 @@
-const { ResponsiveContainer, ComposedChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } = Recharts;
+const { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } = Recharts;
 
 const ContributionAnalysis = ({ contributionData, individualAverages }) => {
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
